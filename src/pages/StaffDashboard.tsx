@@ -2870,7 +2870,7 @@ const StaffDashboard = () => {
             
             {activeTab === "ecological-submissions" && <EcologicalSubmissionsTab />}
 
-            {activeTab === "household-link-requests" && <HouseholdLinkRequestsTab staffName={user?.fullName || "Staff Admin"} />}
+            
 
             {activeTab === "monitoring-reports" && <MonitoringReportsTab />}
 
