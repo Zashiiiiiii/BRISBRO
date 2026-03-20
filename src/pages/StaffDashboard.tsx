@@ -782,7 +782,7 @@ const StaffDashboard = () => {
         supabase.removeChannel(ecologicalChannel);
         supabase.removeChannel(nameChangeChannel);
         supabase.removeChannel(incidentsChannel);
-        supabase.removeChannel(householdLinkChannel);
+        
         supabase.removeChannel(messagesChannel);
       };
     }
