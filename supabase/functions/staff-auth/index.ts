@@ -2982,12 +2982,6 @@ serve(async (req) => {
 
     if (!user.is_active) {
       console.log('Account deactivated:', username);
-      // Record failed attempt for inactive account
-      await supabase.rpc('record_login_attempt', { 
-        p_ip_address: clientIp, 
-        p_username: username, 
-        p_success: false 
-      });
       return new Response(
         JSON.stringify({ error: 'Account is deactivated', code: 'ACCOUNT_INACTIVE' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
