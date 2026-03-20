@@ -2862,7 +2862,7 @@ const StaffDashboard = () => {
 
             {activeTab === "settings" && <SettingsTab />}
 
-            {activeTab === "audit-logs" && <AuditLogsTab />}
+            
 
             {activeTab === "name-change-requests" && <NameChangeRequestsTab />}
 
