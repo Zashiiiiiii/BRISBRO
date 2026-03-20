@@ -338,7 +338,11 @@ export const useStaffAuth = () => {
       clearStaffForcedLogout();
       lastLoginTimeRef.current = Date.now();
 
-      // Token is now set via httpOnly cookie by the server - no localStorage needed
+      // Store token in localStorage for cross-origin environments
+      if (data.token) {
+        localStorage.setItem(STAFF_TOKEN_KEY, data.token);
+      }
+
       setAuthState({
         user: data.user,
         isAuthenticated: true,
