@@ -45,7 +45,6 @@ const ProfileContent = () => {
   useEffect(() => {
     if (user) {
       loadProfile();
-      loadHouseholdLinkRequests();
     }
   }, [user]);
 
