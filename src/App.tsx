@@ -160,14 +160,6 @@ const AppContent = () => {
             <AdminStaffManagement />
           </StaffProtectedRoute>
         } />
-        <Route path="/admin/audit-logs" element={
-          <StaffProtectedRoute 
-            requiredFeature="audit_logs"
-            allowedRoles={['admin', 'barangay_captain']}
-          >
-            <AdminAuditLogs />
-          </StaffProtectedRoute>
-        } />
         <Route path="/admin/resident-approval" element={
           <StaffProtectedRoute requiredFeature="resident_approval">
             <AdminResidentApproval />
