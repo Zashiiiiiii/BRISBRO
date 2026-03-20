@@ -49,16 +49,6 @@ const Header = () => {
               Home
             </Link>
             <Link 
-              to="/request-certificate" 
-              className={`text-sm font-medium transition-colors px-3 py-2 rounded-md ${
-                isActive('/request-certificate') 
-                  ? 'bg-active-nav text-active-nav-foreground' 
-                  : 'text-foreground hover:text-primary'
-              }`}
-            >
-              Request Certificate
-            </Link>
-            <Link 
               to="/track-request" 
               className={`text-sm font-medium transition-colors px-3 py-2 rounded-md ${
                 isActive('/track-request') 
@@ -129,17 +119,6 @@ const Header = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Home
-              </Link>
-              <Link 
-                to="/request-certificate" 
-                className={`text-sm font-medium transition-colors py-2 px-3 rounded-md ${
-                  isActive('/request-certificate') 
-                    ? 'bg-active-nav text-active-nav-foreground' 
-                    : 'text-foreground hover:text-primary'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Request Certificate
               </Link>
               <Link 
                 to="/track-request" 
