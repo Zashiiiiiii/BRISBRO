@@ -380,7 +380,7 @@ const StaffDashboard = () => {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [pendingEcologicalCount, setPendingEcologicalCount] = useState(0);
   const [pendingNameChangeCount, setPendingNameChangeCount] = useState(0);
-  const [pendingHouseholdLinkCount, setPendingHouseholdLinkCount] = useState(0);
+  
   const [pendingIncidentsCount, setPendingIncidentsCount] = useState(0);
   const [pendingCertificatesCount, setPendingCertificatesCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
