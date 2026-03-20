@@ -324,7 +324,7 @@ const StaffSidebar = ({
     hasPermission(userRole, "messages") && { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessagesCount && unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
     hasPermission(userRole, "view_reports") && { title: "Reports", icon: BarChart3, tab: "view-reports" },
     hasPermission(userRole, "settings") && { title: "Settings", icon: Settings, tab: "settings" },
-  ].filter(Boolean) as any[], [userRole, pendingRegistrationCount, pendingNameChangeCount, pendingHouseholdLinkCount, unreadMessagesCount]);
+  ].filter(Boolean) as any[], [userRole, pendingRegistrationCount, pendingNameChangeCount, unreadMessagesCount]);
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
