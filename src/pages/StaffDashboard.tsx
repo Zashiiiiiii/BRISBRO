@@ -319,7 +319,7 @@ const StaffSidebar = ({
     hasPermission(userRole, "name_change_requests") && { title: "Name Change Requests", icon: User, tab: "name-change-requests", badge: pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined },
     
     hasPermission(userRole, "staff_management") && { title: "Staff Management", icon: Shield, route: "/admin/staff" },
-    hasPermission(userRole, "audit_logs") && { title: "Audit Logs", icon: History, tab: "audit-logs" },
+    
     hasPermission(userRole, "monitoring_reports") && { title: "Monitoring Reports", icon: BarChart3, tab: "monitoring-reports" },
     hasPermission(userRole, "messages") && { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessagesCount && unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
     hasPermission(userRole, "view_reports") && { title: "Reports", icon: BarChart3, tab: "view-reports" },
