@@ -2993,12 +2993,6 @@ serve(async (req) => {
     const passwordValid = compareSync(password, user.password_hash);
     if (!passwordValid) {
       console.log('Invalid password for user:', username);
-      // Record failed attempt
-      await supabase.rpc('record_login_attempt', { 
-        p_ip_address: clientIp, 
-        p_username: username, 
-        p_success: false 
-      });
       return new Response(
         JSON.stringify({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
