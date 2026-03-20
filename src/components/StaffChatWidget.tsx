@@ -150,8 +150,10 @@ const StaffChatWidget = () => {
       if (data) {
         // Get resident names using RPC that bypasses RLS
         const residentUserIds = [
-          ...new Set(
-            data.filter((m: any) => m.sender_type === "resident").map((m: any) => m.sender_id)
+          ...new Set<string>(
+            data
+              .filter((m: any) => m.sender_type === "resident" && typeof m.sender_id === "string")
+              .map((m: any) => m.sender_id as string)
           ),
         ];
         let residentMap: Record<string, string> = {};
