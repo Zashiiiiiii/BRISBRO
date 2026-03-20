@@ -368,6 +368,7 @@ export const useStaffAuth = () => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      localStorage.removeItem(STAFF_TOKEN_KEY);
       markStaffForcedLogout();
 
       if (warningTimerRef.current) {
