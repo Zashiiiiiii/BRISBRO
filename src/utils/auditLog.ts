@@ -23,8 +23,7 @@ type EntityType =
   | "staff_user"
   | "template"
   | "message"
-  | "ecological_submission"
-  | "household_link_request";
+  | "ecological_submission";
 
 type PerformedByType = "staff" | "admin" | "resident" | "system";
 

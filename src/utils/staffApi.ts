@@ -171,16 +171,6 @@ export const getPendingNameChangeRequestsCount = async () => {
   return result.count || 0;
 };
 
-export const getPendingHouseholdLinkRequestsCount = async () => {
-  const result = await callStaffApi('get-pending-household-link-requests-count');
-  return result.count || 0;
-};
-
-// Audit logs (admin only)
-export const getAuditLogs = async (entityFilter?: string, actionFilter?: string, limit?: number) => {
-  const result = await callStaffApi('get-audit-logs', { entityFilter, actionFilter, limit });
-  return result.data || [];
-};
 
 // Staff user management (admin only)
 export const getStaffUsers = async () => {
