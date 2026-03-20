@@ -694,6 +694,30 @@ serve(async (req) => {
         );
       }
 
+      // Try to link user_id: look up the resident's email, then find the auth user
+      try {
+        const { data: resident } = await supabase
+          .from('residents')
+          .select('email, user_id')
+          .eq('id', residentId)
+          .single();
+        
+        if (resident?.email && !resident.user_id) {
+          // Look up auth user by email
+          const { data: authData } = await supabase.auth.admin.listUsers();
+          const authUser = authData?.users?.find(u => u.email === resident.email);
+          if (authUser) {
+            await supabase
+              .from('residents')
+              .update({ user_id: authUser.id })
+              .eq('id', residentId);
+            console.log('Linked user_id', authUser.id, 'to resident', residentId);
+          }
+        }
+      } catch (linkError) {
+        console.error('Non-fatal: failed to link user_id:', linkError);
+      }
+
       console.log('Resident approved:', residentId, 'by:', session.username);
       return new Response(
         JSON.stringify({ success: true }),
