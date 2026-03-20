@@ -319,49 +319,10 @@ const ProfileContent = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="text-center py-6 text-muted-foreground">
-                  <Home className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="font-medium">No Household Linked</p>
-                  <p className="text-sm">Request to link your account to a household below.</p>
-                </div>
-                <Separator />
-                <div className="space-y-3">
-                  <h3 className="font-semibold flex items-center gap-2"><Link className="h-4 w-4" /> Link to Household</h3>
-                  <div className="space-y-2">
-                    <Label>Household Number</Label>
-                    <Input value={householdNumber} onChange={(e) => setHouseholdNumber(e.target.value)} placeholder="Enter household number" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Reason (optional)</Label>
-                    <Textarea value={householdReason} onChange={(e) => setHouseholdReason(e.target.value)} placeholder="Why do you want to link to this household?" rows={2} />
-                  </div>
-                  <Button onClick={handleLinkHousehold} disabled={isLinkingHousehold}>
-                    {isLinkingHousehold && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    <Link className="mr-2 h-4 w-4" />
-                    Submit Request
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {householdLinkRequests.length > 0 && (
-              <div className="space-y-3 mt-4">
-                <h3 className="font-semibold">Household Link Requests</h3>
-                {householdLinkRequests.map((req: any) => (
-                  <div key={req.id} className="p-3 rounded-lg border flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Household #{req.household_number}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Submitted: {new Date(req.created_at).toLocaleDateString()}
-                      </p>
-                      {req.rejection_reason && (
-                        <p className="text-sm text-destructive mt-1">Reason: {req.rejection_reason}</p>
-                      )}
-                    </div>
-                    {getRequestStatusBadge(req.status)}
-                  </div>
-                ))}
+              <div className="text-center py-6 text-muted-foreground">
+                <Home className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p className="font-medium">No Household Linked</p>
+                <p className="text-sm">Please contact the Barangay office to link your account to a household.</p>
               </div>
             )}
           </TabsContent>
