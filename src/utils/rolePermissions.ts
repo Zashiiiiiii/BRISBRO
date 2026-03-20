@@ -9,11 +9,9 @@ export type StaffRole =
 
 export type FeatureKey =
   | 'staff_management'
-  | 'audit_logs'
   | 'resident_approval'
   | 'ecological_submissions'
   | 'name_change_requests'
-  | 'household_link_requests'
   | 'view_reports'
   | 'certificate_requests'
   | 'manage_residents'
