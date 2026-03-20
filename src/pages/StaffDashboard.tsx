@@ -762,18 +762,8 @@ const StaffDashboard = () => {
         })
         .subscribe();
 
-      // Real-time subscription for household link requests
-      const householdLinkChannel = supabase
-        .channel('household-link-requests-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'household_link_requests'
-        }, () => {
-          console.log('Household link request changed, reloading count...');
-          loadHouseholdLinkCount();
-        })
-        .subscribe();
+
+
 
       // Real-time subscription for messages (sound notification + badge)
       const messagesChannel = supabase
