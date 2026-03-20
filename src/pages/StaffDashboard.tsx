@@ -144,7 +144,7 @@ import ViewReportsTab from "@/components/staff/ViewReportsTab";
 import NameChangeRequestsTab from "@/components/staff/NameChangeRequestsTab";
 import EcologicalProfileTab from "@/components/staff/EcologicalProfileTab";
 import EcologicalSubmissionsTab from "@/components/staff/EcologicalSubmissionsTab";
-import HouseholdLinkRequestsTab from "@/components/staff/HouseholdLinkRequestsTab";
+
 import CertificateRequestForm from "@/components/CertificateRequestForm";
 import CertificateRequestCard from "@/components/staff/CertificateRequestCard";
 import MonitoringReportsTab from "@/components/staff/MonitoringReportsTab";
