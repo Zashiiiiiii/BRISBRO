@@ -249,7 +249,7 @@ const StaffSidebar = ({
   pendingRegistrationCount?: number;
   pendingEcologicalCount?: number;
   pendingNameChangeCount?: number;
-  pendingHouseholdLinkCount?: number;
+  
   pendingIncidentsCount?: number;
   pendingCertificatesCount?: number;
   unreadMessagesCount?: number;
