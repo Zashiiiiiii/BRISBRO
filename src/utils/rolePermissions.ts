@@ -28,14 +28,12 @@ export type FeatureKey =
 const ROLE_PERMISSIONS: Record<FeatureKey, StaffRole[]> = {
   // Admin-level features
   staff_management: ['admin', 'barangay_captain'],
-  audit_logs: ['admin', 'barangay_captain'],
   monitoring_reports: ['admin'],
   
   // Management features
   resident_approval: ['admin', 'barangay_captain', 'barangay_official'],
   ecological_submissions: ['admin', 'barangay_captain', 'barangay_official', 'secretary'],
   name_change_requests: ['admin', 'barangay_captain', 'barangay_official', 'secretary'],
-  household_link_requests: ['admin', 'barangay_captain', 'barangay_official', 'secretary'],
   manage_residents: ['admin', 'barangay_captain', 'barangay_official', 'secretary'],
   manage_households: ['admin', 'barangay_captain', 'barangay_official', 'secretary'],
   announcements: ['admin', 'barangay_captain', 'barangay_official', 'secretary'],
