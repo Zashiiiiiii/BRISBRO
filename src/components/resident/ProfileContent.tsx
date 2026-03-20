@@ -118,30 +118,6 @@ const ProfileContent = () => {
     }
   };
 
-  const handleLinkHousehold = async () => {
-    if (!householdNumber.trim()) { toast.error("Please enter a household number"); return; }
-    if (!user?.id) { toast.error("You must be logged in"); return; }
-    setIsLinkingHousehold(true);
-    try {
-      const { data, error } = await supabase.rpc("resident_request_household_link", {
-        p_user_id: user.id, p_household_number: householdNumber.trim(), p_reason: householdReason.trim() || null,
-      });
-      if (error) throw error;
-      const result = data as { success: boolean; error?: string; request_id?: string; message?: string };
-      if (result.success) {
-        toast.success(result.message || "Request submitted successfully");
-        setHouseholdNumber(""); setHouseholdReason("");
-        loadHouseholdLinkRequests();
-      } else {
-        toast.error(result.error || "Failed to submit request");
-      }
-    } catch (error: any) {
-      console.error("Error requesting household link:", error);
-      toast.error(error.message || "Failed to submit request");
-    } finally {
-      setIsLinkingHousehold(false);
-    }
-  };
 
   const getRequestStatusBadge = (status: string) => {
     switch (status) {
