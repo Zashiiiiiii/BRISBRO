@@ -87,6 +87,11 @@ function createLogoutCookie(isSecure: boolean): string {
 }
 
 function getTokenFromCookie(req: Request): string | null {
+  // Check custom header first (for cross-origin environments where cookies don't work)
+  const headerToken = req.headers.get('x-staff-token');
+  if (headerToken) return headerToken;
+
+  // Fall back to httpOnly cookie
   const cookieHeader = req.headers.get('cookie');
   if (!cookieHeader) return null;
   
