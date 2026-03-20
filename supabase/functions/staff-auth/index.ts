@@ -2961,34 +2961,7 @@ serve(async (req) => {
       );
     }
 
-    // ========== RATE LIMITING ==========
-    // Check if IP is rate limited (5 failed attempts in 15 minutes = blocked)
-    const { data: rateLimitData, error: rateLimitError } = await supabase
-      .rpc('check_login_rate_limit', { p_ip_address: clientIp });
-
-    if (rateLimitError) {
-      console.error('Rate limit check error:', rateLimitError.message);
-      // Continue without rate limiting if there's an error
-    } else if (rateLimitData === -1) {
-      console.log('Rate limit exceeded for IP:', clientIp);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Too many failed login attempts. Please try again in 15 minutes.',
-          code: 'RATE_LIMITED',
-          retryAfter: 900 // 15 minutes in seconds
-        }),
-        { 
-          status: 429, 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'Retry-After': '900'
-          } 
-        }
-      );
-    } else {
-      console.log('Rate limit check passed. Remaining attempts:', rateLimitData);
-    }
+    // Rate limiting removed per user request
 
     // Find user by username
     const { data: user, error: userError } = await supabase
