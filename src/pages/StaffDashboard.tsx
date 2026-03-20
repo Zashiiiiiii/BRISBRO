@@ -121,7 +121,7 @@ import {
   getPendingIncidentsCount,
   getPendingCertificatesCount,
   getPendingEcologicalCount,
-  getPendingHouseholdLinkRequestsCount,
+  
   getPendingNameChangeRequestsCount,
   getStaffUnreadMessageCount,
 } from "@/utils/staffApi";
@@ -139,12 +139,12 @@ import ResidentsTab from "@/components/staff/ResidentsTab";
 import HouseholdsTab from "@/components/staff/HouseholdsTab";
 import IncidentsTab from "@/components/staff/IncidentsTab";
 import SettingsTab from "@/components/staff/SettingsTab";
-import AuditLogsTab from "@/components/staff/AuditLogsTab";
+
 import ViewReportsTab from "@/components/staff/ViewReportsTab";
 import NameChangeRequestsTab from "@/components/staff/NameChangeRequestsTab";
 import EcologicalProfileTab from "@/components/staff/EcologicalProfileTab";
 import EcologicalSubmissionsTab from "@/components/staff/EcologicalSubmissionsTab";
-import HouseholdLinkRequestsTab from "@/components/staff/HouseholdLinkRequestsTab";
+
 import CertificateRequestForm from "@/components/CertificateRequestForm";
 import CertificateRequestCard from "@/components/staff/CertificateRequestCard";
 import MonitoringReportsTab from "@/components/staff/MonitoringReportsTab";
@@ -238,7 +238,6 @@ const StaffSidebar = ({
   pendingRegistrationCount,
   pendingEcologicalCount,
   pendingNameChangeCount,
-  pendingHouseholdLinkCount,
   pendingIncidentsCount,
   pendingCertificatesCount,
   unreadMessagesCount,
@@ -250,7 +249,7 @@ const StaffSidebar = ({
   pendingRegistrationCount?: number;
   pendingEcologicalCount?: number;
   pendingNameChangeCount?: number;
-  pendingHouseholdLinkCount?: number;
+  
   pendingIncidentsCount?: number;
   pendingCertificatesCount?: number;
   unreadMessagesCount?: number;
@@ -318,14 +317,14 @@ const StaffSidebar = ({
     hasPermission(userRole, "announcements") && { title: "Announcements", icon: Bell, tab: "announcements" },
     hasPermission(userRole, "resident_approval") && { title: "Resident Approval", icon: CheckCircle, tab: "resident-approval", badge: pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined },
     hasPermission(userRole, "name_change_requests") && { title: "Name Change Requests", icon: User, tab: "name-change-requests", badge: pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined },
-    hasPermission(userRole, "household_link_requests") && { title: "Household Link Requests", icon: Home, tab: "household-link-requests", badge: pendingHouseholdLinkCount && pendingHouseholdLinkCount > 0 ? pendingHouseholdLinkCount : undefined },
+    
     hasPermission(userRole, "staff_management") && { title: "Staff Management", icon: Shield, route: "/admin/staff" },
-    hasPermission(userRole, "audit_logs") && { title: "Audit Logs", icon: History, tab: "audit-logs" },
+    
     hasPermission(userRole, "monitoring_reports") && { title: "Monitoring Reports", icon: BarChart3, tab: "monitoring-reports" },
     hasPermission(userRole, "messages") && { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessagesCount && unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
     hasPermission(userRole, "view_reports") && { title: "Reports", icon: BarChart3, tab: "view-reports" },
     hasPermission(userRole, "settings") && { title: "Settings", icon: Settings, tab: "settings" },
-  ].filter(Boolean) as any[], [userRole, pendingRegistrationCount, pendingNameChangeCount, pendingHouseholdLinkCount, unreadMessagesCount]);
+  ].filter(Boolean) as any[], [userRole, pendingRegistrationCount, pendingNameChangeCount, unreadMessagesCount]);
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
@@ -381,7 +380,7 @@ const StaffDashboard = () => {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [pendingEcologicalCount, setPendingEcologicalCount] = useState(0);
   const [pendingNameChangeCount, setPendingNameChangeCount] = useState(0);
-  const [pendingHouseholdLinkCount, setPendingHouseholdLinkCount] = useState(0);
+  
   const [pendingIncidentsCount, setPendingIncidentsCount] = useState(0);
   const [pendingCertificatesCount, setPendingCertificatesCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
@@ -664,16 +663,8 @@ const StaffDashboard = () => {
       };
       loadNameChangeCount();
 
-      // Load pending household link requests count
-      const loadHouseholdLinkCount = async () => {
-        try {
-          const count = await getPendingHouseholdLinkRequestsCount();
-          setPendingHouseholdLinkCount(count);
-        } catch (err) {
-          console.error("Error loading household link count:", err);
-        }
-      };
-      loadHouseholdLinkCount();
+
+
 
       // Load pending incidents count via staff API (bypasses RLS)
       const loadIncidentsCount = async () => {
@@ -771,18 +762,8 @@ const StaffDashboard = () => {
         })
         .subscribe();
 
-      // Real-time subscription for household link requests
-      const householdLinkChannel = supabase
-        .channel('household-link-requests-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'household_link_requests'
-        }, () => {
-          console.log('Household link request changed, reloading count...');
-          loadHouseholdLinkCount();
-        })
-        .subscribe();
+
+
 
       // Real-time subscription for messages (sound notification + badge)
       const messagesChannel = supabase
@@ -801,7 +782,7 @@ const StaffDashboard = () => {
         supabase.removeChannel(ecologicalChannel);
         supabase.removeChannel(nameChangeChannel);
         supabase.removeChannel(incidentsChannel);
-        supabase.removeChannel(householdLinkChannel);
+        
         supabase.removeChannel(messagesChannel);
       };
     }
@@ -1811,7 +1792,7 @@ const StaffDashboard = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <StaffSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} userRole={user?.role} pendingRegistrationCount={pendingRegistrationCount} pendingEcologicalCount={pendingEcologicalCount} pendingNameChangeCount={pendingNameChangeCount} pendingHouseholdLinkCount={pendingHouseholdLinkCount} pendingIncidentsCount={pendingIncidentsCount} pendingCertificatesCount={pendingCertificatesCount} unreadMessagesCount={unreadMessagesCount} />
+        <StaffSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} userRole={user?.role} pendingRegistrationCount={pendingRegistrationCount} pendingEcologicalCount={pendingEcologicalCount} pendingNameChangeCount={pendingNameChangeCount} pendingIncidentsCount={pendingIncidentsCount} pendingCertificatesCount={pendingCertificatesCount} unreadMessagesCount={unreadMessagesCount} />
         
         <div className="flex-1 flex flex-col">
           {/* Top Bar */}
@@ -2881,7 +2862,7 @@ const StaffDashboard = () => {
 
             {activeTab === "settings" && <SettingsTab />}
 
-            {activeTab === "audit-logs" && <AuditLogsTab />}
+            
 
             {activeTab === "name-change-requests" && <NameChangeRequestsTab />}
 
@@ -2889,7 +2870,7 @@ const StaffDashboard = () => {
             
             {activeTab === "ecological-submissions" && <EcologicalSubmissionsTab />}
 
-            {activeTab === "household-link-requests" && <HouseholdLinkRequestsTab staffName={user?.fullName || "Staff Admin"} />}
+            
 
             {activeTab === "monitoring-reports" && <MonitoringReportsTab />}
 

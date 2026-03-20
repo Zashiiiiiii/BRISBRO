@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Save, Loader2, User, Phone, Mail, Calendar, Briefcase, GraduationCap, Heart, Users, Pencil, Link, Clock, CheckCircle, XCircle, Home } from "lucide-react";
+import { Save, Loader2, User, Phone, Mail, Calendar, Briefcase, GraduationCap, Heart, Users, Pencil, Clock, CheckCircle, XCircle, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,10 +30,6 @@ const ProfileContent = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [residentId, setResidentId] = useState<string | null>(null);
   const [showNameChangeForm, setShowNameChangeForm] = useState(false);
-  const [householdNumber, setHouseholdNumber] = useState("");
-  const [householdReason, setHouseholdReason] = useState("");
-  const [isLinkingHousehold, setIsLinkingHousehold] = useState(false);
-  const [householdLinkRequests, setHouseholdLinkRequests] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     firstName: "", middleName: "", lastName: "", suffix: "",
@@ -49,19 +45,9 @@ const ProfileContent = () => {
   useEffect(() => {
     if (user) {
       loadProfile();
-      loadHouseholdLinkRequests();
     }
   }, [user]);
 
-  const loadHouseholdLinkRequests = async () => {
-    if (!user?.id) return;
-    try {
-      const { data, error } = await supabase.rpc("get_resident_household_link_requests", { p_user_id: user.id });
-      if (!error && data) setHouseholdLinkRequests(data);
-    } catch (err) {
-      console.error("Error loading household link requests:", err);
-    }
-  };
 
   const loadProfile = async () => {
     setIsLoading(true);
@@ -132,39 +118,7 @@ const ProfileContent = () => {
     }
   };
 
-  const handleLinkHousehold = async () => {
-    if (!householdNumber.trim()) { toast.error("Please enter a household number"); return; }
-    if (!user?.id) { toast.error("You must be logged in"); return; }
-    setIsLinkingHousehold(true);
-    try {
-      const { data, error } = await supabase.rpc("resident_request_household_link", {
-        p_user_id: user.id, p_household_number: householdNumber.trim(), p_reason: householdReason.trim() || null,
-      });
-      if (error) throw error;
-      const result = data as { success: boolean; error?: string; request_id?: string; message?: string };
-      if (result.success) {
-        toast.success(result.message || "Request submitted successfully");
-        setHouseholdNumber(""); setHouseholdReason("");
-        loadHouseholdLinkRequests();
-      } else {
-        toast.error(result.error || "Failed to submit request");
-      }
-    } catch (error: any) {
-      console.error("Error requesting household link:", error);
-      toast.error(error.message || "Failed to submit request");
-    } finally {
-      setIsLinkingHousehold(false);
-    }
-  };
 
-  const getRequestStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending": return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
-      case "approved": return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
-      case "rejected": return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
-    }
-  };
 
   if (isLoading) {
     return (
@@ -357,49 +311,10 @@ const ProfileContent = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="text-center py-6 text-muted-foreground">
-                  <Home className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="font-medium">No Household Linked</p>
-                  <p className="text-sm">Request to link your account to a household below.</p>
-                </div>
-                <Separator />
-                <div className="space-y-3">
-                  <h3 className="font-semibold flex items-center gap-2"><Link className="h-4 w-4" /> Link to Household</h3>
-                  <div className="space-y-2">
-                    <Label>Household Number</Label>
-                    <Input value={householdNumber} onChange={(e) => setHouseholdNumber(e.target.value)} placeholder="Enter household number" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Reason (optional)</Label>
-                    <Textarea value={householdReason} onChange={(e) => setHouseholdReason(e.target.value)} placeholder="Why do you want to link to this household?" rows={2} />
-                  </div>
-                  <Button onClick={handleLinkHousehold} disabled={isLinkingHousehold}>
-                    {isLinkingHousehold && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    <Link className="mr-2 h-4 w-4" />
-                    Submit Request
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {householdLinkRequests.length > 0 && (
-              <div className="space-y-3 mt-4">
-                <h3 className="font-semibold">Household Link Requests</h3>
-                {householdLinkRequests.map((req: any) => (
-                  <div key={req.id} className="p-3 rounded-lg border flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Household #{req.household_number}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Submitted: {new Date(req.created_at).toLocaleDateString()}
-                      </p>
-                      {req.rejection_reason && (
-                        <p className="text-sm text-destructive mt-1">Reason: {req.rejection_reason}</p>
-                      )}
-                    </div>
-                    {getRequestStatusBadge(req.status)}
-                  </div>
-                ))}
+              <div className="text-center py-6 text-muted-foreground">
+                <Home className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p className="font-medium">No Household Linked</p>
+                <p className="text-sm">Please contact the Barangay office to link your account to a household.</p>
               </div>
             )}
           </TabsContent>
