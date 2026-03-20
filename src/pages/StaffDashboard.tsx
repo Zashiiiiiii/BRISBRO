@@ -139,7 +139,7 @@ import ResidentsTab from "@/components/staff/ResidentsTab";
 import HouseholdsTab from "@/components/staff/HouseholdsTab";
 import IncidentsTab from "@/components/staff/IncidentsTab";
 import SettingsTab from "@/components/staff/SettingsTab";
-import AuditLogsTab from "@/components/staff/AuditLogsTab";
+
 import ViewReportsTab from "@/components/staff/ViewReportsTab";
 import NameChangeRequestsTab from "@/components/staff/NameChangeRequestsTab";
 import EcologicalProfileTab from "@/components/staff/EcologicalProfileTab";
