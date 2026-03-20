@@ -121,7 +121,7 @@ import {
   getPendingIncidentsCount,
   getPendingCertificatesCount,
   getPendingEcologicalCount,
-  getPendingHouseholdLinkRequestsCount,
+  
   getPendingNameChangeRequestsCount,
   getStaffUnreadMessageCount,
 } from "@/utils/staffApi";
