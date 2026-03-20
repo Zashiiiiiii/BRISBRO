@@ -317,7 +317,7 @@ const StaffSidebar = ({
     hasPermission(userRole, "announcements") && { title: "Announcements", icon: Bell, tab: "announcements" },
     hasPermission(userRole, "resident_approval") && { title: "Resident Approval", icon: CheckCircle, tab: "resident-approval", badge: pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined },
     hasPermission(userRole, "name_change_requests") && { title: "Name Change Requests", icon: User, tab: "name-change-requests", badge: pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined },
-    hasPermission(userRole, "household_link_requests") && { title: "Household Link Requests", icon: Home, tab: "household-link-requests", badge: pendingHouseholdLinkCount && pendingHouseholdLinkCount > 0 ? pendingHouseholdLinkCount : undefined },
+    
     hasPermission(userRole, "staff_management") && { title: "Staff Management", icon: Shield, route: "/admin/staff" },
     hasPermission(userRole, "audit_logs") && { title: "Audit Logs", icon: History, tab: "audit-logs" },
     hasPermission(userRole, "monitoring_reports") && { title: "Monitoring Reports", icon: BarChart3, tab: "monitoring-reports" },
