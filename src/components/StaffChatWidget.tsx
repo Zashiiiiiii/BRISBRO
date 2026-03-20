@@ -11,6 +11,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useStaffAuthContext } from "@/context/StaffAuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  getResidentNamesByUserIds,
+  getResidentsForMessagingStaff,
+  getStaffMessages,
+  markStaffMessageRead,
+  sendStaffNewMessage,
+  sendStaffReply,
+} from "@/utils/staffApi";
 
 interface Message {
   id: string;
@@ -86,10 +94,7 @@ const StaffChatWidget = () => {
     if (!user?.id) return;
     setIsLoadingResidents(true);
     try {
-      const { data, error } = await supabase.rpc("get_residents_for_messaging_staff", {
-        p_staff_id: user.id,
-      });
-      if (error) throw error;
+      const data = await getResidentsForMessagingStaff(user.id);
       setResidents(data || []);
     } catch (error) {
       console.error("Error loading residents:", error);
@@ -115,14 +120,12 @@ const StaffChatWidget = () => {
 
     setIsSending(true);
     try {
-      const { error } = await supabase.rpc("staff_send_new_message", {
-        p_staff_id: user.id,
-        p_recipient_user_id: selectedRecipient,
-        p_subject: newSubject.trim(),
-        p_content: newContent.trim(),
+      await sendStaffNewMessage({
+        staffId: user.id,
+        recipientUserId: selectedRecipient,
+        subject: newSubject.trim(),
+        content: newContent.trim(),
       });
-
-      if (error) throw error;
 
       toast.success("Message sent successfully");
       setIsComposing(false);
@@ -142,25 +145,21 @@ const StaffChatWidget = () => {
     if (!user?.id) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc("get_staff_messages", {
-        p_staff_id: user.id,
-      });
-
-      if (error) throw error;
+      const data = await getStaffMessages(user.id);
 
       if (data) {
         // Get resident names using RPC that bypasses RLS
         const residentUserIds = [
-          ...new Set(
-            data.filter((m: any) => m.sender_type === "resident").map((m: any) => m.sender_id)
+          ...new Set<string>(
+            data
+              .filter((m: any) => m.sender_type === "resident" && typeof m.sender_id === "string")
+              .map((m: any) => m.sender_id as string)
           ),
         ];
         let residentMap: Record<string, string> = {};
 
         if (residentUserIds.length > 0) {
-          const { data: residentData } = await supabase.rpc("get_resident_names_by_user_ids", {
-            p_user_ids: residentUserIds,
-          });
+          const residentData = await getResidentNamesByUserIds(residentUserIds);
 
           if (residentData) {
             residentMap = Object.fromEntries(
@@ -223,7 +222,7 @@ const StaffChatWidget = () => {
 
     if (needsMarkAsRead) {
       try {
-        await supabase.rpc("staff_mark_message_read", { p_staff_id: user?.id, p_message_id: message.id });
+        await markStaffMessageRead(message.id, user?.id);
         
         // Calculate how many unread messages we're marking as read
         const unreadRepliesCount = message.replies?.filter((r) => !r.isRead).length || 0;
@@ -258,15 +257,13 @@ const StaffChatWidget = () => {
 
     setIsSending(true);
     try {
-      const { error } = await supabase.rpc("staff_send_reply", {
-        p_staff_id: user.id,
-        p_recipient_id: selectedConversation.senderId,
-        p_subject: `Re: ${selectedConversation.subject}`,
-        p_content: replyContent,
-        p_parent_message_id: selectedConversation.id,
+      await sendStaffReply({
+        staffId: user.id,
+        recipientId: selectedConversation.senderId,
+        subject: `Re: ${selectedConversation.subject}`,
+        content: replyContent,
+        parentMessageId: selectedConversation.id,
       });
-
-      if (error) throw error;
 
       toast.success("Reply sent");
       setReplyContent("");
@@ -296,7 +293,7 @@ const StaffChatWidget = () => {
       
       // Mark all as read via RPC for each message
       for (const msgId of unreadMessageIds) {
-        await supabase.rpc("staff_mark_message_read", { p_staff_id: user.id, p_message_id: msgId });
+        await markStaffMessageRead(msgId, user.id);
       }
       
       // Update local state

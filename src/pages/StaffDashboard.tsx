@@ -117,9 +117,13 @@ import {
   getPendingRegistrations,
   approveResident,
   rejectResident,
+  getAllIncidentsForStaff,
   getPendingIncidentsCount,
   getPendingCertificatesCount,
   getPendingEcologicalCount,
+  getPendingHouseholdLinkRequestsCount,
+  getPendingNameChangeRequestsCount,
+  getStaffUnreadMessageCount,
 } from "@/utils/staffApi";
 import { format } from "date-fns";
 import { MapPin, Search } from "lucide-react";
@@ -611,10 +615,7 @@ const StaffDashboard = () => {
 
 
       // Load incidents for home page
-      const { data: incidentData } = await supabase.rpc("get_all_incidents_for_staff", {
-        p_approval_status: null,
-        p_status: null,
-      });
+      const incidentData = await getAllIncidentsForStaff(null, null);
       if (incidentData) {
         const mappedIncidents = incidentData.map((i: any) => ({
           id: i.id,
@@ -655,10 +656,8 @@ const StaffDashboard = () => {
       // Load pending name change requests count
       const loadNameChangeCount = async () => {
         try {
-          const { data, error } = await supabase.rpc("get_pending_name_change_requests_count");
-          if (!error && data !== null) {
-            setPendingNameChangeCount(data);
-          }
+          const count = await getPendingNameChangeRequestsCount();
+          setPendingNameChangeCount(count);
         } catch (err) {
           console.error("Error loading name change count:", err);
         }
@@ -668,10 +667,8 @@ const StaffDashboard = () => {
       // Load pending household link requests count
       const loadHouseholdLinkCount = async () => {
         try {
-          const { data, error } = await supabase.rpc("get_pending_household_link_requests_count");
-          if (!error && data !== null) {
-            setPendingHouseholdLinkCount(data);
-          }
+          const count = await getPendingHouseholdLinkRequestsCount();
+          setPendingHouseholdLinkCount(count);
         } catch (err) {
           console.error("Error loading household link count:", err);
         }
@@ -704,17 +701,15 @@ const StaffDashboard = () => {
       const loadUnreadMessagesCount = async () => {
         if (!user?.id) return;
         try {
-          const { data, error } = await supabase.rpc("get_staff_unread_message_count", {
-            p_staff_id: user.id,
-          });
-          if (!error && data !== null) {
+          const count = await getStaffUnreadMessageCount(user.id);
+          if (count !== null) {
             setUnreadMessagesCount((prev) => {
               // Only play sound if not initial load and count increased
-              if (prevUnreadCountRef.current >= 0 && data > prevUnreadCountRef.current) {
+              if (prevUnreadCountRef.current >= 0 && count > prevUnreadCountRef.current) {
                 playNotificationSound();
               }
-              prevUnreadCountRef.current = data;
-              return data;
+              prevUnreadCountRef.current = count;
+              return count;
             });
           }
         } catch (err) {

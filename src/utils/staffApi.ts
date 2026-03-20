@@ -120,6 +120,54 @@ export const getStaffMessages = async (staffId?: string) => {
   return result.data || [];
 };
 
+export const getStaffUnreadMessageCount = async (staffId?: string) => {
+  const result = await callStaffApi('get-staff-unread-message-count', { staffId });
+  return result.count || 0;
+};
+
+export const getResidentsForMessagingStaff = async (staffId?: string) => {
+  const result = await callStaffApi('get-residents-for-messaging-staff', { staffId });
+  return result.data || [];
+};
+
+export const getResidentNamesByUserIds = async (userIds: string[]) => {
+  const result = await callStaffApi('get-resident-names-by-user-ids', { userIds });
+  return result.data || [];
+};
+
+export const sendStaffNewMessage = async (payload: {
+  staffId?: string;
+  recipientUserId: string;
+  subject: string;
+  content: string;
+}) => {
+  return callStaffApi('staff-send-new-message', payload);
+};
+
+export const markStaffMessageRead = async (messageId: string, staffId?: string) => {
+  return callStaffApi('staff-mark-message-read', { messageId, staffId });
+};
+
+export const sendStaffReply = async (payload: {
+  staffId?: string;
+  recipientId: string;
+  subject: string;
+  content: string;
+  parentMessageId: string;
+}) => {
+  return callStaffApi('staff-send-reply', payload);
+};
+
+export const getPendingNameChangeRequestsCount = async () => {
+  const result = await callStaffApi('get-pending-name-change-requests-count');
+  return result.count || 0;
+};
+
+export const getPendingHouseholdLinkRequestsCount = async () => {
+  const result = await callStaffApi('get-pending-household-link-requests-count');
+  return result.count || 0;
+};
+
 // Audit logs (admin only)
 export const getAuditLogs = async (entityFilter?: string, actionFilter?: string, limit?: number) => {
   const result = await callStaffApi('get-audit-logs', { entityFilter, actionFilter, limit });
