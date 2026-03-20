@@ -47,6 +47,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBarangayStats } from "@/context/BarangayStatsContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { getAllIncidentsForStaff } from "@/utils/staffApi";
 
 // Types for household and resident data
 interface HouseholdData {
@@ -311,12 +312,9 @@ const EcologicalProfileTab = () => {
       setHouseholds(householdsWithResidents);
 
       // Fetch incidents summary
-      const { data: incidentsData, error: incidentsError } = await supabase.rpc("get_all_incidents_for_staff", {
-        p_approval_status: "approved",
-        p_status: null,
-      });
+      const incidentsData = await getAllIncidentsForStaff("approved", null);
 
-      if (!incidentsError && incidentsData) {
+      if (incidentsData) {
         const byType: { [key: string]: number } = {};
         let resolved = 0;
         let pending = 0;

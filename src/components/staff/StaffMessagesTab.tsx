@@ -12,6 +12,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useStaffAuthContext } from "@/context/StaffAuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  getResidentNamesByUserIds,
+  getResidentsForMessagingStaff,
+  getStaffMessages,
+  markStaffMessageRead,
+  sendStaffNewMessage,
+  sendStaffReply,
+} from "@/utils/staffApi";
 
 interface Message {
   id: string;
@@ -54,10 +62,7 @@ const StaffMessagesTab = () => {
     if (!user?.id) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc("get_staff_messages", {
-        p_staff_id: user.id,
-      });
-      if (error) throw error;
+      const data = await getStaffMessages(user.id);
 
       if (data) {
         const residentUserIds = [
@@ -68,9 +73,7 @@ const StaffMessagesTab = () => {
         let residentMap: Record<string, string> = {};
 
         if (residentUserIds.length > 0) {
-          const { data: residentData } = await supabase.rpc("get_resident_names_by_user_ids", {
-            p_user_ids: residentUserIds,
-          });
+          const residentData = await getResidentNamesByUserIds(residentUserIds);
           if (residentData) {
             residentMap = Object.fromEntries(
               residentData.map((r: any) => [r.user_id, r.full_name])
@@ -135,8 +138,7 @@ const StaffMessagesTab = () => {
     if (!user?.id) return;
     setIsLoadingResidents(true);
     try {
-      const { data, error } = await supabase.rpc("get_residents_for_messaging_staff", { p_staff_id: user.id });
-      if (error) throw error;
+      const data = await getResidentsForMessagingStaff(user.id);
       setResidents(data || []);
     } catch (error) {
       console.error("Error loading residents:", error);
@@ -162,13 +164,13 @@ const StaffMessagesTab = () => {
     }
     setIsSending(true);
     try {
-      const { error } = await supabase.rpc("staff_send_new_message", {
-        p_staff_id: user.id,
-        p_recipient_user_id: selectedRecipient,
-        p_subject: newSubject.trim(),
-        p_content: newContent.trim(),
+      await sendStaffNewMessage({
+        staffId: user.id,
+        recipientUserId: selectedRecipient,
+        subject: newSubject.trim(),
+        content: newContent.trim(),
       });
-      if (error) throw error;
+
       toast.success("Message sent successfully");
       setIsComposing(false);
       loadMessages();
@@ -188,7 +190,7 @@ const StaffMessagesTab = () => {
     const hasUnreadReplies = message.replies?.some((r) => !r.isRead) || false;
     if (!message.isRead || hasUnreadReplies) {
       try {
-        await supabase.rpc("staff_mark_message_read", { p_staff_id: user?.id, p_message_id: message.id });
+        await markStaffMessageRead(message.id, user?.id);
         setMessages((prev) =>
           prev.map((m) =>
             m.id === message.id
@@ -209,14 +211,14 @@ const StaffMessagesTab = () => {
     }
     setIsSending(true);
     try {
-      const { error } = await supabase.rpc("staff_send_reply", {
-        p_staff_id: user.id,
-        p_recipient_id: selectedConversation.senderId,
-        p_subject: `Re: ${selectedConversation.subject}`,
-        p_content: replyContent,
-        p_parent_message_id: selectedConversation.id,
+      await sendStaffReply({
+        staffId: user.id,
+        recipientId: selectedConversation.senderId,
+        subject: `Re: ${selectedConversation.subject}`,
+        content: replyContent,
+        parentMessageId: selectedConversation.id,
       });
-      if (error) throw error;
+
       toast.success("Reply sent");
       setReplyContent("");
       loadMessages();
@@ -238,7 +240,7 @@ const StaffMessagesTab = () => {
     if (unreadIds.length === 0) return;
     try {
       for (const msgId of unreadIds) {
-        await supabase.rpc("staff_mark_message_read", { p_staff_id: user.id, p_message_id: msgId });
+        await markStaffMessageRead(msgId, user.id);
       }
       setMessages((prev) =>
         prev.map((m) => ({ ...m, isRead: true, replies: m.replies?.map((r) => ({ ...r, isRead: true })) }))

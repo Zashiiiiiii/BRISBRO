@@ -1180,6 +1180,328 @@ serve(async (req) => {
       );
     }
 
+    if (action === 'get-staff-unread-message-count') {
+      const token = getTokenFromCookie(req);
+
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { count, error } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('recipient_id', session.staff_user_id)
+        .eq('recipient_type', 'staff')
+        .eq('is_read', false);
+
+      if (error) {
+        console.error('Error fetching unread message count:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch unread message count' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ count: count || 0 }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'get-pending-name-change-requests-count') {
+      const token = getTokenFromCookie(req);
+
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { count, error } = await supabase
+        .from('name_change_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      if (error) {
+        console.error('Error fetching pending name change count:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch pending name change count' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ count: count || 0 }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'get-pending-household-link-requests-count') {
+      const token = getTokenFromCookie(req);
+
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { count, error } = await supabase
+        .from('household_link_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      if (error) {
+        console.error('Error fetching pending household link count:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch pending household link count' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ count: count || 0 }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'get-residents-for-messaging-staff') {
+      const token = getTokenFromCookie(req);
+
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('residents')
+        .select('user_id, first_name, middle_name, last_name, suffix, email')
+        .eq('approval_status', 'approved')
+        .not('user_id', 'is', null)
+        .is('deleted_at', null)
+        .order('last_name', { ascending: true })
+        .order('first_name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching residents for messaging:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch residents' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const formatted = (data || []).map((resident) => ({
+        user_id: resident.user_id,
+        full_name: [resident.first_name, resident.middle_name, resident.last_name, resident.suffix]
+          .filter(Boolean)
+          .join(' '),
+        email: resident.email,
+      }));
+
+      return new Response(
+        JSON.stringify({ data: formatted }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'get-resident-names-by-user-ids') {
+      const token = getTokenFromCookie(req);
+      const userIds = Array.isArray(body?.userIds) ? body.userIds : [];
+
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (userIds.length === 0) {
+        return new Response(
+          JSON.stringify({ data: [] }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('residents')
+        .select('user_id, first_name, middle_name, last_name, suffix')
+        .in('user_id', userIds)
+        .is('deleted_at', null);
+
+      if (error) {
+        console.error('Error fetching resident names:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch resident names' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const formatted = (data || []).map((resident) => ({
+        user_id: resident.user_id,
+        full_name: [resident.first_name, resident.middle_name, resident.last_name, resident.suffix]
+          .filter(Boolean)
+          .join(' '),
+      }));
+
+      return new Response(
+        JSON.stringify({ data: formatted }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'staff-send-new-message') {
+      const token = getTokenFromCookie(req);
+
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const recipientUserId = body?.recipientUserId;
+      const subject = body?.subject?.trim();
+      const content = body?.content?.trim();
+
+      if (!recipientUserId || !subject || !content) {
+        return new Response(
+          JSON.stringify({ error: 'Recipient, subject, and content are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: session.staff_user_id,
+          sender_type: 'staff',
+          recipient_id: recipientUserId,
+          recipient_type: 'resident',
+          subject,
+          content,
+          is_read: false,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error sending staff message:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to send message' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, data }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'staff-mark-message-read') {
+      const token = getTokenFromCookie(req);
+      const messageId = body?.messageId;
+
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!messageId) {
+        return new Response(
+          JSON.stringify({ error: 'Message ID is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('id', messageId)
+        .eq('recipient_id', session.staff_user_id)
+        .eq('recipient_type', 'staff');
+
+      if (error) {
+        console.error('Error marking message as read:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to mark message as read' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'staff-send-reply') {
+      const token = getTokenFromCookie(req);
+
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const recipientId = body?.recipientId;
+      const subject = body?.subject?.trim();
+      const content = body?.content?.trim();
+      const parentMessageId = body?.parentMessageId;
+
+      if (!recipientId || !subject || !content || !parentMessageId) {
+        return new Response(
+          JSON.stringify({ error: 'Reply details are incomplete' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: session.staff_user_id,
+          sender_type: 'staff',
+          recipient_id: recipientId,
+          recipient_type: 'resident',
+          subject,
+          content,
+          parent_message_id: parentMessageId,
+          is_read: false,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error sending staff reply:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to send reply' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, data }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get audit logs (admin and barangay_captain only)
     if (action === 'get-audit-logs') {
       const token = getTokenFromCookie(req);
