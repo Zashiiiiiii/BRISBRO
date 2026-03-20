@@ -77,11 +77,9 @@ export const canAccessAdminSection = (role: string | undefined): boolean => {
   if (!role) return false;
   return (
     hasPermission(role, 'staff_management') ||
-    hasPermission(role, 'audit_logs') ||
     hasPermission(role, 'resident_approval') ||
     hasPermission(role, 'ecological_submissions') ||
     hasPermission(role, 'name_change_requests') ||
-    hasPermission(role, 'household_link_requests') ||
     hasPermission(role, 'monitoring_reports')
   );
 };
