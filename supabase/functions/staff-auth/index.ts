@@ -3077,7 +3077,7 @@ serve(async (req) => {
     const duration = Date.now() - startTime;
     console.log('Login successful for user:', username, 'Duration:', duration, 'ms');
 
-    // Security: Return success WITHOUT token in body - token is ONLY in httpOnly cookie
+    // Return token in body for cross-origin environments where cookies don't work
     return new Response(
       JSON.stringify({
         success: true,
@@ -3088,8 +3088,7 @@ serve(async (req) => {
           role: user.role,
         },
         expiresAt: expiresAt.toISOString(),
-        // Token is intentionally NOT included in response body for security
-        // It's set in the httpOnly cookie which cannot be accessed by JavaScript
+        token: token,
       }),
       { 
         status: 200, 
