@@ -51,9 +51,6 @@ const StaffLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => voi
         } else if (result.code === 'ACCOUNT_INACTIVE') {
           errorMessage = "Account is deactivated";
           toastDescription = "Please contact an administrator";
-        } else if (result.code === 'RATE_LIMITED') {
-          errorMessage = "Too many login attempts";
-          toastDescription = "Please try again in 15 minutes";
         }
         
         setError(errorMessage);

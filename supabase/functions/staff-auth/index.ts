@@ -2961,34 +2961,7 @@ serve(async (req) => {
       );
     }
 
-    // ========== RATE LIMITING ==========
-    // Check if IP is rate limited (5 failed attempts in 15 minutes = blocked)
-    const { data: rateLimitData, error: rateLimitError } = await supabase
-      .rpc('check_login_rate_limit', { p_ip_address: clientIp });
-
-    if (rateLimitError) {
-      console.error('Rate limit check error:', rateLimitError.message);
-      // Continue without rate limiting if there's an error
-    } else if (rateLimitData === -1) {
-      console.log('Rate limit exceeded for IP:', clientIp);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Too many failed login attempts. Please try again in 15 minutes.',
-          code: 'RATE_LIMITED',
-          retryAfter: 900 // 15 minutes in seconds
-        }),
-        { 
-          status: 429, 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'Retry-After': '900'
-          } 
-        }
-      );
-    } else {
-      console.log('Rate limit check passed. Remaining attempts:', rateLimitData);
-    }
+    // Rate limiting removed per user request
 
     // Find user by username
     const { data: user, error: userError } = await supabase
@@ -2999,12 +2972,6 @@ serve(async (req) => {
 
     if (userError || !user) {
       console.log('User not found:', username);
-      // Record failed attempt
-      await supabase.rpc('record_login_attempt', { 
-        p_ip_address: clientIp, 
-        p_username: username, 
-        p_success: false 
-      });
       return new Response(
         JSON.stringify({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -3015,12 +2982,6 @@ serve(async (req) => {
 
     if (!user.is_active) {
       console.log('Account deactivated:', username);
-      // Record failed attempt for inactive account
-      await supabase.rpc('record_login_attempt', { 
-        p_ip_address: clientIp, 
-        p_username: username, 
-        p_success: false 
-      });
       return new Response(
         JSON.stringify({ error: 'Account is deactivated', code: 'ACCOUNT_INACTIVE' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -3032,24 +2993,13 @@ serve(async (req) => {
     const passwordValid = compareSync(password, user.password_hash);
     if (!passwordValid) {
       console.log('Invalid password for user:', username);
-      // Record failed attempt
-      await supabase.rpc('record_login_attempt', { 
-        p_ip_address: clientIp, 
-        p_username: username, 
-        p_success: false 
-      });
       return new Response(
         JSON.stringify({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    // Record successful login attempt (clears the rate limit counter effectively)
-    await supabase.rpc('record_login_attempt', { 
-      p_ip_address: clientIp, 
-      p_username: username, 
-      p_success: true 
-    });
+    // Login successful - proceeding to create session
 
     // Generate session token
     const token = crypto.randomUUID() + '-' + crypto.randomUUID();
