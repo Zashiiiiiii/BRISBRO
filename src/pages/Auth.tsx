@@ -178,6 +178,16 @@ const Auth = () => {
       }
 
       if (data.user) {
+        // Try to link resident record to auth user if not yet linked
+        try {
+          await supabase.rpc('link_resident_to_user', {
+            p_user_id: data.user.id,
+            p_email: data.user.email || loginEmail,
+          });
+        } catch (linkErr) {
+          console.error('Non-fatal: link_resident_to_user failed:', linkErr);
+        }
+
         // Check approval status before allowing access
         const { data: resident } = await supabase
           .from("residents")
@@ -185,7 +195,7 @@ const Auth = () => {
           .eq("user_id", data.user.id)
           .maybeSingle();
 
-        // If no resident found by user_id, try by email
+        // If no resident found by user_id, try by email via RPC
         const approvalStatus = resident?.approval_status || 
           (await supabase
             .from("residents")

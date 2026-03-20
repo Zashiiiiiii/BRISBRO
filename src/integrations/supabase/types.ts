@@ -1844,6 +1844,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      link_resident_to_user: {
+        Args: { p_email: string; p_user_id: string }
+        Returns: boolean
+      }
       record_login_attempt: {
         Args: { p_ip_address: string; p_success: boolean; p_username: string }
         Returns: undefined
