@@ -49,7 +49,7 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
   
   return {
     'Access-Control-Allow-Origin': corsOrigin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, pragma',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, pragma, x-staff-token',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
@@ -87,6 +87,11 @@ function createLogoutCookie(isSecure: boolean): string {
 }
 
 function getTokenFromCookie(req: Request): string | null {
+  // Check custom header first (for cross-origin environments where cookies don't work)
+  const headerToken = req.headers.get('x-staff-token');
+  if (headerToken) return headerToken;
+
+  // Fall back to httpOnly cookie
   const cookieHeader = req.headers.get('cookie');
   if (!cookieHeader) return null;
   
@@ -3072,7 +3077,7 @@ serve(async (req) => {
     const duration = Date.now() - startTime;
     console.log('Login successful for user:', username, 'Duration:', duration, 'ms');
 
-    // Security: Return success WITHOUT token in body - token is ONLY in httpOnly cookie
+    // Return token in body for cross-origin environments where cookies don't work
     return new Response(
       JSON.stringify({
         success: true,
@@ -3083,8 +3088,7 @@ serve(async (req) => {
           role: user.role,
         },
         expiresAt: expiresAt.toISOString(),
-        // Token is intentionally NOT included in response body for security
-        // It's set in the httpOnly cookie which cannot be accessed by JavaScript
+        token: token,
       }),
       { 
         status: 200, 

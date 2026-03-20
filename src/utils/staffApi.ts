@@ -8,14 +8,22 @@ const callStaffApi = async (action: string, body: Record<string, unknown> = {}):
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'apikey': supabaseKey,
+    'Authorization': `Bearer ${supabaseKey}`,
+  };
+
+  // Send stored token via custom header for cross-origin environments
+  const storedToken = localStorage.getItem('bris_staff_token');
+  if (storedToken) {
+    headers['x-staff-token'] = storedToken;
+  }
+
   const response = await fetch(`${supabaseUrl}/functions/v1/staff-auth`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`,
-    },
-    credentials: 'include', // Important: sends httpOnly cookies for authentication
+    headers,
+    credentials: 'include',
     body: JSON.stringify({ action, ...body }),
   });
 

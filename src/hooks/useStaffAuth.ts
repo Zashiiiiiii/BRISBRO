@@ -21,24 +21,32 @@ interface StaffAuthState {
 }
 
 const WARNING_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
+const STAFF_TOKEN_KEY = 'bris_staff_token';
 
 // Helper function to call staff-auth edge function
-// Session tokens are managed via httpOnly cookies - no token in request body
 const callStaffAuthFunction = async (body: Record<string, unknown>): Promise<{ data: any; error: any }> => {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`,
+      'Cache-Control': 'no-store',
+      'Pragma': 'no-cache',
+    };
+
+    // Send stored token via custom header for cross-origin environments
+    const storedToken = localStorage.getItem(STAFF_TOKEN_KEY);
+    if (storedToken) {
+      headers['x-staff-token'] = storedToken;
+    }
+
     const response = await fetch(`${supabaseUrl}/functions/v1/staff-auth`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Cache-Control': 'no-store',
-        'Pragma': 'no-cache',
-      },
-      credentials: 'include', // Important: sends httpOnly cookies
+      headers,
+      credentials: 'include',
       body: JSON.stringify(body),
     });
     
@@ -330,7 +338,11 @@ export const useStaffAuth = () => {
       clearStaffForcedLogout();
       lastLoginTimeRef.current = Date.now();
 
-      // Token is now set via httpOnly cookie by the server - no localStorage needed
+      // Store token in localStorage for cross-origin environments
+      if (data.token) {
+        localStorage.setItem(STAFF_TOKEN_KEY, data.token);
+      }
+
       setAuthState({
         user: data.user,
         isAuthenticated: true,
@@ -356,6 +368,7 @@ export const useStaffAuth = () => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      localStorage.removeItem(STAFF_TOKEN_KEY);
       markStaffForcedLogout();
 
       if (warningTimerRef.current) {
