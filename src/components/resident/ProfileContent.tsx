@@ -48,15 +48,6 @@ const ProfileContent = () => {
     }
   }, [user]);
 
-  const loadHouseholdLinkRequests = async () => {
-    if (!user?.id) return;
-    try {
-      const { data, error } = await supabase.rpc("get_resident_household_link_requests", { p_user_id: user.id });
-      if (!error && data) setHouseholdLinkRequests(data);
-    } catch (err) {
-      console.error("Error loading household link requests:", err);
-    }
-  };
 
   const loadProfile = async () => {
     setIsLoading(true);
