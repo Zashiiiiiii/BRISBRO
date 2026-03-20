@@ -1,0 +1,1 @@
+UPDATE public.staff_users SET password_hash = '$2b$10$L0dz2.geVLfgGNMa0gOr8.Rbs/WDVaPq5WEQrZ7HFBXCxhalYSqru' WHERE username = 'admin';
