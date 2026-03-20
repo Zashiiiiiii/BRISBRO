@@ -2999,12 +2999,7 @@ serve(async (req) => {
       );
     }
     
-    // Record successful login attempt (clears the rate limit counter effectively)
-    await supabase.rpc('record_login_attempt', { 
-      p_ip_address: clientIp, 
-      p_username: username, 
-      p_success: true 
-    });
+    // Login successful - proceeding to create session
 
     // Generate session token
     const token = crypto.randomUUID() + '-' + crypto.randomUUID();
