@@ -30,10 +30,6 @@ const ProfileContent = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [residentId, setResidentId] = useState<string | null>(null);
   const [showNameChangeForm, setShowNameChangeForm] = useState(false);
-  const [householdNumber, setHouseholdNumber] = useState("");
-  const [householdReason, setHouseholdReason] = useState("");
-  const [isLinkingHousehold, setIsLinkingHousehold] = useState(false);
-  const [householdLinkRequests, setHouseholdLinkRequests] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     firstName: "", middleName: "", lastName: "", suffix: "",
