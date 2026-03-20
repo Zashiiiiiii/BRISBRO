@@ -663,16 +663,8 @@ const StaffDashboard = () => {
       };
       loadNameChangeCount();
 
-      // Load pending household link requests count
-      const loadHouseholdLinkCount = async () => {
-        try {
-          const count = await getPendingHouseholdLinkRequestsCount();
-          setPendingHouseholdLinkCount(count);
-        } catch (err) {
-          console.error("Error loading household link count:", err);
-        }
-      };
-      loadHouseholdLinkCount();
+
+
 
       // Load pending incidents count via staff API (bypasses RLS)
       const loadIncidentsCount = async () => {
