@@ -120,7 +120,7 @@ export const StaffProtectedRoute = ({
   }
 
   // Legacy role check for admin-only routes
-  if (requiredRole === 'admin' && user?.role !== 'admin' && user?.role !== 'barangay_captain') {
+  if (requiredRole === 'admin' && user?.role !== 'admin') {
     return <Navigate to="/staff-dashboard" replace />;
   }
 

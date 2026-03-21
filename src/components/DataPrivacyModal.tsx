@@ -75,7 +75,7 @@ const DataPrivacyModal = ({
               </div>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
                 <li>Authorized Barangay Staff members</li>
-                <li>Barangay Officials (Kapitan, Kagawad, SK Chairman)</li>
+                <li>Barangay Officials (Kapitan, Kagawad)</li>
                 <li>System Administrators for technical maintenance only</li>
               </ul>
               <p className="mt-2 text-muted-foreground">

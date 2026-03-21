@@ -1606,8 +1606,8 @@ serve(async (req) => {
         );
       }
 
-      // Only admins and barangay captains can view audit logs
-      if (session.role !== 'admin' && session.role !== 'barangay_captain') {
+      // Only admins can view audit logs
+      if (session.role !== 'admin') {
         return new Response(
           JSON.stringify({ error: 'Admin access required' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -1669,7 +1669,7 @@ serve(async (req) => {
     };
 
     // Helper to check if role can manage staff
-    const canManageStaff = (role: string) => role === 'admin' || role === 'barangay_captain';
+    const canManageStaff = (role: string) => role === 'admin';
     
     // Get all staff users
     if (action === 'get-staff-users') {
@@ -2102,7 +2102,7 @@ serve(async (req) => {
 
       const session = sessionData[0];
       // Allow all staff roles that can access ecological submissions
-      const allowedRoles = ['admin', 'barangay_captain', 'barangay_official', 'secretary'];
+      const allowedRoles = ['admin', 'secretary'];
       if (!allowedRoles.includes(session.role)) {
         return new Response(
           JSON.stringify({ error: 'Staff access required' }),
