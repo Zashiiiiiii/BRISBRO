@@ -946,7 +946,9 @@ const EcologicalProfileTab = () => {
 
     const household = selectedHousehold;
     const residents = household.residents || [];
-    const headOfHousehold = residents.find((r) => r.is_head_of_household) || residents[0];
+    const headOfHousehold =
+      residents.find((r) => r.is_head_of_household || r.relation_to_head?.toLowerCase() === "head") ||
+      residents[0];
 
     return `
   <div class="report-container">
