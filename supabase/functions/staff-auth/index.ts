@@ -1144,7 +1144,7 @@ serve(async (req) => {
       );
     }
 
-    // Get resident demographics (gender + birth_date for stats)
+    // Get population demographics from household members (approved ecological submissions)
     if (action === 'get-resident-demographics') {
       const token = getTokenFromCookie(req);
       
@@ -1156,22 +1156,37 @@ serve(async (req) => {
         );
       }
 
-      const { data, error } = await supabase
-        .from('residents')
-        .select('gender, birth_date')
-        .is('deleted_at', null)
-        .eq('approval_status', 'approved');
+      // Fetch household_members from approved ecological submissions (not deleted)
+      const { data: submissions, error } = await supabase
+        .from('ecological_profile_submissions')
+        .select('household_members')
+        .eq('status', 'approved')
+        .is('deleted_at', null);
 
       if (error) {
-        console.error('Error fetching resident demographics:', error);
+        console.error('Error fetching household demographics:', error);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch resident demographics' }),
+          JSON.stringify({ error: 'Failed to fetch household demographics' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      // Flatten all household_members from all approved submissions into one demographics array
+      const allMembers: any[] = [];
+      (submissions || []).forEach((sub: any) => {
+        const members = sub.household_members || [];
+        if (Array.isArray(members)) {
+          members.forEach((m: any) => {
+            allMembers.push({
+              gender: m.gender || m.sex || null,
+              birth_date: m.birth_date || m.birthDate || m.date_of_birth || null,
+            });
+          });
+        }
+      });
+
       return new Response(
-        JSON.stringify({ data: data || [] }),
+        JSON.stringify({ data: allMembers, totalPopulation: allMembers.length }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -82,20 +82,19 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
     try {
       // Fetch all data in parallel via staff API (bypasses RLS)
       const [
-        residentCountResult,
         pendingCountResult,
         householdCountResult,
         demographicsResult,
         incidentsData,
       ] = await Promise.all([
-        getResidentCount(),
         getPendingRegistrationCount(),
         getHouseholdCount(),
         getResidentDemographics(),
         getAllIncidentsForStaff("approved", null),
       ]);
 
-      // Calculate demographics from residents data
+      // Calculate demographics from household members (not resident accounts)
+      // Total Population = Household Heads + Household Members from approved ecological submissions
       let maleCount = 0;
       let femaleCount = 0;
       const ageGroups: AgeGroups = {
@@ -106,19 +105,24 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
         "60+": 0,
       };
 
-      const residents = demographicsResult || [];
-      residents.forEach((r: any) => {
-        const gender = r.gender?.toLowerCase();
+      const householdMembers = demographicsResult || [];
+      householdMembers.forEach((m: any) => {
+        const gender = m.gender?.toLowerCase();
         if (gender === "male") maleCount++;
         else if (gender === "female") femaleCount++;
 
-        const age = calculateAge(r.birth_date);
-        if (age <= 14) ageGroups["0-14"]++;
-        else if (age <= 24) ageGroups["15-24"]++;
-        else if (age <= 44) ageGroups["25-44"]++;
-        else if (age <= 59) ageGroups["45-59"]++;
-        else ageGroups["60+"]++;
+        const age = calculateAge(m.birth_date);
+        if (m.birth_date) {
+          if (age <= 14) ageGroups["0-14"]++;
+          else if (age <= 24) ageGroups["15-24"]++;
+          else if (age <= 44) ageGroups["25-44"]++;
+          else if (age <= 59) ageGroups["45-59"]++;
+          else ageGroups["60+"]++;
+        }
       });
+
+      // Total population = all household members from approved ecological submissions
+      const totalPopulation = householdMembers.length;
 
       // Calculate incident summary
       const byType: { [key: string]: number } = {};
@@ -135,7 +139,7 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
       });
 
       setStats({
-        totalResidents: residentCountResult || residents.length,
+        totalResidents: totalPopulation,
         totalHouseholds: householdCountResult || 0,
         maleCount,
         femaleCount,
