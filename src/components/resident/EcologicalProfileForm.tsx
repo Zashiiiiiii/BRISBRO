@@ -1000,7 +1000,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                       Household Members ({formData.household_members.length})
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Complete list of all members in household {formData.household_number || "N/A"}
+                      Add all <strong>other</strong> members in household {formData.household_number || "N/A"}. Do not include yourself — your account is automatically linked upon approval.
                     </p>
                   </div>
                   <Button type="button" onClick={addHouseholdMember} size="sm">
