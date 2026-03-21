@@ -1669,7 +1669,7 @@ serve(async (req) => {
     };
 
     // Helper to check if role can manage staff
-    const canManageStaff = (role: string) => role === 'admin' || role === 'barangay_captain';
+    const canManageStaff = (role: string) => role === 'admin';
     
     // Get all staff users
     if (action === 'get-staff-users') {
