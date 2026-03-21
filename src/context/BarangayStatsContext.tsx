@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getResidentCount, getPendingRegistrationCount, getAllIncidentsForStaff } from "@/utils/staffApi";
+import { getResidentCount, getPendingRegistrationCount, getAllIncidentsForStaff, getResidentDemographics, getHouseholdCount } from "@/utils/staffApi";
 import { useStaffAuthContext } from "@/context/StaffAuthContext";
 
 interface AgeGroups {
@@ -80,18 +80,18 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
     setStats((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      // Fetch all data in parallel
+      // Fetch all data in parallel via staff API (bypasses RLS)
       const [
         residentCountResult,
         pendingCountResult,
-        householdsResult,
-        residentsResult,
+        householdCountResult,
+        demographicsResult,
         incidentsData,
       ] = await Promise.all([
         getResidentCount(),
         getPendingRegistrationCount(),
-        supabase.rpc("get_all_households_for_staff"),
-        supabase.rpc("get_all_residents_for_staff"),
+        getHouseholdCount(),
+        getResidentDemographics(),
         getAllIncidentsForStaff("approved", null),
       ]);
 
