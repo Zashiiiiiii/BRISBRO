@@ -469,7 +469,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
         communication_services: formData.communication_services,
         means_of_transport: formData.means_of_transport,
         info_sources: formData.info_sources,
-        household_members: formData.household_members,
+        household_members: filteredMembers,
         // Map to separate database columns
         education_data: healthData?.education || {},
         health_data: {
