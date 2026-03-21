@@ -28,7 +28,7 @@ import StaffSettings from "./pages/staff/Settings";
 import StaffResidents from "./pages/staff/Residents";
 import StaffHouseholds from "./pages/staff/Households";
 
-import AdminStaffManagement from "./pages/admin/StaffManagement";
+
 import AdminResidentApproval from "./pages/admin/ResidentApproval";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
@@ -151,14 +151,6 @@ const AppContent = () => {
         } />
         
         {/* Admin Protected Routes */}
-        <Route path="/admin/staff" element={
-          <StaffProtectedRoute 
-            requiredFeature="staff_management"
-            allowedRoles={['admin', 'barangay_captain']}
-          >
-            <AdminStaffManagement />
-          </StaffProtectedRoute>
-        } />
         <Route path="/admin/resident-approval" element={
           <StaffProtectedRoute requiredFeature="resident_approval">
             <AdminResidentApproval />

@@ -8,7 +8,7 @@ export type StaffRole =
   | 'sk_chairman';
 
 export type FeatureKey =
-  | 'staff_management'
+  
   | 'resident_approval'
   | 'ecological_submissions'
   | 'name_change_requests'
@@ -27,7 +27,6 @@ export type FeatureKey =
 // Define which roles can access each feature
 const ROLE_PERMISSIONS: Record<FeatureKey, StaffRole[]> = {
   // Admin-level features
-  staff_management: ['admin', 'barangay_captain'],
   monitoring_reports: ['admin'],
   
   // Management features
@@ -76,7 +75,7 @@ export const getPermittedFeatures = (role: string | undefined): FeatureKey[] => 
 export const canAccessAdminSection = (role: string | undefined): boolean => {
   if (!role) return false;
   return (
-    hasPermission(role, 'staff_management') ||
+    
     hasPermission(role, 'resident_approval') ||
     hasPermission(role, 'ecological_submissions') ||
     hasPermission(role, 'name_change_requests') ||
