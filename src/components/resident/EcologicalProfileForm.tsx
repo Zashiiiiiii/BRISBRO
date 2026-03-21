@@ -384,14 +384,35 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     );
   };
 
-  // Helper: check if a household member name matches the logged-in resident
-  const isResidentMember = (member: HouseholdMember): boolean => {
+  // Helper: create a household member from the resident's profile
+  const createResidentMember = (): HouseholdMember => ({
+    id: `resident-${profile?.id || crypto.randomUUID()}`,
+    full_name: profile?.fullName || "",
+    birth_date: profile?.birthDate || "",
+    age: profile?.birthDate ? calculateAgeFromBirthDate(profile.birthDate) : null,
+    gender: profile?.gender || "",
+    relationship_to_head: "Head",
+    civil_status: profile?.civilStatus || "",
+    religion: profile?.religion || "",
+    schooling_status: "",
+    education_level: profile?.educationAttainment || "",
+    employment_status: profile?.employmentStatus || "",
+    occupation: profile?.occupation || "",
+    monthly_income: "",
+    is_pwd: false,
+    is_solo_parent: false,
+    is_tenant: false,
+  });
+
+  // Check if resident is already in the members list
+  const isResidentInMembers = (): boolean => {
     if (!profile) return false;
-    const memberName = member.full_name.trim().toLowerCase();
-    if (!memberName) return false;
     const residentFullName = profile.fullName.trim().toLowerCase();
     const residentLastFirst = `${profile.lastName}, ${profile.firstName}`.trim().toLowerCase();
-    return memberName === residentFullName || memberName === residentLastFirst;
+    return formData.household_members.some((m: HouseholdMember) => {
+      const memberName = (m.full_name || "").trim().toLowerCase();
+      return memberName === residentFullName || memberName === residentLastFirst || m.id === `resident-${profile.id}`;
+    });
   };
 
   const handleSubmit = async () => {
