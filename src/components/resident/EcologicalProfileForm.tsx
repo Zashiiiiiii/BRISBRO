@@ -384,15 +384,50 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     );
   };
 
-  // Helper: check if a household member name matches the logged-in resident
-  const isResidentMember = (member: HouseholdMember): boolean => {
+  // Helper: create a household member from the resident's profile
+  const createResidentMember = (): HouseholdMember => ({
+    id: `resident-${profile?.id || crypto.randomUUID()}`,
+    full_name: profile?.fullName || "",
+    birth_date: profile?.birthDate || "",
+    age: profile?.birthDate ? calculateAgeFromBirthDate(profile.birthDate) : null,
+    gender: profile?.gender || "",
+    relationship_to_head: "Head",
+    civil_status: profile?.civilStatus || "",
+    religion: profile?.religion || "",
+    schooling_status: "",
+    education_level: profile?.educationAttainment || "",
+    employment_status: profile?.employmentStatus || "",
+    occupation: profile?.occupation || "",
+    monthly_income: "",
+    is_pwd: false,
+    is_solo_parent: false,
+    is_tenant: false,
+  });
+
+  // Check if resident is already in the members list
+  const isResidentInMembers = (): boolean => {
     if (!profile) return false;
-    const memberName = member.full_name.trim().toLowerCase();
-    if (!memberName) return false;
     const residentFullName = profile.fullName.trim().toLowerCase();
     const residentLastFirst = `${profile.lastName}, ${profile.firstName}`.trim().toLowerCase();
-    return memberName === residentFullName || memberName === residentLastFirst;
+    return formData.household_members.some((m: HouseholdMember) => {
+      const memberName = (m.full_name || "").trim().toLowerCase();
+      return memberName === residentFullName || memberName === residentLastFirst || m.id === `resident-${profile.id}`;
+    });
   };
+
+  // Auto-add resident to household members when form loads and profile is available
+  useEffect(() => {
+    if (profile && !isResidentInMembers() && formData.household_members !== undefined) {
+      // Only auto-add if we're not in edit mode loading state
+      if (!isEditMode || editingSubmissionId) {
+        const residentMember = createResidentMember();
+        setFormData(prev => ({
+          ...prev,
+          household_members: [residentMember, ...prev.household_members]
+        }));
+      }
+    }
+  }, [profile, isEditMode]);
 
   const handleSubmit = async () => {
     if (!residentId) {
@@ -403,15 +438,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     if (!formData.household_number) {
       toast.error("Please enter a household number");
       return;
-    }
-
-    // Filter out the resident themselves from household members before submission
-    const filteredMembers = formData.household_members.filter(
-      (m: HouseholdMember) => !isResidentMember(m)
-    );
-    if (filteredMembers.length < formData.household_members.length) {
-      toast.info("Your own entry was automatically removed from household members.");
-      setFormData(prev => ({ ...prev, household_members: filteredMembers }));
     }
 
     // Block submission if there's a pending submission for this household number (only for new submissions)
@@ -469,7 +495,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
         communication_services: formData.communication_services,
         means_of_transport: formData.means_of_transport,
         info_sources: formData.info_sources,
-        household_members: filteredMembers,
+        household_members: formData.household_members,
         // Map to separate database columns
         education_data: healthData?.education || {},
         health_data: {
@@ -604,15 +630,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
       means_of_transport: Array.isArray(submission.means_of_transport) ? submission.means_of_transport : [],
       info_sources: Array.isArray(submission.info_sources) ? submission.info_sources : [],
       household_members: Array.isArray(submission.household_members) 
-        ? (submission.household_members as HouseholdMember[]).filter((m: HouseholdMember) => {
-            // Filter out the resident's own entry when loading for edit
-            if (!profile) return true;
-            const memberName = (m.full_name || "").trim().toLowerCase();
-            if (!memberName) return true;
-            const residentFullName = profile.fullName.trim().toLowerCase();
-            const residentLastFirst = `${profile.lastName}, ${profile.firstName}`.trim().toLowerCase();
-            return memberName !== residentFullName && memberName !== residentLastFirst;
-          })
+        ? (submission.household_members as HouseholdMember[])
         : [],
       health_data: reconstructedHealthData,
       is_4ps_beneficiary: submission.is_4ps_beneficiary || false,
@@ -1022,6 +1040,37 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
 
               {/* Household Members Tab */}
               <TabsContent value="members" className="space-y-4 mt-0">
+                {/* Census Summary Stats */}
+                {formData.household_members.length > 0 && (
+                  <Card className="border-primary/20 bg-primary/5">
+                    <CardContent className="py-3">
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-4 w-4 text-primary" />
+                          <span className="text-muted-foreground">Total Population:</span>
+                          <span className="font-semibold text-foreground">{formData.household_members.length}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Male:</span>
+                          <span className="font-semibold text-foreground">
+                            {formData.household_members.filter((m: HouseholdMember) => m.gender === "Male").length}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Female:</span>
+                          <span className="font-semibold text-foreground">
+                            {formData.household_members.filter((m: HouseholdMember) => m.gender === "Female").length}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Household:</span>
+                          <span className="font-semibold text-foreground">1</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-medium flex items-center gap-2">
@@ -1029,7 +1078,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                       Household Members ({formData.household_members.length})
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Add all <strong>other</strong> members in household {formData.household_number || "N/A"}. Do not include yourself — your account is automatically linked upon approval.
+                      Add all members in household {formData.household_number || "N/A"}, including yourself. Your profile has been auto-added as Head.
                     </p>
                   </div>
                   <Button type="button" onClick={addHouseholdMember} size="sm">
