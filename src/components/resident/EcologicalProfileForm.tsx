@@ -902,7 +902,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         id="household_number"
                         value={formData.household_number}
                         onChange={(e) => setFormData({ ...formData, household_number: e.target.value })}
-                        placeholder="e.g., HH-001"
+                        placeholder="e.g., 001"
                         className={householdNumberError && !existingHouseholdId ? "border-destructive" : householdNumberError && existingHouseholdId ? "border-yellow-500" : ""}
                       />
                       {isCheckingHousehold && (
