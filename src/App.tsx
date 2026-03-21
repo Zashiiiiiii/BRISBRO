@@ -28,7 +28,7 @@ import StaffSettings from "./pages/staff/Settings";
 import StaffResidents from "./pages/staff/Residents";
 import StaffHouseholds from "./pages/staff/Households";
 
-import AdminStaffManagement from "./pages/admin/StaffManagement";
+
 import AdminResidentApproval from "./pages/admin/ResidentApproval";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
