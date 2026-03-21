@@ -225,10 +225,28 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
       )
       .subscribe();
 
+    // Subscribe to ecological_profile_submissions changes (population source)
+    const ecologicalChannel = supabase
+      .channel("barangay-stats-ecological")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "ecological_profile_submissions",
+        },
+        () => {
+          console.log("Ecological submissions changed, refreshing stats...");
+          refreshStats();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(residentsChannel);
       supabase.removeChannel(householdsChannel);
       supabase.removeChannel(incidentsChannel);
+      supabase.removeChannel(ecologicalChannel);
     };
   }, [isAuthenticated, refreshStats]);
 
