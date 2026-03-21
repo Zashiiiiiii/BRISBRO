@@ -384,6 +384,16 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     );
   };
 
+  // Helper: check if a household member name matches the logged-in resident
+  const isResidentMember = (member: HouseholdMember): boolean => {
+    if (!profile) return false;
+    const memberName = member.full_name.trim().toLowerCase();
+    if (!memberName) return false;
+    const residentFullName = profile.fullName.trim().toLowerCase();
+    const residentLastFirst = `${profile.lastName}, ${profile.firstName}`.trim().toLowerCase();
+    return memberName === residentFullName || memberName === residentLastFirst;
+  };
+
   const handleSubmit = async () => {
     if (!residentId) {
       toast.error("You must be a registered resident to submit");
@@ -393,6 +403,15 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     if (!formData.household_number) {
       toast.error("Please enter a household number");
       return;
+    }
+
+    // Filter out the resident themselves from household members before submission
+    const filteredMembers = formData.household_members.filter(
+      (m: HouseholdMember) => !isResidentMember(m)
+    );
+    if (filteredMembers.length < formData.household_members.length) {
+      toast.info("Your own entry was automatically removed from household members.");
+      setFormData(prev => ({ ...prev, household_members: filteredMembers }));
     }
 
     // Block submission if there's a pending submission for this household number (only for new submissions)
@@ -450,7 +469,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
         communication_services: formData.communication_services,
         means_of_transport: formData.means_of_transport,
         info_sources: formData.info_sources,
-        household_members: formData.household_members,
+        household_members: filteredMembers,
         // Map to separate database columns
         education_data: healthData?.education || {},
         health_data: {
@@ -584,7 +603,17 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
       communication_services: Array.isArray(submission.communication_services) ? submission.communication_services : [],
       means_of_transport: Array.isArray(submission.means_of_transport) ? submission.means_of_transport : [],
       info_sources: Array.isArray(submission.info_sources) ? submission.info_sources : [],
-      household_members: Array.isArray(submission.household_members) ? submission.household_members : [],
+      household_members: Array.isArray(submission.household_members) 
+        ? (submission.household_members as HouseholdMember[]).filter((m: HouseholdMember) => {
+            // Filter out the resident's own entry when loading for edit
+            if (!profile) return true;
+            const memberName = (m.full_name || "").trim().toLowerCase();
+            if (!memberName) return true;
+            const residentFullName = profile.fullName.trim().toLowerCase();
+            const residentLastFirst = `${profile.lastName}, ${profile.firstName}`.trim().toLowerCase();
+            return memberName !== residentFullName && memberName !== residentLastFirst;
+          })
+        : [],
       health_data: reconstructedHealthData,
       is_4ps_beneficiary: submission.is_4ps_beneficiary || false,
       solo_parent_count: submission.solo_parent_count || 0,
