@@ -415,6 +415,20 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     });
   };
 
+  // Auto-add resident to household members when form loads and profile is available
+  useEffect(() => {
+    if (profile && !isResidentInMembers() && formData.household_members !== undefined) {
+      // Only auto-add if we're not in edit mode loading state
+      if (!isEditMode || editingSubmissionId) {
+        const residentMember = createResidentMember();
+        setFormData(prev => ({
+          ...prev,
+          household_members: [residentMember, ...prev.household_members]
+        }));
+      }
+    }
+  }, [profile, isEditMode]);
+
   const handleSubmit = async () => {
     if (!residentId) {
       toast.error("You must be a registered resident to submit");
@@ -424,15 +438,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     if (!formData.household_number) {
       toast.error("Please enter a household number");
       return;
-    }
-
-    // Filter out the resident themselves from household members before submission
-    const filteredMembers = formData.household_members.filter(
-      (m: HouseholdMember) => !isResidentMember(m)
-    );
-    if (filteredMembers.length < formData.household_members.length) {
-      toast.info("Your own entry was automatically removed from household members.");
-      setFormData(prev => ({ ...prev, household_members: filteredMembers }));
     }
 
     // Block submission if there's a pending submission for this household number (only for new submissions)
