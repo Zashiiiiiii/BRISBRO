@@ -106,14 +106,12 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
         "60+": 0,
       };
 
-      const residents = residentsResult.data || [];
+      const residents = demographicsResult || [];
       residents.forEach((r: any) => {
-        // Gender counts
         const gender = r.gender?.toLowerCase();
         if (gender === "male") maleCount++;
         else if (gender === "female") femaleCount++;
 
-        // Age group counts
         const age = calculateAge(r.birth_date);
         if (age <= 14) ageGroups["0-14"]++;
         else if (age <= 24) ageGroups["15-24"]++;
@@ -138,7 +136,7 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
 
       setStats({
         totalResidents: residentCountResult || residents.length,
-        totalHouseholds: householdsResult.data?.length || 0,
+        totalHouseholds: householdCountResult || 0,
         maleCount,
         femaleCount,
         ageGroups,
