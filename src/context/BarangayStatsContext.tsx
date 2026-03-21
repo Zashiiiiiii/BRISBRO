@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getResidentCount, getPendingRegistrationCount, getAllIncidentsForStaff } from "@/utils/staffApi";
+import { getResidentCount, getPendingRegistrationCount, getAllIncidentsForStaff, getResidentDemographics, getHouseholdCount } from "@/utils/staffApi";
 import { useStaffAuthContext } from "@/context/StaffAuthContext";
 
 interface AgeGroups {
@@ -80,18 +80,18 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
     setStats((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      // Fetch all data in parallel
+      // Fetch all data in parallel via staff API (bypasses RLS)
       const [
         residentCountResult,
         pendingCountResult,
-        householdsResult,
-        residentsResult,
+        householdCountResult,
+        demographicsResult,
         incidentsData,
       ] = await Promise.all([
         getResidentCount(),
         getPendingRegistrationCount(),
-        supabase.rpc("get_all_households_for_staff"),
-        supabase.rpc("get_all_residents_for_staff"),
+        getHouseholdCount(),
+        getResidentDemographics(),
         getAllIncidentsForStaff("approved", null),
       ]);
 
@@ -106,14 +106,12 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
         "60+": 0,
       };
 
-      const residents = residentsResult.data || [];
+      const residents = demographicsResult || [];
       residents.forEach((r: any) => {
-        // Gender counts
         const gender = r.gender?.toLowerCase();
         if (gender === "male") maleCount++;
         else if (gender === "female") femaleCount++;
 
-        // Age group counts
         const age = calculateAge(r.birth_date);
         if (age <= 14) ageGroups["0-14"]++;
         else if (age <= 24) ageGroups["15-24"]++;
@@ -138,7 +136,7 @@ export const BarangayStatsProvider = ({ children }: { children: ReactNode }) => 
 
       setStats({
         totalResidents: residentCountResult || residents.length,
-        totalHouseholds: householdsResult.data?.length || 0,
+        totalHouseholds: householdCountResult || 0,
         maleCount,
         femaleCount,
         ageGroups,

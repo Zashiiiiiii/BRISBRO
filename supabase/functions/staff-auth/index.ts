@@ -1144,6 +1144,68 @@ serve(async (req) => {
       );
     }
 
+    // Get resident demographics (gender + birth_date for stats)
+    if (action === 'get-resident-demographics') {
+      const token = getTokenFromCookie(req);
+      
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('residents')
+        .select('gender, birth_date')
+        .is('deleted_at', null)
+        .eq('approval_status', 'approved');
+
+      if (error) {
+        console.error('Error fetching resident demographics:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch resident demographics' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ data: data || [] }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get household count for stats
+    if (action === 'get-household-count') {
+      const token = getTokenFromCookie(req);
+      
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { count, error } = await supabase
+        .from('households')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Error fetching household count:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch household count' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ count: count || 0 }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get pending registration count
     if (action === 'get-pending-registration-count') {
       const token = getTokenFromCookie(req);

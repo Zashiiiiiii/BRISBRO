@@ -107,6 +107,16 @@ export const getResidentCount = async () => {
   return result.count || 0;
 };
 
+export const getResidentDemographics = async () => {
+  const result = await callStaffApi('get-resident-demographics');
+  return result.data || [];
+};
+
+export const getHouseholdCount = async () => {
+  const result = await callStaffApi('get-household-count');
+  return result.count || 0;
+};
+
 export const getPendingRegistrationCount = async () => {
   const result = await callStaffApi('get-pending-registration-count');
   return result.count || 0;
