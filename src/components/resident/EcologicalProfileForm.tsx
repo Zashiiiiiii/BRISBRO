@@ -1040,6 +1040,37 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
 
               {/* Household Members Tab */}
               <TabsContent value="members" className="space-y-4 mt-0">
+                {/* Census Summary Stats */}
+                {formData.household_members.length > 0 && (
+                  <Card className="border-primary/20 bg-primary/5">
+                    <CardContent className="py-3">
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-4 w-4 text-primary" />
+                          <span className="text-muted-foreground">Total Population:</span>
+                          <span className="font-semibold text-foreground">{formData.household_members.length}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Male:</span>
+                          <span className="font-semibold text-foreground">
+                            {formData.household_members.filter((m: HouseholdMember) => m.gender === "Male").length}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Female:</span>
+                          <span className="font-semibold text-foreground">
+                            {formData.household_members.filter((m: HouseholdMember) => m.gender === "Female").length}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Household:</span>
+                          <span className="font-semibold text-foreground">1</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-medium flex items-center gap-2">
@@ -1047,7 +1078,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                       Household Members ({formData.household_members.length})
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Add all <strong>other</strong> members in household {formData.household_number || "N/A"}. Do not include yourself — your account is automatically linked upon approval.
+                      Add all members in household {formData.household_number || "N/A"}, including yourself. Your profile has been auto-added as Head.
                     </p>
                   </div>
                   <Button type="button" onClick={addHouseholdMember} size="sm">
