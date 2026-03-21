@@ -75,7 +75,7 @@ export const getPermittedFeatures = (role: string | undefined): FeatureKey[] => 
 export const canAccessAdminSection = (role: string | undefined): boolean => {
   if (!role) return false;
   return (
-    hasPermission(role, 'staff_management') ||
+    
     hasPermission(role, 'resident_approval') ||
     hasPermission(role, 'ecological_submissions') ||
     hasPermission(role, 'name_change_requests') ||
