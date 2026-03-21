@@ -1140,7 +1140,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                                     />
                                   </TableCell>
                                   <TableCell className="p-1 border-r">
-                                    <Select value={member.relationship_to_head} onValueChange={(v) => updateHouseholdMember(member.id, { relationship_to_head: v })}>
+                                    <Select value={member.relationship_to_head} onValueChange={(v) => { if (v) updateHouseholdMember(member.id, { relationship_to_head: v }); }}>
                                       <SelectTrigger className="h-8 text-xs w-full"><SelectValue placeholder="Select" /></SelectTrigger>
                                       <SelectContent>{RELATIONSHIPS.map(r => <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>)}</SelectContent>
                                     </Select>
