@@ -1577,7 +1577,9 @@ const EcologicalProfileTab = () => {
               </TableHeader>
               <TableBody>
                 {sortedHouseholds.map((h) => {
-                  const head = h.residents?.find((r) => r.is_head_of_household);
+                  const head = h.residents?.find(
+                    (r) => r.is_head_of_household || r.relation_to_head?.toLowerCase() === "head"
+                  );
                   return (
                     <TableRow 
                       key={h.id}
