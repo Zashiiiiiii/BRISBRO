@@ -1606,8 +1606,8 @@ serve(async (req) => {
         );
       }
 
-      // Only admins and barangay captains can view audit logs
-      if (session.role !== 'admin' && session.role !== 'barangay_captain') {
+      // Only admins can view audit logs
+      if (session.role !== 'admin') {
         return new Response(
           JSON.stringify({ error: 'Admin access required' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
