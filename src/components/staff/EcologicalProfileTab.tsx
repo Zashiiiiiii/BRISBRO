@@ -451,7 +451,9 @@ const EcologicalProfileTab = () => {
   // Handle household selection - load existing census data from approved submissions
   const handleSelectHousehold = async (household: HouseholdData) => {
     setSelectedHousehold(household);
-    const head = household.residents?.find((r) => r.is_head_of_household);
+    const head = household.residents?.find(
+      (r) => r.is_head_of_household || r.relation_to_head?.toLowerCase() === "head"
+    );
     
     // Reset census data to defaults first
     setCensusData((prev) => ({
@@ -944,7 +946,9 @@ const EcologicalProfileTab = () => {
 
     const household = selectedHousehold;
     const residents = household.residents || [];
-    const headOfHousehold = residents.find((r) => r.is_head_of_household) || residents[0];
+    const headOfHousehold =
+      residents.find((r) => r.is_head_of_household || r.relation_to_head?.toLowerCase() === "head") ||
+      residents[0];
 
     return `
   <div class="report-container">
@@ -1573,7 +1577,9 @@ const EcologicalProfileTab = () => {
               </TableHeader>
               <TableBody>
                 {sortedHouseholds.map((h) => {
-                  const head = h.residents?.find((r) => r.is_head_of_household);
+                  const head = h.residents?.find(
+                    (r) => r.is_head_of_household || r.relation_to_head?.toLowerCase() === "head"
+                  );
                   return (
                     <TableRow 
                       key={h.id}
