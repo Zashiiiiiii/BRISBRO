@@ -1,23 +1,51 @@
 
 
-## Plan: Sync Head of Household from Ecological Profile to Households/Residents
+## Plan: Update Data Privacy Statement to Match Real Barangay Workflow
 
-### Problem
-When a resident submits an ecological profile, the member with `relationship_to_head: "Head"` is not getting `is_head_of_household = true` set in the `residents` table after approval. This is because:
-1. The ecological form stores the head as `relationship_to_head: "Head"` but doesn't include `is_head_of_household: true` in the JSON
-2. The `apply_ecological_submission_to_household` DB function only sets `is_head_of_household` from `(v_member->>'is_head_of_household')::BOOLEAN`, which is `NULL`
+Two files to update: `DataPrivacyModal.tsx` (short modal) and `PrivacyPolicy.tsx` (full page).
 
-### Changes
+### Changes to DataPrivacyModal.tsx
 
-**1. EcologicalProfileForm.tsx — Add `is_head_of_household` flag to member data on submission**
-- Before saving `household_members` to the database, enrich each member with `is_head_of_household: true/false` based on whether `relationship_to_head === "Head"`
-- This ensures the DB function can correctly pick up the head flag
+**1. "What Data We Collect"** — Rewrite to reflect Ecological Profile Census fields:
+- Personal demographics (name, birth date, gender, civil status, contact details)
+- Household information (address, purok, household composition, dwelling type, land ownership)
+- Socioeconomic data (education, employment, estimated monthly income)
+- Environmental sanitation (water source, waste management, toilet type)
+- Sensitive information (health/disability/family planning) — labeled as restricted-access
+- Transaction records (certificate requests, incident reports, messages)
 
-**2. `apply_ecological_submission_to_household` DB function (migration) — Fallback logic**
-- Add a fallback: if `is_head_of_household` is not set, check `relationship_to_head` or `relation_to_head` for value `"Head"` and treat that member as head
-- This handles both old and new submissions correctly
+**2. "Who Can Access Your Data"** — Replace with:
+- Authorized Barangay Staff (Admin and Secretary) for processing and record-keeping
+- Residents can view and manage only their own data through the resident portal
+- Public tracking shows request status only — no personal data is exposed
 
-### Files to modify
-- `src/components/resident/EcologicalProfileForm.tsx` — enrich members with `is_head_of_household` before submit
-- New migration — update `apply_ecological_submission_to_household` to fallback-check `relationship_to_head`
+**3. "Purpose of Data Collection"** — Replace with:
+- Household profiling through the Ecological Profile Census
+- Service delivery and program planning (certificates, 4Ps, etc.)
+- Preparation of semi-annual monitoring reports (RBI Form C Revised 2024)
+- Government compliance and statistical reporting
+- Communication between residents and barangay staff
+
+**4. Data Sharing** — Replace absolute "NOT shared" statement with nuanced version:
+- Not shared with commercial third parties
+- Aggregated statistical reports may be submitted to authorized government offices as required
+- Personal data shared only when required by law or with the resident's consent
+
+**5. Security Measures** — Remove "Regular security audits and monitoring" (no audit logs claim). Keep encryption, role-based access, secure backup.
+
+**6. Last Updated** — Change to "March 2026"
+
+### Changes to PrivacyPolicy.tsx (Full Page)
+
+Mirror all the same content changes above, plus:
+- Remove "System activity logs" and "Audit trails and activity logging" references
+- Update "Data Access" section to match Admin/Secretary roles (remove Kapitan/Kagawad/SK Chairman)
+- Update Purpose section to include household profiling and RBI Form C
+- Update Data Sharing to use nuanced language
+- Update footer version date to March 2026
+
+### Technical Details
+- Files: `src/components/DataPrivacyModal.tsx`, `src/pages/PrivacyPolicy.tsx`
+- No database or backend changes needed
+- Content-only updates to JSX
 
