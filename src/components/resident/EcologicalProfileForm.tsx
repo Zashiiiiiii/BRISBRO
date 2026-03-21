@@ -887,7 +887,16 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
               <TabsContent value="basic-info" className="space-y-4 mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="household_number">Household Number *</Label>
+                    <Label htmlFor="house_number">House Number</Label>
+                    <Input
+                      id="house_number"
+                      value={formData.house_number}
+                      onChange={(e) => setFormData({ ...formData, house_number: e.target.value })}
+                      placeholder="e.g., 123"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="household_number">Household/Family Number *</Label>
                     <div className="relative">
                       <Input
                         id="household_number"
@@ -906,15 +915,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         {householdNumberError}
                       </p>
                     )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="house_number">House Number</Label>
-                    <Input
-                      id="house_number"
-                      value={formData.house_number}
-                      onChange={(e) => setFormData({ ...formData, house_number: e.target.value })}
-                      placeholder="e.g., 123"
-                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="street_purok">Street/Purok</Label>
@@ -943,7 +943,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="years_staying">Years Staying</Label>
+                    <Label htmlFor="years_staying">No. of Years Staying Here</Label>
                     <Input
                       id="years_staying"
                       type="number"
