@@ -27,7 +27,6 @@ export type FeatureKey =
 // Define which roles can access each feature
 const ROLE_PERMISSIONS: Record<FeatureKey, StaffRole[]> = {
   // Admin-level features
-  staff_management: ['admin', 'barangay_captain'],
   monitoring_reports: ['admin'],
   
   // Management features
