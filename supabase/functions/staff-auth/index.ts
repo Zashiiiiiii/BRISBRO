@@ -2102,7 +2102,7 @@ serve(async (req) => {
 
       const session = sessionData[0];
       // Allow all staff roles that can access ecological submissions
-      const allowedRoles = ['admin', 'barangay_captain', 'barangay_official', 'secretary'];
+      const allowedRoles = ['admin', 'secretary'];
       if (!allowedRoles.includes(session.role)) {
         return new Response(
           JSON.stringify({ error: 'Staff access required' }),
