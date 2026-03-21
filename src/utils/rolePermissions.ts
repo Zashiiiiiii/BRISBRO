@@ -8,7 +8,7 @@ export type StaffRole =
   | 'sk_chairman';
 
 export type FeatureKey =
-  | 'staff_management'
+  
   | 'resident_approval'
   | 'ecological_submissions'
   | 'name_change_requests'
