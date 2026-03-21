@@ -603,7 +603,17 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
       communication_services: Array.isArray(submission.communication_services) ? submission.communication_services : [],
       means_of_transport: Array.isArray(submission.means_of_transport) ? submission.means_of_transport : [],
       info_sources: Array.isArray(submission.info_sources) ? submission.info_sources : [],
-      household_members: Array.isArray(submission.household_members) ? submission.household_members : [],
+      household_members: Array.isArray(submission.household_members) 
+        ? (submission.household_members as HouseholdMember[]).filter((m: HouseholdMember) => {
+            // Filter out the resident's own entry when loading for edit
+            if (!profile) return true;
+            const memberName = (m.full_name || "").trim().toLowerCase();
+            if (!memberName) return true;
+            const residentFullName = profile.fullName.trim().toLowerCase();
+            const residentLastFirst = `${profile.lastName}, ${profile.firstName}`.trim().toLowerCase();
+            return memberName !== residentFullName && memberName !== residentLastFirst;
+          })
+        : [],
       health_data: reconstructedHealthData,
       is_4ps_beneficiary: submission.is_4ps_beneficiary || false,
       solo_parent_count: submission.solo_parent_count || 0,
