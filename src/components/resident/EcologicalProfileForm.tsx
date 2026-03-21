@@ -495,7 +495,10 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
         communication_services: formData.communication_services,
         means_of_transport: formData.means_of_transport,
         info_sources: formData.info_sources,
-        household_members: formData.household_members,
+        household_members: formData.household_members.map((m: HouseholdMember) => ({
+          ...m,
+          is_head_of_household: m.relationship_to_head === "Head",
+        })),
         // Map to separate database columns
         education_data: healthData?.education || {},
         health_data: {
