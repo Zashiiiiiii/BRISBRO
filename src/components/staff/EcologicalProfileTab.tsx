@@ -451,7 +451,9 @@ const EcologicalProfileTab = () => {
   // Handle household selection - load existing census data from approved submissions
   const handleSelectHousehold = async (household: HouseholdData) => {
     setSelectedHousehold(household);
-    const head = household.residents?.find((r) => r.is_head_of_household);
+    const head = household.residents?.find(
+      (r) => r.is_head_of_household || r.relation_to_head?.toLowerCase() === "head"
+    );
     
     // Reset census data to defaults first
     setCensusData((prev) => ({
