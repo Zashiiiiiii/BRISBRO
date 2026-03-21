@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Shield, FileText, Users, Lock, Clock, Scale, Mail, Phone, MapPin } from "lucide-react";
+import { ArrowLeft, Shield, FileText, Users, Lock, Clock, Scale, Mail, Phone, MapPin, Share2, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const PrivacyPolicy = () => {
@@ -25,7 +25,7 @@ const PrivacyPolicy = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Data Privacy Policy</h1>
-              <p className="opacity-90">Barangay Resident Information System (BRIS)</p>
+              <p className="opacity-90">Barangay Resident Information System Pro (BRISPro)</p>
             </div>
           </div>
         </div>
@@ -44,11 +44,12 @@ const PrivacyPolicy = () => {
                 <li><a href="#data-collected" className="text-primary hover:underline">3. Data Collected</a></li>
                 <li><a href="#purpose" className="text-primary hover:underline">4. Purpose of Collection</a></li>
                 <li><a href="#access" className="text-primary hover:underline">5. Data Access</a></li>
-                <li><a href="#security" className="text-primary hover:underline">6. Data Security</a></li>
-                <li><a href="#retention" className="text-primary hover:underline">7. Data Retention</a></li>
-                <li><a href="#rights" className="text-primary hover:underline">8. Your Rights</a></li>
-                <li><a href="#consent" className="text-primary hover:underline">9. Consent Withdrawal</a></li>
-                <li><a href="#contact" className="text-primary hover:underline">10. Contact Information</a></li>
+                <li><a href="#data-sharing" className="text-primary hover:underline">6. Data Sharing</a></li>
+                <li><a href="#security" className="text-primary hover:underline">7. Data Security</a></li>
+                <li><a href="#retention" className="text-primary hover:underline">8. Data Retention</a></li>
+                <li><a href="#rights" className="text-primary hover:underline">9. Your Rights</a></li>
+                <li><a href="#consent" className="text-primary hover:underline">10. Consent and Withdrawal</a></li>
+                <li><a href="#contact" className="text-primary hover:underline">11. Contact Information</a></li>
               </ul>
             </nav>
 
@@ -59,12 +60,13 @@ const PrivacyPolicy = () => {
                 1. Introduction
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                The Barangay, through its Barangay Resident Information System (BRIS), is committed to 
+                The Barangay, through its Barangay Resident Information System Pro (BRISPro), is committed to 
                 protecting the privacy of its residents and ensuring the security of personal information 
-                collected and processed through this system. This Data Privacy Policy outlines our practices 
-                concerning the collection, use, storage, and protection of your personal data in compliance 
-                with Republic Act No. 10173, also known as the "Data Privacy Act of 2012" (DPA), and its 
-                Implementing Rules and Regulations (IRR).
+                collected and processed through this system. Data is primarily gathered through house-to-house 
+                profiling (Ecological Profile Census) and resident self-registration. This Data Privacy Policy 
+                outlines our practices concerning the collection, use, storage, and protection of your personal 
+                data in compliance with Republic Act No. 10173, also known as the "Data Privacy Act of 2012" 
+                (DPA), and its Implementing Rules and Regulations (IRR).
               </p>
             </section>
 
@@ -75,15 +77,16 @@ const PrivacyPolicy = () => {
                 2. Scope
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                This policy applies to all residents who register and use the BRIS platform, including but 
-                not limited to those who:
+                This policy applies to all residents whose data is collected through the Ecological Profile 
+                Census, as well as those who register and use the BRISPro platform, including but not limited to those who:
               </p>
               <ul className="list-disc list-inside mt-2 space-y-1 text-muted-foreground ml-4">
+                <li>Are profiled during the barangay's house-to-house census</li>
                 <li>Create an account on the resident portal</li>
                 <li>Request barangay certificates and clearances</li>
-                <li>Participate in barangay census and surveys</li>
-                <li>Communicate with barangay officials through the system</li>
-                <li>Access any services provided through BRIS</li>
+                <li>Submit incident reports or complaints</li>
+                <li>Communicate with barangay staff through the system</li>
+                <li>Use the public request tracking feature</li>
               </ul>
             </section>
 
@@ -94,38 +97,65 @@ const PrivacyPolicy = () => {
                 3. Data Collected
               </h2>
               <p className="text-muted-foreground mb-3">
-                The following types of personal information may be collected through BRIS:
+                The following types of personal information may be collected through BRISPro, primarily during 
+                the Ecological Profile Census (household profiling):
               </p>
               
               <div className="space-y-4">
                 <div className="bg-muted/30 p-4 rounded-lg">
-                  <h3 className="font-medium mb-2">Personal Identification Information</h3>
+                  <h3 className="font-medium mb-2">Personal Demographics</h3>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                     <li>Full name (first name, middle name, last name, suffix)</li>
                     <li>Date of birth, gender, civil status</li>
                     <li>Contact number and email address</li>
-                    <li>Valid ID documents (for verification purposes)</li>
+                    <li>Religion, ethnic group, place of origin</li>
                   </ul>
                 </div>
 
                 <div className="bg-muted/30 p-4 rounded-lg">
-                  <h3 className="font-medium mb-2">Household and Census Data</h3>
+                  <h3 className="font-medium mb-2">Household Information</h3>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    <li>Complete address (house number, street, purok, barangay)</li>
-                    <li>Household composition and family members</li>
-                    <li>Housing type and ownership status</li>
-                    <li>Utilities and amenities information</li>
+                    <li>Complete address (house number, street/purok, barangay, city/municipality)</li>
+                    <li>Household composition and number of members</li>
+                    <li>Dwelling type and house/lot ownership status</li>
+                    <li>Relationship of each member to the head of household</li>
                   </ul>
                 </div>
 
                 <div className="bg-muted/30 p-4 rounded-lg">
-                  <h3 className="font-medium mb-2">Socioeconomic Information</h3>
+                  <h3 className="font-medium mb-2">Socioeconomic Data</h3>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    <li>Educational attainment</li>
-                    <li>Employment status and occupation</li>
-                    <li>Monthly income bracket</li>
-                    <li>Religion and ethnic affiliation (optional)</li>
+                    <li>Educational attainment and schooling status</li>
+                    <li>Employment status, occupation, and employment category</li>
+                    <li>Estimated monthly income (cash and in-kind)</li>
+                    <li>4Ps beneficiary status</li>
                   </ul>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg">
+                  <h3 className="font-medium mb-2">Environmental Sanitation</h3>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Water source and supply level</li>
+                    <li>Toilet and drainage facilities</li>
+                    <li>Garbage disposal method</li>
+                    <li>Lighting source and communication services</li>
+                  </ul>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border border-destructive/15">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <h3 className="font-medium">Sensitive Information (Restricted Access)</h3>
+                  </div>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Health conditions and disability status</li>
+                    <li>Family planning information</li>
+                    <li>Pregnancy and immunization data</li>
+                  </ul>
+                  <p className="text-xs text-muted-foreground mt-2 italic">
+                    These fields are collected as part of the Ecological Profile Census. Access is restricted 
+                    to authorized staff only and processed with heightened security measures.
+                  </p>
                 </div>
 
                 <div className="bg-muted/30 p-4 rounded-lg">
@@ -133,8 +163,7 @@ const PrivacyPolicy = () => {
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                     <li>Certificate request history and status</li>
                     <li>Incident reports and complaints</li>
-                    <li>Messages sent to and from barangay officials</li>
-                    <li>System activity logs</li>
+                    <li>Messages sent to and from barangay staff</li>
                   </ul>
                 </div>
               </div>
@@ -150,13 +179,12 @@ const PrivacyPolicy = () => {
                 Your personal data is collected and processed for the following legitimate purposes:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+                <li><strong>Household Profiling:</strong> Conducting the Ecological Profile Census to maintain accurate demographic and household records</li>
                 <li><strong>Service Delivery:</strong> Processing requests for barangay certificates, clearances, and other documents</li>
-                <li><strong>Census Management:</strong> Maintaining accurate demographic and household records for planning and resource allocation</li>
-                <li><strong>Emergency Response:</strong> Facilitating disaster preparedness and emergency communication</li>
-                <li><strong>Government Compliance:</strong> Fulfilling legal obligations and reporting requirements to government agencies</li>
-                <li><strong>Program Implementation:</strong> Identifying beneficiaries for barangay programs and services</li>
-                <li><strong>Communication:</strong> Enabling correspondence between residents and barangay officials</li>
-                <li><strong>Record-Keeping:</strong> Maintaining historical records for reference and audit purposes</li>
+                <li><strong>Program Planning:</strong> Identifying beneficiaries for government programs and barangay services (e.g., 4Ps, senior citizen benefits)</li>
+                <li><strong>Monitoring Reports:</strong> Preparation of semi-annual monitoring reports (RBI Form C Revised 2024) for submission to government agencies</li>
+                <li><strong>Statistical Reporting:</strong> Generating aggregated data for government compliance and planning purposes</li>
+                <li><strong>Communication:</strong> Enabling correspondence between residents and barangay staff</li>
               </ul>
             </section>
 
@@ -167,22 +195,27 @@ const PrivacyPolicy = () => {
                 5. Data Access
               </h2>
               <p className="text-muted-foreground mb-3">
-                Access to your personal data is strictly limited to:
+                Access to personal data within BRISPro is strictly controlled:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                <li><strong>Authorized Barangay Staff:</strong> Personnel directly involved in processing your requests and maintaining records</li>
-                <li><strong>Barangay Officials:</strong> Elected and appointed officials (Punong Barangay, Kagawad, SK Chairman) with official duties requiring data access</li>
-                <li><strong>System Administrators:</strong> Technical personnel for system maintenance, with access logged and monitored</li>
+                <li><strong>Authorized Barangay Staff (Admin and Secretary):</strong> Can access resident and household data for processing requests, record-keeping, and report preparation</li>
+                <li><strong>Residents:</strong> Can view and manage only their own personal data and household information through the resident portal</li>
+                <li><strong>Public Request Tracking:</strong> Shows certificate request status only (via control number) — no personal data is exposed</li>
               </ul>
-              <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <p className="text-sm font-medium text-destructive">
-                  Your data will NOT be:
-                </p>
-                <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1">
-                  <li>Sold or rented to any third party</li>
-                  <li>Shared with commercial entities for marketing purposes</li>
-                  <li>Disclosed to unauthorized individuals or organizations</li>
-                  <li>Used for purposes other than those stated in this policy</li>
+            </section>
+
+            {/* Data Sharing */}
+            <section id="data-sharing">
+              <h2 className="text-xl font-semibold flex items-center gap-2 mb-3">
+                <Share2 className="h-5 w-5 text-primary" />
+                6. Data Sharing
+              </h2>
+              <div className="space-y-3 text-muted-foreground">
+                <p>Your personal data is handled with the following sharing principles:</p>
+                <ul className="list-disc list-inside space-y-2 ml-4">
+                  <li>We do <strong>not</strong> share your data with commercial third parties or for marketing purposes</li>
+                  <li>Aggregated statistical reports (with no personally identifiable information) may be submitted to authorized government offices as required by law or regulation</li>
+                  <li>Personal data may be disclosed only when required by law, by court order, or with your explicit consent</li>
                 </ul>
               </div>
             </section>
@@ -191,7 +224,7 @@ const PrivacyPolicy = () => {
             <section id="security">
               <h2 className="text-xl font-semibold flex items-center gap-2 mb-3">
                 <Shield className="h-5 w-5 text-primary" />
-                6. Data Security
+                7. Data Security
               </h2>
               <p className="text-muted-foreground mb-3">
                 We implement appropriate technical and organizational measures to protect your personal data:
@@ -209,10 +242,10 @@ const PrivacyPolicy = () => {
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-medium mb-2">Organizational Measures</h3>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Role-based access control</li>
-                    <li>• Staff training on data privacy</li>
-                    <li>• Audit trails and activity logging</li>
+                    <li>• Role-based access control (Admin/Secretary)</li>
+                    <li>• Staff orientation on data privacy</li>
                     <li>• Incident response procedures</li>
+                    <li>• Secure backup and recovery</li>
                   </ul>
                 </div>
               </div>
@@ -222,7 +255,7 @@ const PrivacyPolicy = () => {
             <section id="retention">
               <h2 className="text-xl font-semibold flex items-center gap-2 mb-3">
                 <Clock className="h-5 w-5 text-primary" />
-                7. Data Retention
+                8. Data Retention
               </h2>
               <p className="text-muted-foreground leading-relaxed">
                 Your personal data will be retained for a period of <strong>five (5) years</strong> from 
@@ -231,7 +264,7 @@ const PrivacyPolicy = () => {
               </p>
               <p className="text-muted-foreground leading-relaxed mt-3">
                 After the retention period, personal data will be securely disposed of through appropriate 
-                methods (secure deletion for digital records, shredding for physical documents) unless:
+                methods (secure deletion for digital records) unless:
               </p>
               <ul className="list-disc list-inside mt-2 space-y-1 text-muted-foreground ml-4">
                 <li>Longer retention is required by law</li>
@@ -244,7 +277,7 @@ const PrivacyPolicy = () => {
             <section id="rights">
               <h2 className="text-xl font-semibold flex items-center gap-2 mb-3">
                 <Scale className="h-5 w-5 text-primary" />
-                8. Your Rights Under the Data Privacy Act
+                9. Your Rights Under the Data Privacy Act
               </h2>
               <p className="text-muted-foreground mb-4">
                 As a data subject under RA 10173, you are entitled to the following rights:
@@ -272,16 +305,17 @@ const PrivacyPolicy = () => {
             <section id="consent">
               <h2 className="text-xl font-semibold flex items-center gap-2 mb-3">
                 <FileText className="h-5 w-5 text-primary" />
-                9. Consent and Withdrawal
+                10. Consent and Withdrawal
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                By creating an account and using BRIS, you consent to the collection and processing of your 
-                personal data as described in this policy. You may withdraw your consent at any time by:
+                By creating an account and using BRISPro, or by providing your information during the 
+                Ecological Profile Census, you consent to the collection and processing of your personal 
+                data as described in this policy. You may withdraw your consent at any time by:
               </p>
               <ul className="list-disc list-inside mt-2 space-y-1 text-muted-foreground ml-4">
                 <li>Submitting a written request to the Barangay Data Protection Officer</li>
                 <li>Visiting the Barangay Hall in person with valid identification</li>
-                <li>Sending a request through the BRIS messaging system</li>
+                <li>Sending a request through the BRISPro messaging system</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed mt-3">
                 Please note that withdrawal of consent may affect your ability to access certain barangay 
@@ -293,7 +327,7 @@ const PrivacyPolicy = () => {
             <section id="contact">
               <h2 className="text-xl font-semibold flex items-center gap-2 mb-3">
                 <Mail className="h-5 w-5 text-primary" />
-                10. Contact Information
+                11. Contact Information
               </h2>
               <p className="text-muted-foreground mb-4">
                 For questions, concerns, or to exercise your data privacy rights, please contact:
@@ -311,7 +345,7 @@ const PrivacyPolicy = () => {
                   </p>
                   <p className="flex items-center gap-2">
                     <Mail className="h-4 w-4" />
-                    Or through the BRIS Messaging System
+                    Or through the BRISPro Messaging System
                   </p>
                 </div>
               </div>
@@ -320,11 +354,11 @@ const PrivacyPolicy = () => {
             {/* Footer */}
             <div className="pt-6 border-t text-center">
               <p className="text-sm text-muted-foreground">
-                <strong>Policy Version:</strong> 1.0 | <strong>Effective Date:</strong> December 2024
+                <strong>Policy Version:</strong> 2.0 | <strong>Last Updated:</strong> March 2026
               </p>
               <p className="text-xs text-muted-foreground mt-2">
                 This policy may be updated from time to time. Users will be notified of significant changes 
-                through the BRIS platform.
+                through the BRISPro platform.
               </p>
             </div>
           </CardContent>

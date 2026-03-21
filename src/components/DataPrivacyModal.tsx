@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Shield, FileText, Users, Lock, Clock, Scale } from "lucide-react";
+import { Shield, FileText, Users, Lock, Clock, Scale, Share2, AlertTriangle } from "lucide-react";
 
 interface DataPrivacyModalProps {
   open: boolean;
@@ -35,7 +34,7 @@ const DataPrivacyModal = ({
             <div>
               <DialogTitle className="text-xl">Data Privacy Statement</DialogTitle>
               <DialogDescription>
-                Barangay Resident Information System (BRIS)
+                Barangay Resident Information System Pro (BRISPro)
               </DialogDescription>
             </div>
           </div>
@@ -48,7 +47,8 @@ const DataPrivacyModal = ({
               <p className="text-muted-foreground leading-relaxed">
                 In compliance with Republic Act No. 10173, also known as the Data Privacy Act of 2012, 
                 and its Implementing Rules and Regulations, the Barangay is committed to protecting your 
-                personal information and respecting your privacy rights.
+                personal information and respecting your privacy rights. Data is primarily collected 
+                through house-to-house profiling (Ecological Profile Census) and resident self-registration.
               </p>
             </section>
 
@@ -59,12 +59,22 @@ const DataPrivacyModal = ({
                 <h3 className="font-semibold text-foreground">What Data We Collect</h3>
               </div>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
-                <li><strong>Personal Information:</strong> Name, birth date, gender, civil status, contact details, email address</li>
-                <li><strong>Household Data:</strong> Address, household composition, family members, dwelling information</li>
-                <li><strong>Census Information:</strong> Employment status, education, income bracket, health records</li>
-                <li><strong>Transaction Records:</strong> Certificate requests, barangay clearances, incident reports</li>
-                <li><strong>Communication Records:</strong> Messages sent to barangay officials</li>
+                <li><strong>Personal Demographics:</strong> Name, birth date, gender, civil status, contact number, email address</li>
+                <li><strong>Household Information:</strong> Address, purok, household composition, dwelling type, land/house ownership</li>
+                <li><strong>Socioeconomic Data:</strong> Educational attainment, employment status, occupation, estimated monthly income</li>
+                <li><strong>Environmental Sanitation:</strong> Water source, waste disposal method, toilet type, drainage facilities</li>
+                <li><strong>Transaction Records:</strong> Certificate requests, incident reports, messages to barangay staff</li>
               </ul>
+              <div className="mt-3 p-3 bg-destructive/5 border border-destructive/15 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                  <span className="text-xs font-medium text-destructive">Sensitive Information</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Health conditions, disability status, and family planning data may be collected as part of the 
+                  Ecological Profile Census. Access to these fields is restricted to authorized staff only.
+                </p>
+              </div>
             </section>
 
             {/* Who Can Access */}
@@ -74,14 +84,10 @@ const DataPrivacyModal = ({
                 <h3 className="font-semibold text-foreground">Who Can Access Your Data</h3>
               </div>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
-                <li>Authorized Barangay Staff members</li>
-                <li>Barangay Officials (Kapitan, Kagawad)</li>
-                <li>System Administrators for technical maintenance only</li>
+                <li><strong>Authorized Barangay Staff</strong> (Admin and Secretary) for processing and record-keeping</li>
+                <li><strong>Residents</strong> can view and manage only their own data through the resident portal</li>
+                <li><strong>Public request tracking</strong> shows request status only — no personal data is exposed</li>
               </ul>
-              <p className="mt-2 text-muted-foreground">
-                <strong>Your data will NOT be shared</strong> with third parties, commercial entities, or 
-                external organizations without your explicit consent or unless required by law.
-              </p>
             </section>
 
             {/* Purpose of Collection */}
@@ -91,12 +97,25 @@ const DataPrivacyModal = ({
                 <h3 className="font-semibold text-foreground">Purpose of Data Collection</h3>
               </div>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
+                <li>Household profiling through the Ecological Profile Census</li>
                 <li>Processing of barangay certificates and clearances</li>
-                <li>Maintaining accurate census and demographic records</li>
-                <li>Delivering barangay services and programs</li>
-                <li>Emergency response and disaster preparedness</li>
-                <li>Communication between residents and barangay officials</li>
-                <li>Statistical reporting to government agencies as required by law</li>
+                <li>Service delivery and program planning (e.g., 4Ps beneficiary identification)</li>
+                <li>Preparation of semi-annual monitoring reports (RBI Form C Revised 2024)</li>
+                <li>Statistical reporting to authorized government agencies as required by law</li>
+                <li>Communication between residents and barangay staff</li>
+              </ul>
+            </section>
+
+            {/* Data Sharing */}
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <Share2 className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold text-foreground">Data Sharing</h3>
+              </div>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
+                <li>Your data is <strong>not shared with commercial third parties</strong></li>
+                <li>Aggregated statistical reports may be submitted to authorized government offices as required</li>
+                <li>Personal data is shared only when required by law or with your explicit consent</li>
               </ul>
             </section>
 
@@ -141,7 +160,6 @@ const DataPrivacyModal = ({
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
                 <li>Encrypted data storage and transmission</li>
                 <li>Role-based access control for authorized personnel only</li>
-                <li>Regular security audits and monitoring</li>
                 <li>Secure backup and recovery procedures</li>
               </ul>
             </section>
@@ -152,13 +170,13 @@ const DataPrivacyModal = ({
               <p className="text-muted-foreground text-xs">
                 For questions, concerns, or to exercise your data privacy rights, please contact the 
                 Barangay Data Protection Officer at the Barangay Hall during office hours, or send a 
-                message through the BRIS messaging system.
+                message through the BRISPro messaging system.
               </p>
             </section>
 
             {/* Last Updated */}
             <p className="text-xs text-muted-foreground text-center pt-4 border-t">
-              Last Updated: December 2024
+              Last Updated: March 2026
             </p>
           </div>
         </ScrollArea>
