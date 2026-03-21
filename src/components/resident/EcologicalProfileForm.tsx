@@ -384,6 +384,16 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     );
   };
 
+  // Helper: check if a household member name matches the logged-in resident
+  const isResidentMember = (member: HouseholdMember): boolean => {
+    if (!profile) return false;
+    const memberName = member.full_name.trim().toLowerCase();
+    if (!memberName) return false;
+    const residentFullName = profile.fullName.trim().toLowerCase();
+    const residentLastFirst = `${profile.lastName}, ${profile.firstName}`.trim().toLowerCase();
+    return memberName === residentFullName || memberName === residentLastFirst;
+  };
+
   const handleSubmit = async () => {
     if (!residentId) {
       toast.error("You must be a registered resident to submit");
@@ -393,6 +403,15 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     if (!formData.household_number) {
       toast.error("Please enter a household number");
       return;
+    }
+
+    // Filter out the resident themselves from household members before submission
+    const filteredMembers = formData.household_members.filter(
+      (m: HouseholdMember) => !isResidentMember(m)
+    );
+    if (filteredMembers.length < formData.household_members.length) {
+      toast.info("Your own entry was automatically removed from household members.");
+      setFormData(prev => ({ ...prev, household_members: filteredMembers }));
     }
 
     // Block submission if there's a pending submission for this household number (only for new submissions)
