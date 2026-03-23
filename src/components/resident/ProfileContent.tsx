@@ -240,6 +240,10 @@ const ProfileContent = () => {
                 <Label>Place of Origin</Label>
                 <Input value={formData.placeOfOrigin} onChange={(e) => setFormData({ ...formData, placeOfOrigin: e.target.value })} placeholder="City/Municipality" />
               </div>
+              <div className="space-y-2">
+                <Label>House Number</Label>
+                <Input value={householdData?.house_number || ""} disabled className="bg-muted cursor-not-allowed" />
+              </div>
             </div>
           </TabsContent>
 
