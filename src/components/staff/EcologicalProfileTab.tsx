@@ -1535,6 +1535,7 @@ const EcologicalProfileTab = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>House #</TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('household_number')}
