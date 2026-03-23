@@ -1586,6 +1586,7 @@ const EcologicalProfileTab = () => {
                       key={h.id}
                       className={selectedHousehold?.id === h.id ? "bg-primary/10" : ""}
                     >
+                      <TableCell>{h.house_number || "-"}</TableCell>
                       <TableCell className="font-medium">{h.household_number}</TableCell>
                       <TableCell>{h.street_purok || h.address || "-"}</TableCell>
                       <TableCell>
