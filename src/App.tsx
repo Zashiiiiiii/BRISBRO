@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { StaffAuthProvider } from "@/context/StaffAuthContext";
 import { BarangayStatsProvider } from "@/context/BarangayStatsContext";
@@ -18,7 +18,7 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import ResidentDashboard from "./pages/resident/Dashboard";
 import ResidentProfile from "./pages/resident/Profile";
-import ResidentRequests from "./pages/resident/Requests";
+// ResidentRequests is now inline in the dashboard
 import ResidentMessages from "./pages/resident/Messages";
 import ResidentSettings from "./pages/resident/Settings";
 import ResidentIncidents from "./pages/resident/Incidents";
@@ -169,9 +169,7 @@ const AppContent = () => {
           </ResidentProtectedRoute>
         } />
         <Route path="/resident/requests" element={
-          <ResidentProtectedRoute>
-            <ResidentRequests />
-          </ResidentProtectedRoute>
+          <Navigate to="/resident/dashboard?tab=requests" replace />
         } />
         <Route path="/resident/messages" element={
           <ResidentProtectedRoute>

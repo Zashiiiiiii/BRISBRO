@@ -46,11 +46,11 @@ import SuccessModal from "@/components/SuccessModal";
 
 import ChatWidget from "@/components/ChatWidget";
 import { logResidentLogout } from "@/utils/auditLog";
-import { secureLogoutRedirect } from "@/utils/authNavigationGuard";
+import { secureLogoutRedirect, markResidentForcedLogout } from "@/utils/authNavigationGuard";
 import ProfileContent from "@/components/resident/ProfileContent";
 import MessagesContent from "@/components/resident/MessagesContent";
 import IncidentsContent from "@/components/resident/IncidentsContent";
-
+import RequestsContent from "@/components/resident/RequestsContent";
 import SettingsContent from "@/components/resident/SettingsContent";
 interface Request {
   id: string;
@@ -91,7 +91,7 @@ const ResidentSidebar = ({
   const menuItems = [
     { title: "Dashboard", icon: Home, tab: "dashboard" },
     { title: "My Profile", icon: User, tab: "profile" },
-    { title: "My Requests", icon: Clock, tab: "requests", href: "/resident/requests" },
+    { title: "My Requests", icon: Clock, tab: "requests" },
     { title: "Request Certificate", icon: FileText, tab: "request" },
     { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessageCount > 0 ? unreadMessageCount : undefined },
     { title: "Incident Reports", icon: AlertCircle, tab: "incidents" },
@@ -241,7 +241,27 @@ const ResidentDashboard = () => {
   const pullThreshold = 60;
   const swipeThreshold = 50;
 
-  // Auth is now handled by ResidentProtectedRoute wrapper
+  // Browser back button = auto logout for security
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+
+    const handlePopState = async () => {
+      markResidentForcedLogout();
+      if (user && profile) {
+        const fullName = profile.firstName && profile.lastName 
+          ? `${profile.firstName} ${profile.lastName}`
+          : profile.fullName || "Unknown Resident";
+        await logResidentLogout(fullName, user.id);
+      }
+      await logout();
+      secureLogoutRedirect("/auth");
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [user, profile, logout]);
+
+
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -408,8 +428,6 @@ const ResidentDashboard = () => {
     setTimeout(() => setSwipeDirection(null), 250);
     if (tab === "ecological-profile") {
       navigate("/resident/ecological-profile");
-    } else if (tab === "requests") {
-      navigate("/resident/requests");
     } else {
       setActiveTab(tab);
     }
@@ -545,7 +563,7 @@ const ResidentDashboard = () => {
                         {latestRequest.status === "rejected" && latestRequest.rejectionReason && (
                           <p className="text-sm text-destructive">Reason: {latestRequest.rejectionReason}</p>
                         )}
-                        <Button variant="link" size="sm" className="px-0" onClick={() => navigate("/resident/requests")}>
+                        <Button variant="link" size="sm" className="px-0" onClick={() => setActiveTab("requests")}>
                           View all requests →
                         </Button>
                       </div>
@@ -738,9 +756,22 @@ const ResidentDashboard = () => {
               isResidentFlow
               onViewRequests={() => {
                 setSubmittedControlNumber("");
-                navigate("/resident/requests");
+                setActiveTab("requests");
               }}
             />
+          )}
+
+          {activeTab === "requests" && (
+            <>
+              <div className="flex items-center gap-4 mb-6">
+                <SidebarTrigger />
+                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Dashboard
+                </Button>
+              </div>
+              <RequestsContent onNewRequest={() => setActiveTab("request")} />
+            </>
           )}
 
           {activeTab === "profile" && (
