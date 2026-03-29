@@ -20,6 +20,7 @@ import { logResidentLogin, logResidentRegistration } from "@/utils/auditLog";
 import {
   clearResidentForcedLogout,
   clearStaffForcedLogout,
+  markResidentForcedLogout,
 } from "@/utils/authNavigationGuard";
 
 const loginSchema = z.object({
