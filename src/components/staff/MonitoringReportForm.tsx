@@ -22,6 +22,8 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { getMonitoringReport, createMonitoringReport, updateMonitoringReport, syncMonitoringReportData } from "@/utils/staffApi";
 import { useStaffAuthContext } from "@/context/StaffAuthContext";
@@ -95,6 +97,11 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [dataQuality, setDataQuality] = useState<{
+    missingBirthDate: number;
+    missingGender: number;
+    notLinkedToHousehold: number;
+  } | null>(null);
 
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -247,6 +254,15 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
         );
       }
 
+      // Data quality
+      if (data.data_quality) {
+        setDataQuality({
+          missingBirthDate: data.data_quality.missing_birth_date || 0,
+          missingGender: data.data_quality.missing_gender || 0,
+          notLinkedToHousehold: data.data_quality.not_linked_to_household || 0,
+        });
+      }
+
       setLastSyncedAt(new Date());
       toast.success("Data synced from database");
     } catch (error: any) {
@@ -257,12 +273,12 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
     }
   }, []);
 
-  // Auto-sync on new report load
+  // Auto-sync on new report load only if semester is set
   useEffect(() => {
-    if (!reportId && !readOnly) {
+    if (!reportId && !readOnly && semester) {
       handleSync();
     }
-  }, [reportId, readOnly, handleSync]);
+  }, [reportId, readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const buildPayload = (status: string) => {
     const sectorData: Record<string, { male: number; female: number }> = {};
