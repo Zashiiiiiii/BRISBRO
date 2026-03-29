@@ -1,50 +1,45 @@
 
 
-## Plan: Regroup Reports in Staff Sidebar
+## Plan: Improve "New RBI Form C Report" UX — Semester Gate, Coverage Period, Data Quality Warnings
 
 ### Summary
-Move "Monitoring Reports" out of Administration, create a new "Reports" collapsible group containing both reporting items with updated labels.
+Three UI-only enhancements to `MonitoringReportForm.tsx` plus a small edge function update to return data quality counts.
 
-### Changes
+### 1. Make Semester required before "Sync from Database"
 
-#### 1. `src/pages/StaffDashboard.tsx` — Sidebar restructure
+**In `MonitoringReportForm.tsx`:**
+- Disable the "Sync from Database" button when `semester` is empty/unset
+- Show a helper message like "Please select a semester first" when hovering or below the button
+- Remove the auto-sync `useEffect` (lines 261-265) — instead, only auto-sync if semester is already set on mount
 
-**In `StaffSidebar` component (~lines 296-348):**
+### 2. Show "Coverage Period" summary near Sync button
 
-- Extract a new `reportsItems` array:
-  ```
-  const reportsItems = [
-    hasPermission(userRole, "view_reports") && { title: "Analytics Reports", icon: BarChart3, tab: "view-reports" },
-    hasPermission(userRole, "monitoring_reports") && { title: "RBI Form C Reports", icon: BarChart3, tab: "monitoring-reports" },
-  ]
-  ```
+**In `MonitoringReportForm.tsx`:**
+- Add a computed string based on `semester` + `calendarYear`:
+  - `"1st"` → "Jan – Jun {year}"
+  - `"2nd"` → "Jul – Dec {year}"
+- Display as a `Badge` or text span next to the Sync button area (inside the sync row, lines 456-475)
 
-- Remove "Monitoring Reports" and "Reports" entries from `adminItems`
+### 3. Data Quality summary after sync — edge function + frontend
 
-- Add a new `CollapsibleGroup` for "Reports" between Residents and Administration:
-  ```
-  <CollapsibleGroup label="Reports" items={reportsItems} ... />
-  ```
+**Edge function (`supabase/functions/staff-auth/index.ts`, sync-monitoring-report-data action):**
+- After fetching residents (line 2389-2401), compute and include in the response:
+  - `missing_birth_date`: count of residents where `birth_date` is null
+  - `missing_gender`: count where `gender` is null or empty
+  - `not_linked_to_household`: count where `household_id` is null
+- Add `household_id` to the select query (line 2391)
+- Add a `data_quality` object to the response alongside existing fields
 
-**In the main content area (~line where `activeTab === "monitoring-reports"` renders):**
-- Update the heading from "Monitoring Reports" to "RBI Form C Reports (Semi-Annual)"
-
-**In the main content area where `activeTab === "view-reports"` renders:**
-- Update the heading from "Reports" to "Analytics Reports" (if there is one)
-
-#### 2. `src/components/staff/MonitoringReportsTab.tsx`
-
-- Update the list page card title from "Monitoring Reports" to "RBI Form C Reports (Semi-Annual)"
-- Update the "New Report" form page title to "New RBI Form C Report (Revised 2024)"
-
-#### 3. `src/components/staff/MonitoringReportForm.tsx`
-
-- Update any header/title references from "Monitoring Report" to "RBI Form C Report (Revised 2024)"
+**In `MonitoringReportForm.tsx`:**
+- Add state: `dataQuality: { missingBirthDate: number; missingGender: number; notLinkedToHousehold: number } | null`
+- In `handleSync`, extract `data.data_quality` from the response and set state
+- After the sync button area, if `dataQuality` is set and any count > 0, render an `Alert` (warning variant) showing:
+  - "⚠ X residents missing birth date"
+  - "⚠ X residents missing gender"
+  - "⚠ X residents not linked to a household"
+- These are warnings only — do not block Save/Submit
 
 ### Files Modified
-- `src/pages/StaffDashboard.tsx` — sidebar groups + content headings
-- `src/components/staff/MonitoringReportsTab.tsx` — list page title
-- `src/components/staff/MonitoringReportForm.tsx` — form page title
-
-### No route, permission, or database changes needed.
+- `src/components/staff/MonitoringReportForm.tsx` — semester gate, coverage period, data quality UI
+- `supabase/functions/staff-auth/index.ts` — add `data_quality` to sync response
 
