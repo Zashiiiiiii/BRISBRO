@@ -254,7 +254,7 @@ const ResidentDashboard = () => {
         await logResidentLogout(fullName, user.id);
       }
       await logout();
-      secureLogoutRedirect("/auth");
+      window.location.replace("/auth");
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -419,7 +419,7 @@ const ResidentDashboard = () => {
     }
     await logout();
     toast.success("Logged out successfully");
-    secureLogoutRedirect("/");
+    window.location.replace("/auth");
   };
 
   const handleTabChange = (tab: string) => {
