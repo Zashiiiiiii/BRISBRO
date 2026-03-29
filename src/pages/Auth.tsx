@@ -20,6 +20,7 @@ import { logResidentLogin, logResidentRegistration } from "@/utils/auditLog";
 import {
   clearResidentForcedLogout,
   clearStaffForcedLogout,
+  markResidentForcedLogout,
 } from "@/utils/authNavigationGuard";
 
 const loginSchema = z.object({
@@ -84,6 +85,9 @@ const Auth = () => {
   const [statusResult, setStatusResult] = useState<RegistrationStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
 
+  // Track whether login was initiated from this page to prevent onAuthStateChange double-nav
+  const [loginInitiated, setLoginInitiated] = useState(false);
+
   // Check if user is already logged in and approved
   useEffect(() => {
     const checkApprovalAndRedirect = async (userId: string, email: string) => {
@@ -101,7 +105,7 @@ const Auth = () => {
           .maybeSingle();
 
         if (residentByEmail?.approval_status === "approved") {
-          navigate("/resident/dashboard", { replace: true });
+          window.location.replace("/resident/dashboard");
         } else if (residentByEmail?.approval_status === "pending") {
           await supabase.auth.signOut();
           toast.info("Your account is pending approval. Please wait for admin approval before logging in.");
@@ -110,12 +114,34 @@ const Auth = () => {
       }
 
       if (resident.approval_status === "approved") {
-        navigate("/resident/dashboard", { replace: true });
+        window.location.replace("/resident/dashboard");
       } else if (resident.approval_status === "pending") {
         await supabase.auth.signOut();
         toast.info("Your account is pending approval. Please wait for admin approval before logging in.");
       }
     };
+
+    // Detect back/forward navigation to /auth — if session exists, sign out immediately
+    const isBackForward = performance.getEntriesByType?.("navigation")?.[0] &&
+      (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming).type === "back_forward";
+
+    if (isBackForward) {
+      // User arrived via back/forward — sign out if there's an active session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          markResidentForcedLogout();
+          supabase.auth.signOut({ scope: 'local' }).then(() => {
+            // Clear any Supabase session keys
+            Object.keys(localStorage).forEach(key => {
+              if (key.startsWith('sb-') && key.includes('-auth-token')) {
+                localStorage.removeItem(key);
+              }
+            });
+          });
+        }
+      });
+      return;
+    }
 
     // Check existing session on mount — if already logged in, redirect away
     const checkExistingSession = async () => {
@@ -132,6 +158,9 @@ const Auth = () => {
     }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Skip if login was initiated from this page — handleLogin manages its own navigation
+      if (loginInitiated) return;
+
       if (session?.user && event === "SIGNED_IN") {
         setTimeout(() => {
           checkApprovalAndRedirect(session.user.id, session.user.email || "");
@@ -140,7 +169,27 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, loginInitiated]);
+
+  // Listen for popstate (back/forward) while on auth page — sign out if session exists
+  useEffect(() => {
+    const handlePopState = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          markResidentForcedLogout();
+          supabase.auth.signOut({ scope: 'local' });
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('sb-') && key.includes('-auth-token')) {
+              localStorage.removeItem(key);
+            }
+          });
+        }
+      });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,7 +204,7 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-
+    setLoginInitiated(true);
     try {
       // Clear forced logout flags BEFORE signing in so onAuthStateChange can process the session
       clearResidentForcedLogout();
@@ -246,7 +295,9 @@ const Auth = () => {
 
 
         toast.success("Login successful!");
-        navigate("/resident/dashboard", { replace: true });
+        // Use hard redirect to prevent /auth from remaining in browser history
+        window.location.replace("/resident/dashboard");
+        return;
       }
     } catch (error: any) {
       toast.error("An unexpected error occurred. Please try again.");
