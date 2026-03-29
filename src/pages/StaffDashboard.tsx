@@ -385,6 +385,7 @@ const StaffDashboard = () => {
   const [pendingIncidentsCount, setPendingIncidentsCount] = useState(0);
   const [pendingCertificatesCount, setPendingCertificatesCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [showCreateCertificate, setShowCreateCertificate] = useState(false);
   const prevUnreadCountRef = useRef(-1); // -1 means initial load, don't play sound
 
   // Auth is now handled by ProtectedRoute wrapper
