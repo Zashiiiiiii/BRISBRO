@@ -191,6 +191,7 @@ const EcologicalProfileTab = () => {
   // Census form state
   const [censusData, setCensusData] = useState({
     interviewDate: format(new Date(), "yyyy-MM-dd"),
+    interviewerName: "",
     respondentName: "",
     respondentRelation: "",
     // Health data
@@ -486,6 +487,7 @@ const EcologicalProfileTab = () => {
           respondentName: sub.respondent_name || prev.respondentName,
           respondentRelation: sub.respondent_relation || prev.respondentRelation,
           interviewDate: sub.interview_date || prev.interviewDate,
+          interviewerName: (sub as any).interviewer_name || prev.interviewerName,
           // Education data
           educationData: {
             preschool: { graduate: educationData.preschool || 0, undergraduate: 0 },
@@ -1639,13 +1641,21 @@ const EcologicalProfileTab = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Date of Interview</Label>
                 <Input
                   type="date"
                   value={censusData.interviewDate}
                   onChange={(e) => setCensusData((prev) => ({ ...prev, interviewDate: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Interviewer Name</Label>
+                <Input
+                  value={censusData.interviewerName || ""}
+                  onChange={(e) => setCensusData((prev) => ({ ...prev, interviewerName: e.target.value }))}
+                  placeholder="Name of interviewer/staff"
                 />
               </div>
               <div className="space-y-2">

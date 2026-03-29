@@ -299,6 +299,7 @@ export type Database = {
           barangay: string | null
           city: string | null
           communication_services: Json | null
+          consent_datetime: string | null
           created_at: string
           death_data: Json | null
           deleted_at: string | null
@@ -323,6 +324,7 @@ export type Database = {
           immunization_data: Json | null
           info_sources: Json | null
           interview_date: string | null
+          interviewer_name: string | null
           is_4ps_beneficiary: boolean | null
           lighting_source: string | null
           lot_ownership: string | null
@@ -356,6 +358,7 @@ export type Database = {
           barangay?: string | null
           city?: string | null
           communication_services?: Json | null
+          consent_datetime?: string | null
           created_at?: string
           death_data?: Json | null
           deleted_at?: string | null
@@ -380,6 +383,7 @@ export type Database = {
           immunization_data?: Json | null
           info_sources?: Json | null
           interview_date?: string | null
+          interviewer_name?: string | null
           is_4ps_beneficiary?: boolean | null
           lighting_source?: string | null
           lot_ownership?: string | null
@@ -413,6 +417,7 @@ export type Database = {
           barangay?: string | null
           city?: string | null
           communication_services?: Json | null
+          consent_datetime?: string | null
           created_at?: string
           death_data?: Json | null
           deleted_at?: string | null
@@ -437,6 +442,7 @@ export type Database = {
           immunization_data?: Json | null
           info_sources?: Json | null
           interview_date?: string | null
+          interviewer_name?: string | null
           is_4ps_beneficiary?: boolean | null
           lighting_source?: string | null
           lot_ownership?: string | null
@@ -1366,6 +1372,7 @@ export type Database = {
           barangay: string | null
           city: string | null
           communication_services: Json | null
+          consent_datetime: string | null
           created_at: string
           death_data: Json | null
           deleted_at: string | null
@@ -1390,6 +1397,7 @@ export type Database = {
           immunization_data: Json | null
           info_sources: Json | null
           interview_date: string | null
+          interviewer_name: string | null
           is_4ps_beneficiary: boolean | null
           lighting_source: string | null
           lot_ownership: string | null
@@ -1556,6 +1564,7 @@ export type Database = {
           barangay: string | null
           city: string | null
           communication_services: Json | null
+          consent_datetime: string | null
           created_at: string
           death_data: Json | null
           deleted_at: string | null
@@ -1580,6 +1589,7 @@ export type Database = {
           immunization_data: Json | null
           info_sources: Json | null
           interview_date: string | null
+          interviewer_name: string | null
           is_4ps_beneficiary: boolean | null
           lighting_source: string | null
           lot_ownership: string | null

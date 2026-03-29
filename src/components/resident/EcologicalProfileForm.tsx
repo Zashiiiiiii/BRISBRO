@@ -115,6 +115,8 @@ interface SubmissionData {
   additional_notes: string;
   respondent_name: string;
   respondent_relation: string;
+  interview_date: string;
+  interviewer_name: string;
   // Custom "Others" text values
   other_values?: {
     water_storage?: string;
@@ -157,6 +159,8 @@ const defaultFormData: SubmissionData = {
   additional_notes: "",
   respondent_name: "",
   respondent_relation: "",
+  interview_date: format(new Date(), "yyyy-MM-dd"),
+  interviewer_name: "",
   other_values: {},
 };
 
@@ -173,6 +177,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
   const [existingHouseholdId, setExistingHouseholdId] = useState<string | null>(null);
   const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
 
   // Load existing submissions and resident profile
   useEffect(() => {
@@ -440,6 +445,26 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
       return;
     }
 
+    if (!consentGiven) {
+      toast.error("Respondent consent is required before submission");
+      return;
+    }
+
+    if (!formData.street_purok.trim()) {
+      toast.error("Purok/Street is required");
+      return;
+    }
+
+    if (!formData.house_number.trim()) {
+      toast.error("House number is required");
+      return;
+    }
+
+    if (!formData.interview_date) {
+      toast.error("Date of interview is required");
+      return;
+    }
+
     // Block submission if there's a pending submission for this household number (only for new submissions)
     if (!isEditMode && householdNumberError && !existingHouseholdId) {
       toast.error("Cannot submit", {
@@ -525,7 +550,9 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
         additional_notes: formData.additional_notes,
         respondent_name: formData.respondent_name,
         respondent_relation: formData.respondent_relation,
-        interview_date: format(new Date(), "yyyy-MM-dd"),
+        interview_date: formData.interview_date,
+        interviewer_name: formData.interviewer_name || null,
+        consent_datetime: new Date().toISOString(),
       };
 
       if (isEditMode && editingSubmissionId) {
@@ -642,8 +669,15 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
       additional_notes: submission.additional_notes || "",
       respondent_name: submission.respondent_name || "",
       respondent_relation: submission.respondent_relation || "",
+      interview_date: submission.interview_date || format(new Date(), "yyyy-MM-dd"),
+      interviewer_name: submission.interviewer_name || "",
       other_values: submission.health_data?.other_values || {},
     });
+    
+    // If submission had consent, pre-check consent
+    if (submission.consent_datetime) {
+      setConsentGiven(true);
+    }
     
     setEditingSubmissionId(submission.id);
     setIsEditMode(true);
@@ -935,6 +969,28 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
             <div className="min-h-[500px]">
               {/* Basic Info Tab */}
               <TabsContent value="basic-info" className="space-y-4 mt-0">
+                {/* Interview Metadata */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b">
+                  <div className="space-y-2">
+                    <Label htmlFor="interview_date">Date of Interview *</Label>
+                    <Input
+                      id="interview_date"
+                      type="date"
+                      value={formData.interview_date}
+                      onChange={(e) => setFormData({ ...formData, interview_date: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="interviewer_name">Interviewer Name</Label>
+                    <Input
+                      id="interviewer_name"
+                      value={formData.interviewer_name}
+                      onChange={(e) => setFormData({ ...formData, interviewer_name: e.target.value })}
+                      placeholder="Name of person conducting the interview"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="house_number">House Number</Label>
@@ -1696,6 +1752,25 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
               </TabsContent>
             </div>
           </Tabs>
+
+          {/* Consent Checkbox */}
+          <div className="mt-6 pt-4 border-t">
+            <div className="flex items-start space-x-3 p-4 rounded-lg border bg-muted/50">
+              <Checkbox
+                id="consent_given"
+                checked={consentGiven}
+                onCheckedChange={(checked) => setConsentGiven(!!checked)}
+              />
+              <div className="space-y-1">
+                <label htmlFor="consent_given" className="text-sm font-medium leading-none cursor-pointer">
+                  Respondent Consent *
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  The respondent has given informed consent for this data collection as part of the Barangay Ecological Profile Census.
+                </p>
+              </div>
+            </div>
+          </div>
 
           <div className="flex justify-between mt-6 pt-4 border-t">
             <Button variant="outline" onClick={isEditMode ? handleCancelEdit : onCancel}>

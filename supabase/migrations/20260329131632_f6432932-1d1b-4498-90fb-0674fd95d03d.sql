@@ -1,0 +1,1 @@
+ALTER TABLE public.ecological_profile_submissions ADD COLUMN interviewer_name TEXT, ADD COLUMN consent_datetime TIMESTAMPTZ;
