@@ -1179,7 +1179,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                                 <TableHead className="min-w-[140px] border-r">Income (Cash)</TableHead>
                                 <TableHead className="w-16 border-r text-center">PWD</TableHead>
                                 <TableHead className="w-20 border-r text-center">Solo Parent</TableHead>
-                                <TableHead className="w-16 border-r text-center">Tenant</TableHead>
                                 <TableHead className="w-12">Del</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1281,12 +1280,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                                     <Checkbox
                                       checked={member.is_solo_parent || false}
                                       onCheckedChange={(checked) => updateHouseholdMember(member.id, { is_solo_parent: !!checked })}
-                                    />
-                                  </TableCell>
-                                  <TableCell className="p-1 border-r text-center">
-                                    <Checkbox
-                                      checked={member.is_tenant || false}
-                                      onCheckedChange={(checked) => updateHouseholdMember(member.id, { is_tenant: !!checked })}
                                     />
                                   </TableCell>
                                   <TableCell className="p-1">

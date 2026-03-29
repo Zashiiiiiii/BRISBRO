@@ -1291,8 +1291,7 @@ const EcologicalProfileTab = () => {
           <th>Schooling</th>
           <th>Education</th>
           <th>Employment</th>
-          <th>Income (Cash)</th>
-          <th>Tenant</th>
+           <th>Income (Cash)</th>
         </tr>
       </thead>
       <tbody>
@@ -1309,7 +1308,6 @@ const EcologicalProfileTab = () => {
             <td>${r.education_attainment || ""}</td>
             <td>${r.employment_status || ""}</td>
             <td>${r.monthly_income_cash || ""}</td>
-            <td>${r.relation_to_head === "Tenant" ? "Yes" : ""}</td>
           </tr>
         `).join("")}
       </tbody>
