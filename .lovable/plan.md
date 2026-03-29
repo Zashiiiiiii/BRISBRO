@@ -1,43 +1,55 @@
 
 
-## Plan: Update Staff Dashboard Quick Actions
+## Plan: Shared AuthGuard for All Authenticated Areas
 
-### Summary
-Add three new quick-action buttons to the Staff Dashboard home tab for RBI Form C, Ecological Submissions, and Households/Census. Keep existing buttons.
+### Problem
+Back/forward security logic is scattered across `Auth.tsx`, `ProtectedRoute.tsx`, `useResidentAuth.ts`, and `authNavigationGuard.ts`. Staff login (`StaffLoginModal`) lacks the back/forward sign-out behavior that resident auth has.
 
-### Changes
+### Design
 
-**File: `src/pages/StaffDashboard.tsx` (~lines 2012-2025)**
+Create a single `useAuthGuard` hook and a thin `<AuthGuard>` wrapper component that both staff and resident protected routes use.
 
-Add three buttons after the existing ones inside the Quick Actions `flex` container:
+### New File: `src/hooks/useAuthGuard.ts`
 
-```tsx
-{/* Existing buttons stay */}
+A hook that:
+1. **On mount + `pageshow`** (bfcache): checks for a valid session. If none, calls `onUnauthenticated()`.
+2. **On `popstate`**: same revalidation check.
+3. Accepts config:
+   - `type: 'resident' | 'staff'` — determines which session check to run (Supabase `getSession()` for resident, `validateSession()` for staff).
+   - `onUnauthenticated: () => void` — callback to redirect (using `window.location.replace` or `Navigate`).
 
-{hasPermission(userRole, "monitoring_reports") && (
-  <Button variant="outline" onClick={() => setActiveTab("monitoring-reports")}>
-    <FileText className="h-4 w-4 mr-2" />
-    New RBI Form C Report
-  </Button>
-)}
-{hasPermission(userRole, "ecological_submissions") && (
-  <Button variant="outline" onClick={() => setActiveTab("ecological-submissions")}>
-    <ClipboardList className="h-4 w-4 mr-2" /> {/* or appropriate icon */}
-    Review Ecological Submissions
-  </Button>
-)}
-{hasPermission(userRole, "manage_households") && (
-  <Button variant="outline" onClick={() => setActiveTab("households")}>
-    <Home className="h-4 w-4 mr-2" />
-    Manage Households / Census
-  </Button>
-)}
-```
+### Changes to Existing Files
 
-- All three features are permitted for both Admin and Secretary per `rolePermissions.ts`, so they'll be visible to both roles.
-- Icons: reuse `FileText` (already imported), add `ClipboardList` and `Home` from lucide-react if not already imported.
-- Each button navigates to the corresponding existing tab — no new routes needed.
+**`src/components/ProtectedRoute.tsx`**
+- In both `StaffProtectedRoute` and `ResidentProtectedRoute`, replace the inline `pageshow`/`visibilitychange`/`popstate` listeners with a call to `useAuthGuard(...)`.
+- Keep existing approval-status logic and role checks unchanged — the guard only handles session revalidation and redirect.
+
+**`src/pages/Auth.tsx`** (resident login page)
+- Extract the back/forward sign-out logic (lines 124-143 and 175-192) into the shared hook, configured as `type: 'resident'` with `isLoginPage: true`.
+- When `isLoginPage: true` and navigation is back/forward, the hook signs out any active session.
+
+**`src/components/StaffLoginModal.tsx`** (staff login)
+- After successful login, use `window.location.replace("/staff-dashboard")` instead of `navigate(..., { replace: true })` to remove the login entry from history.
+
+**`src/pages/Index.tsx`** (homepage with staff login modal)
+- Add a `useAuthGuard({ type: 'staff', isLoginPage: true, ... })` effect so that if the user back/forwards to the homepage with an active staff session, it signs them out.
+
+### Where to Wrap Routes
+
+No new wrapper component around routes in `App.tsx` — the hook is called inside the existing `StaffProtectedRoute` and `ResidentProtectedRoute` components, keeping the architecture unchanged.
 
 ### Files Modified
-- `src/pages/StaffDashboard.tsx` — add 3 buttons + any missing icon imports
+| File | Change |
+|------|--------|
+| `src/hooks/useAuthGuard.ts` | **New** — shared hook |
+| `src/components/ProtectedRoute.tsx` | Use `useAuthGuard` in both route guards |
+| `src/pages/Auth.tsx` | Replace inline back/forward logic with hook |
+| `src/components/StaffLoginModal.tsx` | Use `window.location.replace` for post-login redirect |
+| `src/utils/authNavigationGuard.ts` | No changes (still used for forced-logout flags) |
+
+### Acceptance Tests
+- a) Login resident → back → forward → must NOT show dashboard; must require login
+- b) Logout resident → back/forward → must NOT show protected pages
+- c) Login staff → back → forward → must NOT show staff dashboard; must require login
+- d) Normal in-app navigation for both portals still works
 
