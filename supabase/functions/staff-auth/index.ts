@@ -2385,10 +2385,10 @@ serve(async (req) => {
         );
       }
 
-      // Fetch all approved, non-deleted residents
+      // Fetch all approved, non-deleted residents with expanded fields
       const { data: residents, error: resError } = await supabase
         .from('residents')
-        .select('birth_date, gender, civil_status, employment_status')
+        .select('birth_date, gender, civil_status, employment_status, schooling_status, employment_category, ethnic_group')
         .eq('approval_status', 'approved')
         .is('deleted_at', null);
 
@@ -2407,6 +2407,17 @@ serve(async (req) => {
 
       if (hhError) {
         console.error('Error fetching household count:', hhError);
+      }
+
+      // Fetch approved ecological submissions for PWD and Solo Parent counts
+      const { data: ecoSubmissions, error: ecoError } = await supabase
+        .from('ecological_profile_submissions')
+        .select('pwd_count, solo_parent_count')
+        .eq('status', 'approved')
+        .is('deleted_at', null);
+
+      if (ecoError) {
+        console.error('Error fetching ecological submissions for sync:', ecoError);
       }
 
       const totalInhabitants = residents?.length || 0;
@@ -2435,15 +2446,22 @@ serve(async (req) => {
       ];
 
       const now = new Date();
+
+      // Helper to calculate age
+      const calcAge = (birthDate: string) => {
+        const birth = new Date(birthDate);
+        let age = now.getFullYear() - birth.getFullYear();
+        const monthDiff = now.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
+        return age;
+      };
+
       const ageBrackets = ageBracketDefs.map(def => {
         let male = 0;
         let female = 0;
         (residents || []).forEach((r: any) => {
           if (!r.birth_date) return;
-          const birth = new Date(r.birth_date);
-          let age = now.getFullYear() - birth.getFullYear();
-          const monthDiff = now.getMonth() - birth.getMonth();
-          if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
+          const age = calcAge(r.birth_date);
           if (age >= def.min && age <= def.max) {
             const gender = (r.gender || '').toLowerCase();
             if (gender === 'male') male++;
@@ -2453,11 +2471,14 @@ serve(async (req) => {
         return { bracket: def.bracket, male, female };
       });
 
-      // Sector data
-      const sectorData: Record<string, { male: number; female: number }> = {};
+      // Sector data with expanded counters
       const sectorCounters: Record<string, { male: number; female: number }> = {
         labor_force: { male: 0, female: 0 },
         unemployed: { male: 0, female: 0 },
+        osc: { male: 0, female: 0 },
+        osy: { male: 0, female: 0 },
+        ofw: { male: 0, female: 0 },
+        ips: { male: 0, female: 0 },
         single: { male: 0, female: 0 },
         married: { male: 0, female: 0 },
       };
@@ -2475,21 +2496,53 @@ serve(async (req) => {
           sectorCounters.unemployed[gKey]++;
         }
 
-        const civilStatus = (r.civil_status || '').toLowerCase();
-        // Calculate age for 18+ check
+        // OFW
+        const empCategory = (r.employment_category || '').toLowerCase();
+        if (empCategory === 'ofw') {
+          sectorCounters.ofw[gKey]++;
+        }
+
+        // Indigenous Peoples
+        const ethnicGroup = (r.ethnic_group || '').trim();
+        if (ethnicGroup) {
+          sectorCounters.ips[gKey]++;
+        }
+
+        // Schooling-based sectors & civil status need age
         if (r.birth_date) {
-          const birth = new Date(r.birth_date);
-          let age = now.getFullYear() - birth.getFullYear();
-          const monthDiff = now.getMonth() - birth.getMonth();
-          if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
+          const age = calcAge(r.birth_date);
+          const schooling = (r.schooling_status || '').toLowerCase();
+          if (schooling === 'out of school' || schooling === 'out-of-school') {
+            if (age >= 6 && age <= 14) sectorCounters.osc[gKey]++;
+            if (age >= 15 && age <= 24) sectorCounters.osy[gKey]++;
+          }
+
           if (age >= 18) {
+            const civilStatus = (r.civil_status || '').toLowerCase();
             if (civilStatus === 'single') sectorCounters.single[gKey]++;
             if (civilStatus === 'married') sectorCounters.married[gKey]++;
           }
         }
       });
 
-      Object.assign(sectorData, sectorCounters);
+      // PWD and Solo Parents from ecological submissions (total only, no M/F breakdown)
+      let pwdTotal = 0;
+      let soloParentTotal = 0;
+      (ecoSubmissions || []).forEach((s: any) => {
+        pwdTotal += (s.pwd_count || 0);
+        soloParentTotal += (s.solo_parent_count || 0);
+      });
+
+      const sectorData: Record<string, { male: number; female: number }> = {
+        ...sectorCounters,
+        // PWD/Solo Parents: no M/F breakdown, store total in male field with female=0 as convention
+        // Use -1 to indicate no M/F breakdown available (total stored as male+female sum split evenly isn't accurate)
+        pwd: { male: pwdTotal, female: 0 },
+        solo_parents: { male: soloParentTotal, female: 0 },
+        // Not collected sectors
+        filipino: { male: -1, female: -1 },
+        foreigner: { male: -1, female: -1 },
+      };
 
       return new Response(
         JSON.stringify({

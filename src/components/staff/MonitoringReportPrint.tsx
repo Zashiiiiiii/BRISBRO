@@ -126,14 +126,17 @@ const MonitoringReportPrint = forwardRef<HTMLDivElement, MonitoringReportPrintPr
             </tr>
           </thead>
           <tbody>
-            {sectors.map((row) => (
+            {sectors.map((row) => {
+              const isNotCollected = row.male === -1 && row.female === -1;
+              return (
               <tr key={row.key}>
                 <td className="border border-black px-2 py-0.5">{row.label}</td>
-                <td className="border border-black px-2 py-0.5 text-center">{row.male}</td>
-                <td className="border border-black px-2 py-0.5 text-center">{row.female}</td>
-                <td className="border border-black px-2 py-0.5 text-center font-semibold">{row.male + row.female}</td>
+                <td className="border border-black px-2 py-0.5 text-center">{isNotCollected ? "N/A" : row.male}</td>
+                <td className="border border-black px-2 py-0.5 text-center">{isNotCollected ? "N/A" : row.female}</td>
+                <td className="border border-black px-2 py-0.5 text-center font-semibold">{isNotCollected ? "N/A" : row.male + row.female}</td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
 
