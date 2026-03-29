@@ -354,6 +354,83 @@ const EcologicalProfileTab = () => {
     loadData();
   }, [loadData]);
 
+  // Field-to-section mapping for auto-save tracking
+  const fieldToSection: Record<string, string> = useMemo(() => ({
+    interviewDate: "basic-info",
+    interviewerName: "basic-info",
+    respondentName: "basic-info",
+    respondentRelation: "basic-info",
+    educationData: "education-health",
+    familyPlanning: "education-health",
+    healthData: "health-info",
+    immunizationData: "health-info",
+    pregnantData: "health-info",
+    disabilityData: "health-info",
+    deathData: "health-info",
+    seniorData: "health-info",
+    soloParentCount: "health-info",
+    pwdCount: "health-info",
+    is4PsBeneficiary: "health-info",
+    additionalNotes: "health-info",
+    foodProduction: "environmental",
+    animals: "environmental",
+  }), []);
+
+  // Track censusData changes to mark sections unsaved
+  const prevCensusDataRef = useRef(censusData);
+  useEffect(() => {
+    if (!selectedHousehold) return;
+    const prev = prevCensusDataRef.current;
+    const changed = new Set<string>();
+    for (const key of Object.keys(censusData) as (keyof typeof censusData)[]) {
+      if (JSON.stringify(prev[key]) !== JSON.stringify(censusData[key])) {
+        const section = fieldToSection[key];
+        if (section) changed.add(section);
+      }
+    }
+    prevCensusDataRef.current = censusData;
+    if (changed.size > 0) {
+      setSectionSaveStatus(prev => {
+        const next = { ...prev };
+        changed.forEach(s => { next[s] = 'unsaved'; });
+        return next;
+      });
+    }
+  }, [censusData, selectedHousehold, fieldToSection]);
+
+  // Debounced auto-save
+  useEffect(() => {
+    if (!selectedHousehold) return;
+    const hasUnsaved = Object.values(sectionSaveStatus).some(s => s === 'unsaved');
+    if (!hasUnsaved) return;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      setSectionSaveStatus(prev =>
+        Object.fromEntries(Object.entries(prev).map(([k, v]) => [k, v === 'unsaved' ? 'saving' : v]))
+      );
+      try {
+        await handleSaveCensusData();
+        setSectionSaveStatus(prev =>
+          Object.fromEntries(Object.entries(prev).map(([k, v]) => [k, v === 'saving' ? 'saved' : v]))
+        );
+      } catch {
+        setSectionSaveStatus(prev =>
+          Object.fromEntries(Object.entries(prev).map(([k, v]) => [k, v === 'saving' ? 'unsaved' : v]))
+        );
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [sectionSaveStatus, selectedHousehold]);
+
+  // Reset save status when household changes
+  useEffect(() => {
+    setSectionSaveStatus({});
+  }, [selectedHousehold?.id]);
+
   // Calculate age from birth date
   const calculateAge = (birthDate: string | null): number => {
     if (!birthDate) return 0;
