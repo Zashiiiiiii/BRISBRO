@@ -445,6 +445,26 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
       return;
     }
 
+    if (!consentGiven) {
+      toast.error("Respondent consent is required before submission");
+      return;
+    }
+
+    if (!formData.street_purok.trim()) {
+      toast.error("Purok/Street is required");
+      return;
+    }
+
+    if (!formData.house_number.trim()) {
+      toast.error("House number is required");
+      return;
+    }
+
+    if (!formData.interview_date) {
+      toast.error("Date of interview is required");
+      return;
+    }
+
     // Block submission if there's a pending submission for this household number (only for new submissions)
     if (!isEditMode && householdNumberError && !existingHouseholdId) {
       toast.error("Cannot submit", {
@@ -530,7 +550,9 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
         additional_notes: formData.additional_notes,
         respondent_name: formData.respondent_name,
         respondent_relation: formData.respondent_relation,
-        interview_date: format(new Date(), "yyyy-MM-dd"),
+        interview_date: formData.interview_date,
+        interviewer_name: formData.interviewer_name || null,
+        consent_datetime: new Date().toISOString(),
       };
 
       if (isEditMode && editingSubmissionId) {
