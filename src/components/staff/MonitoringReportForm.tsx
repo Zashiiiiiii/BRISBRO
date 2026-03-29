@@ -470,7 +470,7 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Auto-populate age brackets, inhabitants, and household counts from resident records.
+                    Auto-populate age brackets, sector indicators, inhabitants, and household counts from resident records.
                   </p>
                 </div>
               )}
