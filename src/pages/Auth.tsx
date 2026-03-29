@@ -124,27 +124,7 @@ const Auth = () => {
       }
     };
 
-    // Detect back/forward navigation to /auth — if session exists, sign out immediately
-    const isBackForward = performance.getEntriesByType?.("navigation")?.[0] &&
-      (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming).type === "back_forward";
-
-    if (isBackForward) {
-      // User arrived via back/forward — sign out if there's an active session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          markResidentForcedLogout();
-          supabase.auth.signOut({ scope: 'local' }).then(() => {
-            // Clear any Supabase session keys
-            Object.keys(localStorage).forEach(key => {
-              if (key.startsWith('sb-') && key.includes('-auth-token')) {
-                localStorage.removeItem(key);
-              }
-            });
-          });
-        }
-      });
-      return;
-    }
+    // Back/forward sign-out is now handled by useAuthGuard above
 
     // Check existing session on mount — if already logged in, redirect away
     const checkExistingSession = async () => {
@@ -174,25 +154,7 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate, loginInitiated]);
 
-  // Listen for popstate (back/forward) while on auth page — sign out if session exists
-  useEffect(() => {
-    const handlePopState = () => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          markResidentForcedLogout();
-          supabase.auth.signOut({ scope: 'local' });
-          Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('sb-') && key.includes('-auth-token')) {
-              localStorage.removeItem(key);
-            }
-          });
-        }
-      });
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  // Popstate sign-out is now handled by useAuthGuard above
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
