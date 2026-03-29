@@ -298,6 +298,7 @@ const Auth = () => {
         // Use hard redirect to prevent /auth from remaining in browser history
         window.location.replace("/resident/dashboard");
         return;
+      }
     } catch (error: any) {
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
