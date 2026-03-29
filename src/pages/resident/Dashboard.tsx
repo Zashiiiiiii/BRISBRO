@@ -241,7 +241,27 @@ const ResidentDashboard = () => {
   const pullThreshold = 60;
   const swipeThreshold = 50;
 
-  // Auth is now handled by ResidentProtectedRoute wrapper
+  // Browser back button = auto logout for security
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+
+    const handlePopState = async () => {
+      markResidentForcedLogout();
+      if (user && profile) {
+        const fullName = profile.firstName && profile.lastName 
+          ? `${profile.firstName} ${profile.lastName}`
+          : profile.fullName || "Unknown Resident";
+        await logResidentLogout(fullName, user.id);
+      }
+      await logout();
+      secureLogoutRedirect("/auth");
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [user, profile, logout]);
+
+
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -739,6 +759,19 @@ const ResidentDashboard = () => {
                 setActiveTab("requests");
               }}
             />
+          )}
+
+          {activeTab === "requests" && (
+            <>
+              <div className="flex items-center gap-4 mb-6">
+                <SidebarTrigger />
+                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Dashboard
+                </Button>
+              </div>
+              <RequestsContent onNewRequest={() => setActiveTab("request")} />
+            </>
           )}
 
           {activeTab === "profile" && (
