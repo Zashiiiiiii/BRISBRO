@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,6 +40,9 @@ import {
   ArrowUp,
   ArrowDown,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
 } from "lucide-react";
 import { createAuditLog } from "@/utils/auditLog";
 import { useStaffAuth } from "@/hooks/useStaffAuth";
@@ -174,7 +177,10 @@ const EcologicalProfileTab = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("basic-info");
+  const [openSections, setOpenSections] = useState<string[]>(["basic-info"]);
+  const [sectionSaveStatus, setSectionSaveStatus] = useState<Record<string, 'saved' | 'unsaved' | 'saving'>>({});
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Sort state for households table
   const [sortField, setSortField] = useState<'household_number' | 'address' | 'members' | 'created_at'>('created_at');
