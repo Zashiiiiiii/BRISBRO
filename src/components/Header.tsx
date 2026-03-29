@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import StaffLoginModal from "@/components/StaffLoginModal";
+import ResidentLoginModal from "@/components/ResidentLoginModal";
 import { useTheme } from "@/components/theme-provider";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [staffLoginOpen, setStaffLoginOpen] = useState(false);
+  const [residentLoginOpen, setResidentLoginOpen] = useState(false);
   const location = useLocation();
   const { theme, setTheme } = useTheme();
   
@@ -80,12 +82,10 @@ const Header = () => {
                 <Moon className="h-5 w-5" />
               )}
             </Button>
-            <Link to="/auth">
-              <Button variant="default" size="sm" className="gap-2">
-                <User className="h-4 w-4" />
-                Resident Portal
-              </Button>
-            </Link>
+            <Button variant="default" size="sm" className="gap-2" onClick={() => setResidentLoginOpen(true)}>
+              <User className="h-4 w-4" />
+              Resident Portal
+            </Button>
             <Button 
               variant="outline" 
               size="sm"
@@ -143,15 +143,18 @@ const Header = () => {
                 Contact
               </Link>
               <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                <Link 
-                  to="/auth"
-                  onClick={() => setMobileMenuOpen(false)}
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="w-full gap-2"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setResidentLoginOpen(true);
+                  }}
                 >
-                  <Button variant="default" size="sm" className="w-full gap-2">
-                    <User className="h-4 w-4" />
-                    Resident Portal
-                  </Button>
-                </Link>
+                  <User className="h-4 w-4" />
+                  Resident Portal
+                </Button>
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
@@ -185,6 +188,7 @@ const Header = () => {
         )}
       </nav>
       <StaffLoginModal open={staffLoginOpen} onOpenChange={setStaffLoginOpen} />
+      <ResidentLoginModal open={residentLoginOpen} onOpenChange={setResidentLoginOpen} />
     </header>
   );
 };
