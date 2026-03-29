@@ -20,8 +20,8 @@ import { logResidentLogin, logResidentRegistration } from "@/utils/auditLog";
 import {
   clearResidentForcedLogout,
   clearStaffForcedLogout,
-  markResidentForcedLogout,
 } from "@/utils/authNavigationGuard";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

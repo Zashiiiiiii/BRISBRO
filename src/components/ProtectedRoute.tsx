@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useCallback } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useResidentAuth } from '@/hooks/useResidentAuth';
 import { useStaffAuthContext } from '@/context/StaffAuthContext';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { hasPermission, FeatureKey } from '@/utils/rolePermissions';
 import { isStaffForcedLogout, isResidentForcedLogout, secureLogoutRedirect } from '@/utils/authNavigationGuard';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 interface StaffProtectedRouteProps {
   children: ReactNode;
