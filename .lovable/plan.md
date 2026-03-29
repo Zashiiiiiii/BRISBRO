@@ -1,45 +1,43 @@
 
 
-## Plan: Improve "New RBI Form C Report" UX — Semester Gate, Coverage Period, Data Quality Warnings
+## Plan: Update Staff Dashboard Quick Actions
 
 ### Summary
-Three UI-only enhancements to `MonitoringReportForm.tsx` plus a small edge function update to return data quality counts.
+Add three new quick-action buttons to the Staff Dashboard home tab for RBI Form C, Ecological Submissions, and Households/Census. Keep existing buttons.
 
-### 1. Make Semester required before "Sync from Database"
+### Changes
 
-**In `MonitoringReportForm.tsx`:**
-- Disable the "Sync from Database" button when `semester` is empty/unset
-- Show a helper message like "Please select a semester first" when hovering or below the button
-- Remove the auto-sync `useEffect` (lines 261-265) — instead, only auto-sync if semester is already set on mount
+**File: `src/pages/StaffDashboard.tsx` (~lines 2012-2025)**
 
-### 2. Show "Coverage Period" summary near Sync button
+Add three buttons after the existing ones inside the Quick Actions `flex` container:
 
-**In `MonitoringReportForm.tsx`:**
-- Add a computed string based on `semester` + `calendarYear`:
-  - `"1st"` → "Jan – Jun {year}"
-  - `"2nd"` → "Jul – Dec {year}"
-- Display as a `Badge` or text span next to the Sync button area (inside the sync row, lines 456-475)
+```tsx
+{/* Existing buttons stay */}
 
-### 3. Data Quality summary after sync — edge function + frontend
+{hasPermission(userRole, "monitoring_reports") && (
+  <Button variant="outline" onClick={() => setActiveTab("monitoring-reports")}>
+    <FileText className="h-4 w-4 mr-2" />
+    New RBI Form C Report
+  </Button>
+)}
+{hasPermission(userRole, "ecological_submissions") && (
+  <Button variant="outline" onClick={() => setActiveTab("ecological-submissions")}>
+    <ClipboardList className="h-4 w-4 mr-2" /> {/* or appropriate icon */}
+    Review Ecological Submissions
+  </Button>
+)}
+{hasPermission(userRole, "manage_households") && (
+  <Button variant="outline" onClick={() => setActiveTab("households")}>
+    <Home className="h-4 w-4 mr-2" />
+    Manage Households / Census
+  </Button>
+)}
+```
 
-**Edge function (`supabase/functions/staff-auth/index.ts`, sync-monitoring-report-data action):**
-- After fetching residents (line 2389-2401), compute and include in the response:
-  - `missing_birth_date`: count of residents where `birth_date` is null
-  - `missing_gender`: count where `gender` is null or empty
-  - `not_linked_to_household`: count where `household_id` is null
-- Add `household_id` to the select query (line 2391)
-- Add a `data_quality` object to the response alongside existing fields
-
-**In `MonitoringReportForm.tsx`:**
-- Add state: `dataQuality: { missingBirthDate: number; missingGender: number; notLinkedToHousehold: number } | null`
-- In `handleSync`, extract `data.data_quality` from the response and set state
-- After the sync button area, if `dataQuality` is set and any count > 0, render an `Alert` (warning variant) showing:
-  - "⚠ X residents missing birth date"
-  - "⚠ X residents missing gender"
-  - "⚠ X residents not linked to a household"
-- These are warnings only — do not block Save/Submit
+- All three features are permitted for both Admin and Secretary per `rolePermissions.ts`, so they'll be visible to both roles.
+- Icons: reuse `FileText` (already imported), add `ClipboardList` and `Home` from lucide-react if not already imported.
+- Each button navigates to the corresponding existing tab — no new routes needed.
 
 ### Files Modified
-- `src/components/staff/MonitoringReportForm.tsx` — semester gate, coverage period, data quality UI
-- `supabase/functions/staff-auth/index.ts` — add `data_quality` to sync response
+- `src/pages/StaffDashboard.tsx` — add 3 buttons + any missing icon imports
 
