@@ -469,26 +469,55 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {!readOnly && (
-                <div className="space-y-2 md:col-span-2 lg:col-span-3">
+                <div className="space-y-3 md:col-span-2 lg:col-span-3">
                   <div className="flex items-center gap-3 flex-wrap">
                     <Button
                       variant="outline"
                       onClick={handleSync}
-                      disabled={isSyncing}
+                      disabled={isSyncing || !semester}
                       className="w-full sm:w-auto"
                     >
                       {isSyncing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                       Sync from Database
                     </Button>
+                    {semester && calendarYear && (
+                      <Badge variant="secondary" className="text-xs">
+                        Coverage: {semester === "1st" ? "Jan – Jun" : "Jul – Dec"} {calendarYear}
+                      </Badge>
+                    )}
                     {lastSyncedAt && (
                       <span className="text-xs text-muted-foreground">
                         Last synced: {format(lastSyncedAt, "MMM d, yyyy h:mm a")}
                       </span>
                     )}
                   </div>
+                  {!semester && (
+                    <p className="text-xs text-destructive">
+                      Please select a semester below before syncing data.
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     Auto-populate age brackets, sector indicators, inhabitants, and household counts from resident records.
                   </p>
+                  {dataQuality && (dataQuality.missingBirthDate > 0 || dataQuality.missingGender > 0 || dataQuality.notLinkedToHousehold > 0) && (
+                    <Alert className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                      <AlertDescription className="text-sm">
+                        <span className="font-medium">Data Quality Warnings</span> — these do not block submission:
+                        <ul className="mt-1 list-disc list-inside text-xs space-y-0.5">
+                          {dataQuality.missingBirthDate > 0 && (
+                            <li>{dataQuality.missingBirthDate} resident{dataQuality.missingBirthDate > 1 ? "s" : ""} missing birth date</li>
+                          )}
+                          {dataQuality.missingGender > 0 && (
+                            <li>{dataQuality.missingGender} resident{dataQuality.missingGender > 1 ? "s" : ""} missing gender</li>
+                          )}
+                          {dataQuality.notLinkedToHousehold > 0 && (
+                            <li>{dataQuality.notLinkedToHousehold} resident{dataQuality.notLinkedToHousehold > 1 ? "s" : ""} not linked to a household</li>
+                          )}
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               )}
               {readOnly && lastSyncedAt && (
