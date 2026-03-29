@@ -460,49 +460,52 @@ const Auth = () => {
   // Show success message after registration
   if (registrationSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-        <Card className="w-full max-w-md shadow-lg border-border/50">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-foreground">
-              Registration Submitted!
-            </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Your account is pending approval
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert className="border-primary/20 bg-primary/5">
-              <Info className="h-4 w-4 text-primary" />
-              <AlertDescription className="text-sm">
-                Your registration has been submitted and is awaiting approval from the Barangay admin. 
-                You will be able to log in once your account is approved.
-              </AlertDescription>
-            </Alert>
-            <p className="text-sm text-muted-foreground text-center">
-              This usually takes 1-2 business days. You may contact the Barangay office for faster processing.
-            </p>
-            <Button 
-              className="w-full" 
-              onClick={() => {
-                setRegistrationSuccess(false);
-                setActiveTab("login");
-              }}
-            >
-              Back to Login
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => navigate("/")}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <div className="relative z-10 w-full max-w-md mx-4 animate-in fade-in-0 zoom-in-95 duration-200">
+          <Card className="shadow-2xl border-border/50">
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-foreground">
+                Registration Submitted!
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Your account is pending approval
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert className="border-primary/20 bg-primary/5">
+                <Info className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  Your registration has been submitted and is awaiting approval from the Barangay admin. 
+                  You will be able to log in once your account is approved.
+                </AlertDescription>
+              </Alert>
+              <p className="text-sm text-muted-foreground text-center">
+                This usually takes 1-2 business days. You may contact the Barangay office for faster processing.
+              </p>
+              <Button 
+                className="w-full" 
+                onClick={() => {
+                  setRegistrationSuccess(false);
+                  setActiveTab("login");
+                }}
+              >
+                Back to Login
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate("/")}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
