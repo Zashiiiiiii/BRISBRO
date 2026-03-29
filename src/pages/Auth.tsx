@@ -204,7 +204,7 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-
+    setLoginInitiated(true);
     try {
       // Clear forced logout flags BEFORE signing in so onAuthStateChange can process the session
       clearResidentForcedLogout();
@@ -295,8 +295,9 @@ const Auth = () => {
 
 
         toast.success("Login successful!");
-        navigate("/resident/dashboard", { replace: true });
-      }
+        // Use hard redirect to prevent /auth from remaining in browser history
+        window.location.replace("/resident/dashboard");
+        return;
     } catch (error: any) {
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
