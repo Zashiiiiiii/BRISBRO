@@ -2850,56 +2850,139 @@ const EcologicalProfileTab = () => {
         </Card>
       </div>
 
-      {/* Selected Household Banner */}
-      {selectedHousehold && (
-        <Alert className="border-primary bg-primary/5">
-          <Home className="h-4 w-4" />
-          <AlertTitle>Selected: Household {selectedHousehold.household_number}</AlertTitle>
-          <AlertDescription>
-            {selectedHousehold.street_purok || selectedHousehold.address || "No address"} • 
-            {selectedHousehold.residents?.length || 0} members
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Sticky Selected Household Bar */}
+      <div className="sticky top-0 z-10 bg-background border-b pb-3">
+        {selectedHousehold ? (
+          <Alert className="border-primary bg-primary/5">
+            <Home className="h-4 w-4" />
+            <AlertTitle className="flex items-center justify-between">
+              <span>Selected: Household {selectedHousehold.household_number}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setOpenSections(prev => prev.includes("basic-info") ? prev : [...prev, "basic-info"]);
+                  setTimeout(() => {
+                    sectionRefs.current["basic-info"]?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 100);
+                }}
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Change Household
+              </Button>
+            </AlertTitle>
+            <AlertDescription>
+              {selectedHousehold.street_purok || selectedHousehold.address || "No address"} • 
+              {selectedHousehold.residents?.length || 0} members
+              {(() => {
+                const head = selectedHousehold.residents?.find(r => r.is_head_of_household || r.relation_to_head?.toLowerCase() === "head");
+                return head ? ` • Head: ${head.first_name} ${head.last_name}` : "";
+              })()}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Alert className="border-muted">
+            <Home className="h-4 w-4" />
+            <AlertTitle>No household selected</AlertTitle>
+            <AlertDescription>Expand Basic Info below to choose a household.</AlertDescription>
+          </Alert>
+        )}
+      </div>
 
-      {/* Tabbed Form */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-7 w-full">
-          {CENSUS_TABS.map((tab) => (
-            <TabsTrigger key={tab.id} value={tab.id} className="text-xs md:text-sm">
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* Accordion Form Sections */}
+      <Accordion
+        type="multiple"
+        value={openSections}
+        onValueChange={setOpenSections}
+        className="w-full space-y-2"
+      >
+        {CENSUS_TABS.map((tab, index) => {
+          const status = sectionSaveStatus[tab.id];
+          const TabIcon = tab.icon;
+          const prevTab = index > 0 ? CENSUS_TABS[index - 1] : null;
+          const nextTab = index < CENSUS_TABS.length - 1 ? CENSUS_TABS[index + 1] : null;
 
-        <TabsContent value="basic-info" className="mt-6">
-          {renderBasicInfoTab()}
-        </TabsContent>
+          const navigateToSection = (targetId: string) => {
+            setOpenSections(prev => {
+              const next = prev.filter(s => s !== tab.id);
+              if (!next.includes(targetId)) next.push(targetId);
+              return next;
+            });
+            setTimeout(() => {
+              sectionRefs.current[targetId]?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 150);
+          };
 
-        <TabsContent value="housing" className="mt-6">
-          {renderHousingTab()}
-        </TabsContent>
+          const renderContent = () => {
+            switch (tab.id) {
+              case "basic-info": return renderBasicInfoTab();
+              case "housing": return renderHousingTab();
+              case "services": return renderServicesTab();
+              case "education-health": return renderEducationHealthTab();
+              case "household-members": return renderHouseholdMembersTab();
+              case "environmental": return renderEnvironmentalTab();
+              case "health-info": return renderHealthInfoTab();
+              default: return null;
+            }
+          };
 
-        <TabsContent value="services" className="mt-6">
-          {renderServicesTab()}
-        </TabsContent>
-
-        <TabsContent value="education-health" className="mt-6">
-          {renderEducationHealthTab()}
-        </TabsContent>
-
-        <TabsContent value="household-members" className="mt-6">
-          {renderHouseholdMembersTab()}
-        </TabsContent>
-
-        <TabsContent value="environmental" className="mt-6">
-          {renderEnvironmentalTab()}
-        </TabsContent>
-
-        <TabsContent value="health-info" className="mt-6">
-          {renderHealthInfoTab()}
-        </TabsContent>
-      </Tabs>
+          return (
+            <AccordionItem
+              key={tab.id}
+              value={tab.id}
+              ref={(el) => { if (el) sectionRefs.current[tab.id] = el as unknown as HTMLDivElement; }}
+              id={`section-${tab.id}`}
+            >
+              <AccordionTrigger className="hover:no-underline px-4 py-3 bg-muted/30 rounded-t-lg [&[data-state=closed]]:rounded-b-lg">
+                <div className="flex items-center gap-3 flex-1">
+                  <TabIcon className="h-4 w-4 text-primary" />
+                  <span className="font-medium">{tab.label}</span>
+                  {status && selectedHousehold && (
+                    <span className="ml-auto mr-4 flex items-center gap-1 text-xs">
+                      {status === 'saved' && (
+                        <>
+                          <Circle className="h-2 w-2 fill-green-500 text-green-500" />
+                          <span className="text-muted-foreground">Saved</span>
+                        </>
+                      )}
+                      {status === 'unsaved' && (
+                        <>
+                          <Circle className="h-2 w-2 fill-orange-500 text-orange-500" />
+                          <span className="text-muted-foreground">Unsaved</span>
+                        </>
+                      )}
+                      {status === 'saving' && (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                          <span className="text-muted-foreground">Saving...</span>
+                        </>
+                      )}
+                    </span>
+                  )}
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pt-4 pb-6">
+                {renderContent()}
+                {/* Section Navigation Buttons */}
+                <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                  {prevTab ? (
+                    <Button variant="outline" size="sm" onClick={() => navigateToSection(prevTab.id)}>
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous: {prevTab.label}
+                    </Button>
+                  ) : <div />}
+                  {nextTab ? (
+                    <Button variant="outline" size="sm" onClick={() => navigateToSection(nextTab.id)}>
+                      Next: {nextTab.label}
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  ) : <div />}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
