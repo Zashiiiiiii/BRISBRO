@@ -1527,8 +1527,8 @@ const EcologicalProfileTab = () => {
               <SelectContent>
                 <SelectItem value="created_at-desc">Newest First</SelectItem>
                 <SelectItem value="created_at-asc">Oldest First</SelectItem>
-                <SelectItem value="household_number-asc">Household # (A-Z)</SelectItem>
-                <SelectItem value="household_number-desc">Household # (Z-A)</SelectItem>
+                <SelectItem value="household_number-asc">Household # (1-700)</SelectItem>
+                <SelectItem value="household_number-desc">Household # (700-1)</SelectItem>
                 <SelectItem value="address-asc">Address (A-Z)</SelectItem>
                 <SelectItem value="members-desc">Most Members</SelectItem>
                 <SelectItem value="members-asc">Fewest Members</SelectItem>
