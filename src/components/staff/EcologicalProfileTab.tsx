@@ -191,6 +191,7 @@ const EcologicalProfileTab = () => {
   // Census form state
   const [censusData, setCensusData] = useState({
     interviewDate: format(new Date(), "yyyy-MM-dd"),
+    interviewerName: "",
     respondentName: "",
     respondentRelation: "",
     // Health data
