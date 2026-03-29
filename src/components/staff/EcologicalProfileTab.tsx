@@ -428,7 +428,9 @@ const EcologicalProfileTab = () => {
       let comparison = 0;
       switch (sortField) {
         case 'household_number':
-          comparison = (a.household_number || '').localeCompare(b.household_number || '');
+          const numA = parseInt((a.household_number || '').replace(/\D/g, ''), 10) || 0;
+          const numB = parseInt((b.household_number || '').replace(/\D/g, ''), 10) || 0;
+          comparison = numA - numB;
           break;
         case 'address':
           const addressA = a.street_purok || a.address || '';
