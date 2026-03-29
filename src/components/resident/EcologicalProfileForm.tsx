@@ -647,8 +647,15 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
       additional_notes: submission.additional_notes || "",
       respondent_name: submission.respondent_name || "",
       respondent_relation: submission.respondent_relation || "",
+      interview_date: submission.interview_date || format(new Date(), "yyyy-MM-dd"),
+      interviewer_name: submission.interviewer_name || "",
       other_values: submission.health_data?.other_values || {},
     });
+    
+    // If submission had consent, pre-check consent
+    if (submission.consent_datetime) {
+      setConsentGiven(true);
+    }
     
     setEditingSubmissionId(submission.id);
     setIsEditMode(true);
