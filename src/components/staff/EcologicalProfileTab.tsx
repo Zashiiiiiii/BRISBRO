@@ -181,6 +181,7 @@ const EcologicalProfileTab = () => {
   const [sectionSaveStatus, setSectionSaveStatus] = useState<Record<string, 'saved' | 'unsaved' | 'saving'>>({});
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLoadingCensusRef = useRef(false);
   
   // Sort state for households table
   const [sortField, setSortField] = useState<'household_number' | 'address' | 'members' | 'created_at'>('created_at');
@@ -380,6 +381,10 @@ const EcologicalProfileTab = () => {
   const prevCensusDataRef = useRef(censusData);
   useEffect(() => {
     if (!selectedHousehold) return;
+    if (isLoadingCensusRef.current) {
+      prevCensusDataRef.current = censusData;
+      return;
+    }
     const prev = prevCensusDataRef.current;
     const changed = new Set<string>();
     for (const key of Object.keys(censusData) as (keyof typeof censusData)[]) {
@@ -410,7 +415,7 @@ const EcologicalProfileTab = () => {
         Object.fromEntries(Object.entries(prev).map(([k, v]) => [k, v === 'unsaved' ? 'saving' : v]))
       );
       try {
-        await handleSaveCensusData();
+        await handleSaveCensusData(true);
         setSectionSaveStatus(prev =>
           Object.fromEntries(Object.entries(prev).map(([k, v]) => [k, v === 'saving' ? 'saved' : v]))
         );
@@ -429,6 +434,7 @@ const EcologicalProfileTab = () => {
   // Reset save status when household changes
   useEffect(() => {
     setSectionSaveStatus({});
+    prevCensusDataRef.current = censusData;
   }, [selectedHousehold?.id]);
 
   // Calculate age from birth date
@@ -536,6 +542,7 @@ const EcologicalProfileTab = () => {
 
   // Handle household selection - load existing census data from approved submissions
   const handleSelectHousehold = async (household: HouseholdData) => {
+    isLoadingCensusRef.current = true;
     setSelectedHousehold(household);
     const head = household.residents?.find(
       (r) => r.is_head_of_household || r.relation_to_head?.toLowerCase() === "head"
@@ -632,10 +639,13 @@ const EcologicalProfileTab = () => {
       console.error("Error loading census data:", error);
       toast.success(`Selected household: ${household.household_number}`);
     }
+    setTimeout(() => {
+      isLoadingCensusRef.current = false;
+    }, 0);
   };
 
   // Save census data to ecological_profile_submissions using RPC
-  const handleSaveCensusData = async () => {
+  const handleSaveCensusData = async (skipReload = false) => {
     if (!selectedHousehold) {
       toast.error("Please select a household first");
       return;
@@ -740,60 +750,58 @@ const EcologicalProfileTab = () => {
 
       toast.success(`Census data saved successfully! Submission #${data}`);
       
-      // Reload data and re-select the household to refresh the form with saved values
-      await loadData();
-      
-      // Re-fetch and select the household to reload the saved census data
-      if (selectedHousehold) {
-        // Re-fetch updated household data
-        const { data: updatedHouseholds } = await supabase.rpc("get_all_households_for_staff");
-        if (updatedHouseholds) {
-          const updatedHousehold = updatedHouseholds.find(
-            (h: any) => h.id === selectedHousehold.id
-          );
-          if (updatedHousehold) {
-            // Get residents for this household
-            const { data: residents } = await supabase.rpc("get_all_residents_for_staff");
-            const householdResidents = (residents?.filter(
-              (r: any) => r.household_id === updatedHousehold.id
-            ) || []).map((r: any) => ({
-              ...r,
-              dialects_spoken: Array.isArray(r.dialects_spoken) ? r.dialects_spoken : [],
-            })) as ResidentData[];
-            
-            // Cast household data properly
-            const typedHousehold: HouseholdData = {
-              id: updatedHousehold.id,
-              household_number: updatedHousehold.household_number,
-              address: updatedHousehold.address,
-              barangay: updatedHousehold.barangay,
-              city: updatedHousehold.city,
-              province: updatedHousehold.province,
-              house_number: updatedHousehold.house_number,
-              street_purok: updatedHousehold.street_purok,
-              district: updatedHousehold.district,
-              years_staying: updatedHousehold.years_staying,
-              place_of_origin: updatedHousehold.place_of_origin,
-              ethnic_group: updatedHousehold.ethnic_group,
-              house_ownership: updatedHousehold.house_ownership,
-              lot_ownership: updatedHousehold.lot_ownership,
-              dwelling_type: updatedHousehold.dwelling_type,
-              lighting_source: updatedHousehold.lighting_source,
-              water_supply_level: updatedHousehold.water_supply_level,
-              water_storage: Array.isArray(updatedHousehold.water_storage) ? (updatedHousehold.water_storage as string[]) : [],
-              food_storage_type: Array.isArray(updatedHousehold.food_storage_type) ? (updatedHousehold.food_storage_type as string[]) : [],
-              toilet_facilities: Array.isArray(updatedHousehold.toilet_facilities) ? (updatedHousehold.toilet_facilities as string[]) : [],
-              drainage_facilities: Array.isArray(updatedHousehold.drainage_facilities) ? (updatedHousehold.drainage_facilities as string[]) : [],
-              garbage_disposal: Array.isArray(updatedHousehold.garbage_disposal) ? (updatedHousehold.garbage_disposal as string[]) : [],
-              communication_services: Array.isArray(updatedHousehold.communication_services) ? (updatedHousehold.communication_services as string[]) : [],
-              means_of_transport: Array.isArray(updatedHousehold.means_of_transport) ? (updatedHousehold.means_of_transport as string[]) : [],
-              info_sources: Array.isArray(updatedHousehold.info_sources) ? (updatedHousehold.info_sources as string[]) : [],
-              interview_date: updatedHousehold.interview_date,
-              residents: householdResidents,
-            };
-            
-            // Reload the household with residents
-            await handleSelectHousehold(typedHousehold);
+      if (!skipReload) {
+        // Reload data and re-select the household to refresh the form with saved values
+        await loadData();
+        
+        // Re-fetch and select the household to reload the saved census data
+        if (selectedHousehold) {
+          const { data: updatedHouseholds } = await supabase.rpc("get_all_households_for_staff");
+          if (updatedHouseholds) {
+            const updatedHousehold = updatedHouseholds.find(
+              (h: any) => h.id === selectedHousehold.id
+            );
+            if (updatedHousehold) {
+              const { data: residents } = await supabase.rpc("get_all_residents_for_staff");
+              const householdResidents = (residents?.filter(
+                (r: any) => r.household_id === updatedHousehold.id
+              ) || []).map((r: any) => ({
+                ...r,
+                dialects_spoken: Array.isArray(r.dialects_spoken) ? r.dialects_spoken : [],
+              })) as ResidentData[];
+              
+              const typedHousehold: HouseholdData = {
+                id: updatedHousehold.id,
+                household_number: updatedHousehold.household_number,
+                address: updatedHousehold.address,
+                barangay: updatedHousehold.barangay,
+                city: updatedHousehold.city,
+                province: updatedHousehold.province,
+                house_number: updatedHousehold.house_number,
+                street_purok: updatedHousehold.street_purok,
+                district: updatedHousehold.district,
+                years_staying: updatedHousehold.years_staying,
+                place_of_origin: updatedHousehold.place_of_origin,
+                ethnic_group: updatedHousehold.ethnic_group,
+                house_ownership: updatedHousehold.house_ownership,
+                lot_ownership: updatedHousehold.lot_ownership,
+                dwelling_type: updatedHousehold.dwelling_type,
+                lighting_source: updatedHousehold.lighting_source,
+                water_supply_level: updatedHousehold.water_supply_level,
+                water_storage: Array.isArray(updatedHousehold.water_storage) ? (updatedHousehold.water_storage as string[]) : [],
+                food_storage_type: Array.isArray(updatedHousehold.food_storage_type) ? (updatedHousehold.food_storage_type as string[]) : [],
+                toilet_facilities: Array.isArray(updatedHousehold.toilet_facilities) ? (updatedHousehold.toilet_facilities as string[]) : [],
+                drainage_facilities: Array.isArray(updatedHousehold.drainage_facilities) ? (updatedHousehold.drainage_facilities as string[]) : [],
+                garbage_disposal: Array.isArray(updatedHousehold.garbage_disposal) ? (updatedHousehold.garbage_disposal as string[]) : [],
+                communication_services: Array.isArray(updatedHousehold.communication_services) ? (updatedHousehold.communication_services as string[]) : [],
+                means_of_transport: Array.isArray(updatedHousehold.means_of_transport) ? (updatedHousehold.means_of_transport as string[]) : [],
+                info_sources: Array.isArray(updatedHousehold.info_sources) ? (updatedHousehold.info_sources as string[]) : [],
+                interview_date: updatedHousehold.interview_date,
+                residents: householdResidents,
+              };
+              
+              await handleSelectHousehold(typedHousehold);
+            }
           }
         }
       }
@@ -2819,7 +2827,7 @@ const EcologicalProfileTab = () => {
           <CardContent>
             <div className="flex flex-wrap gap-4">
               <Button
-                onClick={handleSaveCensusData}
+                onClick={() => handleSaveCensusData()}
                 variant="default"
                 disabled={isSaving || !selectedHousehold}
                 className="bg-accent hover:bg-accent/90"
