@@ -2261,9 +2261,6 @@ const EcologicalProfileTab = () => {
                       <TableCell>{i + 1}</TableCell>
                       <TableCell className="font-medium">
                         {r.last_name}, {r.first_name} {r.middle_name || ""} {r.suffix || ""}
-                        {r.is_head_of_household && (
-                          <Badge variant="outline" className="ml-2">Head</Badge>
-                        )}
                       </TableCell>
                       <TableCell>{r.relation_to_head || (r.is_head_of_household ? "Head" : "-")}</TableCell>
                       <TableCell>{r.birth_date ? format(new Date(r.birth_date), "MM/dd/yyyy") : "-"}</TableCell>
