@@ -25,6 +25,7 @@ interface HouseholdMember {
   is_head_of_household?: boolean;
   is_pwd?: boolean;
   is_solo_parent?: boolean;
+  is_tenant?: boolean;
 }
 
 export interface EcologicalSubmission {
@@ -241,6 +242,7 @@ export const exportMembersToCSV = (submissions: EcologicalSubmission[]): string 
     'Is Head of Household',
     'Is PWD',
     'Is Solo Parent',
+    'Is Tenant',
   ];
   
   const rows: string[] = [memberHeaders.map(escapeCSV).join(',')];
@@ -269,6 +271,7 @@ export const exportMembersToCSV = (submissions: EcologicalSubmission[]): string 
           member.is_head_of_household ? 'Yes' : 'No',
           member.is_pwd ? 'Yes' : 'No',
           member.is_solo_parent ? 'Yes' : 'No',
+          member.is_tenant ? 'Yes' : 'No',
         ];
         rows.push(values.map(escapeCSV).join(','));
       });
