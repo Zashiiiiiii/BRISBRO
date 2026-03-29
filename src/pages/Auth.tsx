@@ -88,6 +88,9 @@ const Auth = () => {
   // Track whether login was initiated from this page to prevent onAuthStateChange double-nav
   const [loginInitiated, setLoginInitiated] = useState(false);
 
+  // Shared auth guard: handles back/forward sign-out on login page
+  useAuthGuard({ type: 'resident', isLoginPage: true });
+
   // Check if user is already logged in and approved
   useEffect(() => {
     const checkApprovalAndRedirect = async (userId: string, email: string) => {
