@@ -508,7 +508,13 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={() => navigate("/")}
+      />
+
       <DataPrivacyModal 
         open={showPrivacyModal} 
         onOpenChange={setShowPrivacyModal}
@@ -519,35 +525,45 @@ const Auth = () => {
         }}
       />
 
-      <div className="w-full max-w-md">
-        <Button
-          variant="ghost"
-          className="mb-4"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Button>
-
-        <Card className="shadow-lg border-border/50">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-8 w-8 text-primary" />
+      {/* Modal Content */}
+      <div className="relative z-10 w-full max-w-md mx-4 animate-in fade-in-0 zoom-in-95 duration-200">
+        <Card className="shadow-2xl border-border/50 max-h-[90vh] overflow-y-auto">
+          <CardHeader className="text-center pb-2 sticky top-0 bg-card z-10 border-b border-border/30">
+            <div className="flex items-center justify-between mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/")}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                Back
+              </Button>
+              <Link
+                to="/"
+                className="text-xs text-muted-foreground hover:text-primary inline-flex items-center"
+              >
+                <Shield className="mr-1 h-3 w-3" />
+                Staff Login
+              </Link>
             </div>
-            <CardTitle className="text-2xl font-bold text-foreground">
+            <div className="mx-auto mb-2 h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-7 w-7 text-primary" />
+            </div>
+            <CardTitle className="text-xl font-bold text-foreground">
               Resident Portal
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-muted-foreground text-sm">
               Access barangay services online
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="pt-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                <TabsTrigger value="status">Check Status</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="login" className="text-xs sm:text-sm">Login</TabsTrigger>
+                <TabsTrigger value="signup" className="text-xs sm:text-sm">Sign Up</TabsTrigger>
+                <TabsTrigger value="status" className="text-xs sm:text-sm">Check Status</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -618,9 +634,9 @@ const Auth = () => {
                   </AlertDescription>
                 </Alert>
 
-                <form onSubmit={handleSignup} className="space-y-4">
+                <form onSubmit={handleSignup} className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label htmlFor="signup-firstname">First Name</Label>
                       <Input
                         id="signup-firstname"
@@ -631,7 +647,7 @@ const Auth = () => {
                         required
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label htmlFor="signup-lastname">Last Name</Label>
                       <Input
                         id="signup-lastname"
@@ -644,7 +660,7 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="signup-middlename">Middle Name (Optional)</Label>
                     <Input
                       id="signup-middlename"
@@ -655,7 +671,7 @@ const Auth = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label>Birth Date</Label>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -670,7 +686,7 @@ const Auth = () => {
                           {signupBirthDate ? format(signupBirthDate, "MMMM d, yyyy") : "Select your birth date"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 z-[60]" align="start">
                         <Calendar
                           mode="single"
                           selected={signupBirthDate}
@@ -686,7 +702,7 @@ const Auth = () => {
                     </Popover>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="signup-contact">Contact Number</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -702,7 +718,7 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="signup-address">Address</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -718,7 +734,7 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="signup-email">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -734,7 +750,7 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="signup-password">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -750,7 +766,7 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="signup-confirm">Confirm Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -897,16 +913,6 @@ const Auth = () => {
                 </div>
               </TabsContent>
             </Tabs>
-
-            <div className="mt-6 text-center">
-              <Link
-                to="/"
-                className="text-sm text-muted-foreground hover:text-primary inline-flex items-center"
-              >
-                <Shield className="mr-1 h-4 w-4" />
-                Staff Login
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>
