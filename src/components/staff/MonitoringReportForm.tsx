@@ -158,8 +158,8 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
           setSectors(
             SECTOR_ITEMS.map((s) => ({
               ...s,
-              male: sd[s.key]?.male || 0,
-              female: sd[s.key]?.female || 0,
+              male: sd[s.key]?.male ?? 0,
+              female: sd[s.key]?.female ?? 0,
             }))
           );
         }
@@ -194,8 +194,8 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
     let totalMale = 0;
     let totalFemale = 0;
     sectors.forEach((r) => {
-      totalMale += r.male;
-      totalFemale += r.female;
+      if (r.male >= 0) totalMale += r.male;
+      if (r.female >= 0) totalFemale += r.female;
     });
     return { totalMale, totalFemale };
   }, [sectors]);
@@ -603,11 +603,24 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sectors.map((row, index) => (
+                  {sectors.map((row, index) => {
+                    const isNotCollected = row.male === -1 && row.female === -1;
+                    const isTotalOnly = row.key === 'pwd' || row.key === 'solo_parents';
+                    return (
                     <TableRow key={row.key}>
-                      <TableCell className="font-medium text-sm">{row.label}</TableCell>
+                      <TableCell className="font-medium text-sm">
+                        {row.label}
+                        {isNotCollected && (
+                          <span className="ml-2 text-xs italic text-muted-foreground">— Not collected</span>
+                        )}
+                        {isTotalOnly && !isNotCollected && (
+                          <span className="ml-2 text-xs italic text-muted-foreground">— Total only (no M/F breakdown)</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center">
-                        {readOnly ? (
+                        {isNotCollected ? (
+                          <span className="text-muted-foreground italic text-sm">N/A</span>
+                        ) : readOnly ? (
                           <span>{row.male}</span>
                         ) : (
                           <Input
@@ -620,7 +633,9 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {readOnly ? (
+                        {isNotCollected ? (
+                          <span className="text-muted-foreground italic text-sm">N/A</span>
+                        ) : readOnly ? (
                           <span>{row.female}</span>
                         ) : (
                           <Input
@@ -633,10 +648,15 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
                         )}
                       </TableCell>
                       <TableCell className="text-center font-semibold">
-                        {row.male + row.female}
+                        {isNotCollected ? (
+                          <span className="text-muted-foreground italic text-sm">N/A</span>
+                        ) : (
+                          row.male + row.female
+                        )}
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
