@@ -1753,6 +1753,25 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
             </div>
           </Tabs>
 
+          {/* Consent Checkbox */}
+          <div className="mt-6 pt-4 border-t">
+            <div className="flex items-start space-x-3 p-4 rounded-lg border bg-muted/50">
+              <Checkbox
+                id="consent_given"
+                checked={consentGiven}
+                onCheckedChange={(checked) => setConsentGiven(!!checked)}
+              />
+              <div className="space-y-1">
+                <label htmlFor="consent_given" className="text-sm font-medium leading-none cursor-pointer">
+                  Respondent Consent *
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  The respondent has given informed consent for this data collection as part of the Barangay Ecological Profile Census.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-between mt-6 pt-4 border-t">
             <Button variant="outline" onClick={isEditMode ? handleCancelEdit : onCancel}>
               <ArrowLeft className="h-4 w-4 mr-2" />
