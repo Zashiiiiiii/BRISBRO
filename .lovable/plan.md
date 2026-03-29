@@ -1,74 +1,61 @@
 
 
-## Plan: Inline Requests Module + Browser Back = Logout
+## Plan: Fix Resident Auth Navigation — Back/Forward Cache Bypass
 
-### Summary
-Two changes: (1) Move "My Requests" from a separate page into the resident dashboard as an inline tab, and (2) intercept the browser back button on all resident pages to trigger automatic logout and session destruction.
+### Root Cause
+The current implementation has extensive protection but two gaps allow cached state to leak through:
 
-### 1. Inline "My Requests" Tab in Dashboard
+1. **`ResidentProtectedRoute` uses async session checks** — when the browser restores a page from bfcache or history, the component renders children briefly while the async `getSession()` call is in-flight (the loading state may not trigger if `useResidentAuth` returns stale cached state from its React state before the `pageshow`/`popstate` revalidation completes).
 
-**Current behavior**: Clicking "My Requests" navigates to `/resident/requests` (a separate page). The sidebar item has `href: "/resident/requests"` and `handleTabChange` calls `navigate("/resident/requests")`.
+2. **`pageshow` handler in `App.tsx` only calls `window.location.reload()`** for bfcache, but the forced logout flags are checked *after* React re-renders, creating a brief window where protected content is visible.
 
-**New behavior**: Render the requests list inline as `activeTab === "requests"`, same as profile, messages, incidents, and settings tabs.
+### Changes
 
-**Changes in `src/pages/resident/Dashboard.tsx`:**
-- Remove the `navigate("/resident/requests")` branch from `handleTabChange` — treat `"requests"` like any other tab (`setActiveTab(tab)`)
-- Remove the sidebar `href` for "My Requests"
-- Add a new `{activeTab === "requests" && (...)}` block that renders the full requests list (import and use the content from `ResidentRequests` or inline it)
-- Update the SuccessModal's `onViewRequests` callback to `setActiveTab("requests")` instead of `navigate("/resident/requests")`
-- Update dashboard "View all requests →" link to `setActiveTab("requests")` instead of `navigate("/resident/requests")`
+#### 1. `src/components/ProtectedRoute.tsx` — ResidentProtectedRoute
 
-**Changes in `src/pages/resident/Requests.tsx`:**
-- Extract the requests list content into a reusable component `RequestsContent` (similar to how `ProfileContent`, `MessagesContent` etc. work)
-- Or inline the requests logic directly in Dashboard
+Add a `pageshow` + `visibilitychange` listener that does a **synchronous hard redirect** (not React Navigate) when no session exists:
 
-**Create `src/components/resident/RequestsContent.tsx`:**
-- Move the core requests UI (loading, list, details dialog, summary cards) from `ResidentRequests` into this component
-- Accept no navigation props — it's fully self-contained within the dashboard
+- On `pageshow` (especially `event.persisted === true`): immediately call `supabase.auth.getSession()`. If no session OR forced logout flag is set, call `window.location.replace("/auth")` — this is a hard redirect that replaces the history entry, preventing forward navigation.
+- On `visibilitychange` (tab refocus): same check.
+- These listeners go directly in `ResidentProtectedRoute`, not relying on the hook's async state updates.
 
-**Route cleanup in `src/App.tsx`:**
-- Keep `/resident/requests` route but have it redirect to `/resident/dashboard?tab=requests` for backwards compatibility (or remove it entirely)
+#### 2. `src/hooks/useResidentAuth.ts` — logout function
 
-### 2. Browser Back Button = Auto-Logout
+Change `logout()` to end with `window.location.replace("/auth")` instead of relying on the caller to redirect. This ensures every logout path uses `replace` semantics. But since the Dashboard's `handleLogout` already calls `secureLogoutRedirect`, we'll keep the hook's `logout` as a session-clearing function and ensure all callers use `window.location.replace`.
 
-**Current behavior**: Back button triggers `popstate` which checks forced logout flags; if not set, it just navigates normally.
+#### 3. `src/pages/resident/Dashboard.tsx` — handlePopState
 
-**New behavior**: Any browser back button press while on a resident protected page triggers immediate logout + session destruction.
+Change `secureLogoutRedirect("/auth")` to `window.location.replace("/auth")` — simpler and more reliable than the pushState+replace approach since `replace` already prevents back-navigation to the current entry.
 
-**Changes in `src/pages/resident/Dashboard.tsx`:**
-- Add a `useEffect` that listens for `popstate` events
-- On `popstate`, immediately call `logout()`, mark forced logout, clear session tokens, and redirect to `/auth`
-- Push an extra history entry on mount so the back button triggers `popstate` instead of leaving the page
+#### 4. `src/pages/Auth.tsx` — Login page guard
 
-**Implementation:**
-```
-useEffect(() => {
-  // Push a duplicate entry so "back" fires popstate instead of leaving
-  window.history.pushState(null, '', window.location.href);
+Already correct: only redirects to dashboard if a valid approved session exists, and checks forced logout flag. No changes needed.
 
-  const handlePopState = async () => {
-    // Trigger full logout
-    markResidentForcedLogout();
-    await logout();
-    secureLogoutRedirect("/auth");
-  };
+### Specific Code Changes
 
-  window.addEventListener('popstate', handlePopState);
-  return () => window.removeEventListener('popstate', handlePopState);
-}, []);
-```
+**`src/components/ProtectedRoute.tsx`** (ResidentProtectedRoute):
+- Add `useEffect` with `pageshow` and `visibilitychange` handlers that do:
+  ```
+  if forced_logout_flag OR no session → window.location.replace("/auth")
+  ```
+- This catches bfcache restoration and tab-switching scenarios with a hard redirect.
 
-This ensures:
-- Pressing back triggers logout immediately
-- Session tokens are cleared
-- Forced logout flag prevents forward-button access
-- `secureLogoutRedirect` overwrites history entries
+**`src/pages/resident/Dashboard.tsx`**:
+- In the popstate handler, replace `secureLogoutRedirect("/auth")` with `window.location.replace("/auth")`.
+
+**`src/utils/authNavigationGuard.ts`**:
+- Update `secureLogoutRedirect` to use `window.location.replace(targetUrl)` only (remove the pushState calls — they're unnecessary when using `replace`).
 
 ### Files Modified
-- `src/components/resident/RequestsContent.tsx` — new file, extracted from `ResidentRequests`
-- `src/pages/resident/Dashboard.tsx` — inline requests tab + back-button logout
-- `src/pages/resident/Requests.tsx` — simplified to redirect or kept for backwards compat
-- `src/App.tsx` — optionally redirect `/resident/requests` to dashboard
+- `src/components/ProtectedRoute.tsx`
+- `src/pages/resident/Dashboard.tsx`  
+- `src/utils/authNavigationGuard.ts`
 
-### No database or backend changes needed.
+### Acceptance Tests
+1. Log in as resident → navigate to dashboard
+2. Click Logout → lands on `/auth`
+3. Press browser Back → stays on `/auth` (not dashboard)
+4. Press browser Forward → stays on `/auth`
+5. Manually type `/resident/dashboard` in URL bar → redirected to `/auth`
+6. Log in → navigate around dashboard tabs → close tab → reopen → navigating to `/resident/dashboard` redirects to `/auth`
 
