@@ -40,7 +40,8 @@ const StaffLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => voi
         onOpenChange(false);
         setUsername("");
         setPassword("");
-        navigate("/staff-dashboard", { replace: true });
+        // Use hard redirect to prevent login page from remaining in history
+        window.location.replace("/staff-dashboard");
       } else {
         let errorMessage = result.error || "Invalid credentials";
         let toastDescription = "Please check your credentials";

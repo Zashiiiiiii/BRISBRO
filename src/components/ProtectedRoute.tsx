@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useCallback } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useResidentAuth } from '@/hooks/useResidentAuth';
 import { useStaffAuthContext } from '@/context/StaffAuthContext';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { hasPermission, FeatureKey } from '@/utils/rolePermissions';
 import { isStaffForcedLogout, isResidentForcedLogout, secureLogoutRedirect } from '@/utils/authNavigationGuard';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 interface StaffProtectedRouteProps {
   children: ReactNode;
@@ -36,21 +37,22 @@ export const StaffProtectedRoute = ({
   const [isRevalidating, setIsRevalidating] = useState(true);
   const [forcedLogout, setForcedLogout] = useState(() => isStaffForcedLogout());
 
+  // Shared auth guard: revalidate on pageshow/visibilitychange/popstate
+  const handleStaffUnauthenticated = useCallback(() => {
+    window.location.replace(redirectTo);
+  }, [redirectTo]);
+
+  useAuthGuard({
+    type: 'staff',
+    onUnauthenticated: handleStaffUnauthenticated,
+    validateStaffSession: validateSession,
+    logoutStaff: logout,
+  });
+
   // Re-check forced logout flag on every navigation change
   useEffect(() => {
     setForcedLogout(isStaffForcedLogout());
   }, [location.key]);
-
-  // Also listen for popstate to catch browser back/forward
-  useEffect(() => {
-    const checkForcedLogout = () => {
-      if (isStaffForcedLogout()) {
-        setForcedLogout(true);
-      }
-    };
-    window.addEventListener('popstate', checkForcedLogout);
-    return () => window.removeEventListener('popstate', checkForcedLogout);
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -142,6 +144,16 @@ export const ResidentProtectedRoute = ({
   const [hasCheckedOnce, setHasCheckedOnce] = useState(false);
   const [forcedLogout, setForcedLogout] = useState(() => isResidentForcedLogout());
 
+  // Shared auth guard: revalidate on pageshow/visibilitychange/popstate
+  const handleResidentUnauthenticated = useCallback(() => {
+    window.location.replace(redirectTo);
+  }, [redirectTo]);
+
+  useAuthGuard({
+    type: 'resident',
+    onUnauthenticated: handleResidentUnauthenticated,
+  });
+
   // Re-check forced logout flag on navigation changes
   useEffect(() => {
     setForcedLogout(isResidentForcedLogout());
@@ -156,39 +168,6 @@ export const ResidentProtectedRoute = ({
     window.addEventListener('popstate', checkForcedLogout);
     return () => window.removeEventListener('popstate', checkForcedLogout);
   }, []);
-
-  // Hard redirect on bfcache restore or tab refocus if session is gone
-  useEffect(() => {
-    const hardCheckSession = async (reason: string) => {
-      if (isResidentForcedLogout()) {
-        window.location.replace(redirectTo);
-        return;
-      }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.replace(redirectTo);
-      }
-    };
-
-    const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) {
-        hardCheckSession('pageshow');
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        hardCheckSession('visibilitychange');
-      }
-    };
-
-    window.addEventListener('pageshow', handlePageShow);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      window.removeEventListener('pageshow', handlePageShow);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [redirectTo]);
 
   useEffect(() => {
     let isMounted = true;

@@ -4,8 +4,20 @@ import Services from "@/components/Services";
 import Announcements from "@/components/Announcements";
 import GoogleMap from "@/components/GoogleMap";
 import Footer from "@/components/Footer";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { useStaffAuthContext } from "@/context/StaffAuthContext";
 
 const Index = () => {
+  const { validateSession, logout } = useStaffAuthContext();
+
+  // If user back/forwards to homepage with an active staff session, sign them out
+  useAuthGuard({
+    type: 'staff',
+    isLoginPage: true,
+    validateStaffSession: validateSession,
+    logoutStaff: logout,
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
