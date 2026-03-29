@@ -115,6 +115,8 @@ interface SubmissionData {
   additional_notes: string;
   respondent_name: string;
   respondent_relation: string;
+  interview_date: string;
+  interviewer_name: string;
   // Custom "Others" text values
   other_values?: {
     water_storage?: string;
@@ -157,6 +159,8 @@ const defaultFormData: SubmissionData = {
   additional_notes: "",
   respondent_name: "",
   respondent_relation: "",
+  interview_date: format(new Date(), "yyyy-MM-dd"),
+  interviewer_name: "",
   other_values: {},
 };
 
