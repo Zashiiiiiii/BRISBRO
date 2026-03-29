@@ -765,7 +765,7 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit Monitoring Report</AlertDialogTitle>
+            <AlertDialogTitle>Submit RBI Form C Report</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to submit this report? Once submitted, the report will become read-only and cannot be edited.
             </AlertDialogDescription>
