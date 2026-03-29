@@ -38,6 +38,7 @@ import {
   ImageIcon,
   Languages,
   MessageSquare,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -2022,6 +2023,24 @@ const StaffDashboard = () => {
                       <FileText className="h-4 w-4 mr-2" />
                       View Certificate Requests
                     </Button>
+                    {hasPermission(user?.role, "monitoring_reports") && (
+                      <Button variant="outline" onClick={() => setActiveTab("monitoring-reports")}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        New RBI Form C Report
+                      </Button>
+                    )}
+                    {hasPermission(user?.role, "ecological_submissions") && (
+                      <Button variant="outline" onClick={() => setActiveTab("ecological-submissions")}>
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        Review Ecological Submissions
+                      </Button>
+                    )}
+                    {hasPermission(user?.role, "manage_households") && (
+                      <Button variant="outline" onClick={() => setActiveTab("households")}>
+                        <Home className="h-4 w-4 mr-2" />
+                        Manage Households / Census
+                      </Button>
+                    )}
                   </div>
                 </div>
 
