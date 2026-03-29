@@ -71,6 +71,7 @@ interface HouseholdMember {
   is_head_of_household?: boolean;
   is_pwd?: boolean;
   is_solo_parent?: boolean;
+  is_tenant?: boolean;
 }
 
 // Helper to get member field value with fallback
@@ -1075,6 +1076,9 @@ const EcologicalSubmissionsTab = () => {
                               )}
                               {member.is_solo_parent && (
                                 <Badge variant="secondary" className="text-xs">Solo Parent</Badge>
+                              )}
+                              {member.is_tenant && (
+                                <Badge variant="outline" className="text-xs">Tenant</Badge>
                               )}
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
