@@ -104,7 +104,10 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
   const [totalHouseholds, setTotalHouseholds] = useState(0);
   const [totalFamilies, setTotalFamilies] = useState(0);
   const [averageHouseholdSize, setAverageHouseholdSize] = useState(0);
-  const [semester, setSemester] = useState<string>("");
+  const [semester, setSemester] = useState<string>(() => {
+    const month = new Date().getMonth();
+    return month < 6 ? "1st" : "2nd";
+  });
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
 
   // Signature fields
