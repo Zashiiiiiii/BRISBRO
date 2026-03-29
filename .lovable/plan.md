@@ -1,90 +1,74 @@
 
 
-## Plan: Auto-Generate RBI Form C from Resident/Household Data
+## Plan: Inline Requests Module + Browser Back = Logout
 
 ### Summary
-Enhance the existing sync mechanism to support semester filtering, compute all derivable sector indicators from resident fields, and mark non-collectible sectors as "Not collected".
+Two changes: (1) Move "My Requests" from a separate page into the resident dashboard as an inline tab, and (2) intercept the browser back button on all resident pages to trigger automatic logout and session destruction.
 
-### Data Mapping: Resident Fields → RBI Form C Cells
+### 1. Inline "My Requests" Tab in Dashboard
 
-```text
-RBI Cell                          | Source Field(s)
-----------------------------------|---------------------------------------------
-Age Brackets (M/F)                | residents.birth_date + residents.gender
-Total Inhabitants                 | COUNT(residents) where approved & not deleted
-Total Households                  | COUNT(households)
-Avg Household Size                | inhabitants / households
-Labor Force                       | employment_status IN (Employed, Self-employed)
-Unemployed                        | employment_status = Unemployed
-Out of School Children (6-14)     | schooling_status = 'Out of School' AND age 6-14
-Out of School Youth (15-24)       | schooling_status = 'Out of School' AND age 15-24
-PWD                               | ecological_profile_submissions.pwd_count (household-level sum)
-Solo Parents                      | ecological_profile_submissions.solo_parent_count (sum)
-OFW                               | employment_category = 'OFW'
-Civil Status Single (18+)         | civil_status = Single AND age >= 18
-Civil Status Married (18+)        | civil_status = Married AND age >= 18
-Indigenous Peoples                | ethnic_group IS NOT NULL AND != '' (approx)
-Filipino / Foreigner              | Not collected → mark "N/A"
+**Current behavior**: Clicking "My Requests" navigates to `/resident/requests` (a separate page). The sidebar item has `href: "/resident/requests"` and `handleTabChange` calls `navigate("/resident/requests")`.
+
+**New behavior**: Render the requests list inline as `activeTab === "requests"`, same as profile, messages, incidents, and settings tabs.
+
+**Changes in `src/pages/resident/Dashboard.tsx`:**
+- Remove the `navigate("/resident/requests")` branch from `handleTabChange` — treat `"requests"` like any other tab (`setActiveTab(tab)`)
+- Remove the sidebar `href` for "My Requests"
+- Add a new `{activeTab === "requests" && (...)}` block that renders the full requests list (import and use the content from `ResidentRequests` or inline it)
+- Update the SuccessModal's `onViewRequests` callback to `setActiveTab("requests")` instead of `navigate("/resident/requests")`
+- Update dashboard "View all requests →" link to `setActiveTab("requests")` instead of `navigate("/resident/requests")`
+
+**Changes in `src/pages/resident/Requests.tsx`:**
+- Extract the requests list content into a reusable component `RequestsContent` (similar to how `ProfileContent`, `MessagesContent` etc. work)
+- Or inline the requests logic directly in Dashboard
+
+**Create `src/components/resident/RequestsContent.tsx`:**
+- Move the core requests UI (loading, list, details dialog, summary cards) from `ResidentRequests` into this component
+- Accept no navigation props — it's fully self-contained within the dashboard
+
+**Route cleanup in `src/App.tsx`:**
+- Keep `/resident/requests` route but have it redirect to `/resident/dashboard?tab=requests` for backwards compatibility (or remove it entirely)
+
+### 2. Browser Back Button = Auto-Logout
+
+**Current behavior**: Back button triggers `popstate` which checks forced logout flags; if not set, it just navigates normally.
+
+**New behavior**: Any browser back button press while on a resident protected page triggers immediate logout + session destruction.
+
+**Changes in `src/pages/resident/Dashboard.tsx`:**
+- Add a `useEffect` that listens for `popstate` events
+- On `popstate`, immediately call `logout()`, mark forced logout, clear session tokens, and redirect to `/auth`
+- Push an extra history entry on mount so the back button triggers `popstate` instead of leaving the page
+
+**Implementation:**
+```
+useEffect(() => {
+  // Push a duplicate entry so "back" fires popstate instead of leaving
+  window.history.pushState(null, '', window.location.href);
+
+  const handlePopState = async () => {
+    // Trigger full logout
+    markResidentForcedLogout();
+    await logout();
+    secureLogoutRedirect("/auth");
+  };
+
+  window.addEventListener('popstate', handlePopState);
+  return () => window.removeEventListener('popstate', handlePopState);
+}, []);
 ```
 
-### Changes
-
-#### 1. Edge Function (`supabase/functions/staff-auth/index.ts`) — Enhance `sync-monitoring-report-data`
-
-- Accept optional `semester` and `calendar_year` params (not used for filtering residents yet — residents don't have a "census period" — but stored for context)
-- Expand resident query to also fetch: `schooling_status`, `employment_category`, `ethnic_group`
-- Compute new sector counters:
-  - **OSC (6-14)**: `schooling_status = 'Out of School'` AND age 6-14
-  - **OSY (15-24)**: `schooling_status = 'Out of School'` AND age 15-24
-  - **OFW**: `employment_category = 'OFW'`
-  - **IPs**: `ethnic_group` is not null/empty
-- Fetch `ecological_profile_submissions` (approved) to sum `pwd_count` and `solo_parent_count` for PWD and Solo Parents sectors
-- For sectors that cannot be derived (Filipino/Foreigner), return `{ male: -1, female: -1 }` to signal "Not collected"
-
-#### 2. UI — `MonitoringReportForm.tsx`
-
-- Add semester period selector at top: "1st Semester (Jan–Jun)" / "2nd Semester (Jul–Dec)" — already exists as a dropdown; ensure it defaults to current semester
-- Pass `semester` and `calendar_year` to sync call (for future filtering support)
-- When displaying sector rows, if male/female = -1, show "N/A" instead of 0 and disable the input
-- Add a visual indicator (italic gray text) for "Not collected" sectors
-
-#### 3. No DB migration needed
-All required fields already exist in the `residents` and `ecological_profile_submissions` tables.
-
-### Aggregation Pseudocode
-
-```text
-FOR EACH resident WHERE approved AND not deleted:
-  age = calculate_age(birth_date)
-  gender_key = 'male' | 'female'
-
-  // Age brackets
-  place into matching bracket by age
-
-  // Sectors
-  IF employment_status IN ('Employed','Self-employed'): labor_force[gender_key]++
-  IF employment_status = 'Unemployed': unemployed[gender_key]++
-  IF schooling_status = 'Out of School' AND age 6-14: osc[gender_key]++
-  IF schooling_status = 'Out of School' AND age 15-24: osy[gender_key]++
-  IF employment_category = 'OFW': ofw[gender_key]++
-  IF age >= 18 AND civil_status = 'Single': single[gender_key]++
-  IF age >= 18 AND civil_status = 'Married': married[gender_key]++
-  IF ethnic_group NOT NULL/EMPTY: ips[gender_key]++
-
-// From ecological_profile_submissions (approved):
-pwd = SUM(pwd_count)  // no M/F breakdown available → total only
-solo_parents = SUM(solo_parent_count)  // no M/F breakdown → total only
-```
-
-### Minimal Acceptance Tests
-1. Click "Sync from Database" on a new report → age brackets populate with correct M/F counts
-2. Sector rows for Labor Force, Unemployed, OSC, OSY, OFW, Single, Married compute correctly
-3. PWD and Solo Parents show totals from ecological submissions
-4. Filipino/Foreigner rows show "N/A" (not collected)
-5. Select semester, save draft, reopen → semester value persists
-6. Print preview shows all computed data correctly
+This ensures:
+- Pressing back triggers logout immediately
+- Session tokens are cleared
+- Forced logout flag prevents forward-button access
+- `secureLogoutRedirect` overwrites history entries
 
 ### Files Modified
-- `supabase/functions/staff-auth/index.ts` — expand sync query + sector computation
-- `src/components/staff/MonitoringReportForm.tsx` — UI for N/A sectors, default semester
+- `src/components/resident/RequestsContent.tsx` — new file, extracted from `ResidentRequests`
+- `src/pages/resident/Dashboard.tsx` — inline requests tab + back-button logout
+- `src/pages/resident/Requests.tsx` — simplified to redirect or kept for backwards compat
+- `src/App.tsx` — optionally redirect `/resident/requests` to dashboard
+
+### No database or backend changes needed.
 
