@@ -2827,7 +2827,7 @@ const EcologicalProfileTab = () => {
           <CardContent>
             <div className="flex flex-wrap gap-4">
               <Button
-                onClick={handleSaveCensusData}
+                onClick={() => handleSaveCensusData()}
                 variant="default"
                 disabled={isSaving || !selectedHousehold}
                 className="bg-accent hover:bg-accent/90"
