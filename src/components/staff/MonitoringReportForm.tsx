@@ -413,7 +413,7 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
             </Button>
             <div>
               <h2 className="text-2xl font-bold">
-                {readOnly ? "View" : reportId ? "Edit" : "New"} Monitoring Report
+                {readOnly ? "View" : reportId ? "Edit" : "New"} RBI Form C Report (Revised 2024)
               </h2>
               <p className="text-sm text-muted-foreground">
                 RBI Form C – Revised 2024
@@ -765,7 +765,7 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit Monitoring Report</AlertDialogTitle>
+            <AlertDialogTitle>Submit RBI Form C Report</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to submit this report? Once submitted, the report will become read-only and cannot be edited.
             </AlertDialogDescription>
