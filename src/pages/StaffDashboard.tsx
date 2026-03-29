@@ -312,15 +312,18 @@ const StaffSidebar = ({
     hasPermission(userRole, "manage_households") && { title: "Households", icon: Home, tab: "households" },
   ].filter(Boolean) as any[], [userRole]);
 
+  // Reports group
+  const reportsItems = useMemo(() => [
+    hasPermission(userRole, "view_reports") && { title: "Analytics Reports", icon: BarChart3, tab: "view-reports" },
+    hasPermission(userRole, "monitoring_reports") && { title: "RBI Form C Reports", icon: FileText, tab: "monitoring-reports" },
+  ].filter(Boolean) as any[], [userRole]);
+
   // Administration group
   const adminItems = useMemo(() => [
     hasPermission(userRole, "announcements") && { title: "Announcements", icon: Bell, tab: "announcements" },
     hasPermission(userRole, "resident_approval") && { title: "Resident Approval", icon: CheckCircle, tab: "resident-approval", badge: pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined },
     hasPermission(userRole, "name_change_requests") && { title: "Name Change Requests", icon: User, tab: "name-change-requests", badge: pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined },
-    
-    hasPermission(userRole, "monitoring_reports") && { title: "Monitoring Reports", icon: BarChart3, tab: "monitoring-reports" },
     hasPermission(userRole, "messages") && { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessagesCount && unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
-    hasPermission(userRole, "view_reports") && { title: "Reports", icon: BarChart3, tab: "view-reports" },
     hasPermission(userRole, "settings") && { title: "Settings", icon: Settings, tab: "settings" },
   ].filter(Boolean) as any[], [userRole, pendingRegistrationCount, pendingNameChangeCount, unreadMessagesCount]);
   return (
@@ -345,6 +348,7 @@ const StaffSidebar = ({
         <CollapsibleGroup label="Services" items={servicesItems} defaultOpen activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
         <CollapsibleGroup label="Census" items={censusItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
         <CollapsibleGroup label="Residents" items={residentsItems} defaultOpen activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
+        <CollapsibleGroup label="Reports" items={reportsItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
         <CollapsibleGroup label="Administration" items={adminItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
 
         {/* Logout */}

@@ -122,7 +122,7 @@ const MonitoringReportsTab = () => {
             <div>
               <CardTitle className="text-2xl flex items-center gap-2">
                 <FileText className="h-6 w-6" />
-                Monitoring Reports (RBI Form C)
+                RBI Form C Reports (Semi-Annual)
               </CardTitle>
               <CardDescription>Manage barangay monitoring reports</CardDescription>
             </div>
