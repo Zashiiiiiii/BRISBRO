@@ -969,6 +969,28 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
             <div className="min-h-[500px]">
               {/* Basic Info Tab */}
               <TabsContent value="basic-info" className="space-y-4 mt-0">
+                {/* Interview Metadata */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b">
+                  <div className="space-y-2">
+                    <Label htmlFor="interview_date">Date of Interview *</Label>
+                    <Input
+                      id="interview_date"
+                      type="date"
+                      value={formData.interview_date}
+                      onChange={(e) => setFormData({ ...formData, interview_date: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="interviewer_name">Interviewer Name</Label>
+                    <Input
+                      id="interviewer_name"
+                      value={formData.interviewer_name}
+                      onChange={(e) => setFormData({ ...formData, interviewer_name: e.target.value })}
+                      placeholder="Name of person conducting the interview"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="house_number">House Number</Label>
