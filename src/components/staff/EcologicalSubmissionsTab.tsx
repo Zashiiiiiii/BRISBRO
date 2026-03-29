@@ -698,8 +698,8 @@ const EcologicalSubmissionsTab = () => {
                 <SelectItem value="created_at-asc">Oldest First</SelectItem>
                 <SelectItem value="submission_number-asc">Submission # (A-Z)</SelectItem>
                 <SelectItem value="submission_number-desc">Submission # (Z-A)</SelectItem>
-                <SelectItem value="household_number-asc">Household # (A-Z)</SelectItem>
-                <SelectItem value="household_number-desc">Household # (Z-A)</SelectItem>
+                <SelectItem value="household_number-asc">Household # (1-700)</SelectItem>
+                <SelectItem value="household_number-desc">Household # (700-1)</SelectItem>
                 <SelectItem value="status-asc">Status (A-Z)</SelectItem>
                 <SelectItem value="status-desc">Status (Z-A)</SelectItem>
               </SelectContent>
