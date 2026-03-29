@@ -2388,7 +2388,7 @@ serve(async (req) => {
       // Fetch all approved, non-deleted residents with expanded fields
       const { data: residents, error: resError } = await supabase
         .from('residents')
-        .select('birth_date, gender, civil_status, employment_status, schooling_status, employment_category, ethnic_group')
+        .select('birth_date, gender, civil_status, employment_status, schooling_status, employment_category, ethnic_group, household_id')
         .eq('approval_status', 'approved')
         .is('deleted_at', null);
 
@@ -2544,6 +2544,16 @@ serve(async (req) => {
         foreigner: { male: -1, female: -1 },
       };
 
+      // Data quality counts
+      let missingBirthDate = 0;
+      let missingGender = 0;
+      let notLinkedToHousehold = 0;
+      (residents || []).forEach((r: any) => {
+        if (!r.birth_date) missingBirthDate++;
+        if (!r.gender || r.gender.trim() === '') missingGender++;
+        if (!r.household_id) notLinkedToHousehold++;
+      });
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -2553,6 +2563,11 @@ serve(async (req) => {
             average_household_size: averageHouseholdSize,
             age_bracket_data: ageBrackets,
             sector_data: sectorData,
+            data_quality: {
+              missing_birth_date: missingBirthDate,
+              missing_gender: missingGender,
+              not_linked_to_household: notLinkedToHousehold,
+            },
           }
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
