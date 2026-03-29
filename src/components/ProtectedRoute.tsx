@@ -157,6 +157,39 @@ export const ResidentProtectedRoute = ({
     return () => window.removeEventListener('popstate', checkForcedLogout);
   }, []);
 
+  // Hard redirect on bfcache restore or tab refocus if session is gone
+  useEffect(() => {
+    const hardCheckSession = async (reason: string) => {
+      if (isResidentForcedLogout()) {
+        window.location.replace(redirectTo);
+        return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace(redirectTo);
+      }
+    };
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        hardCheckSession('pageshow');
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        hardCheckSession('visibilitychange');
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [redirectTo]);
+
   useEffect(() => {
     let isMounted = true;
 
