@@ -1156,12 +1156,13 @@ serve(async (req) => {
         );
       }
 
-      // Fetch household_members from approved ecological submissions (not deleted)
+      // Fetch household_members from the LATEST approved ecological submission per household (not deleted)
       const { data: submissions, error } = await supabase
         .from('ecological_profile_submissions')
-        .select('household_members')
+        .select('household_number, household_members, reviewed_at, created_at')
         .eq('status', 'approved')
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .order('reviewed_at', { ascending: false, nullsFirst: false });
 
       if (error) {
         console.error('Error fetching household demographics:', error);
@@ -1171,9 +1172,18 @@ serve(async (req) => {
         );
       }
 
-      // Flatten all household_members from all approved submissions into one demographics array
-      const allMembers: any[] = [];
+      // Deduplicate: only keep the latest submission per household_number
+      const latestByHousehold = new Map<string, any>();
       (submissions || []).forEach((sub: any) => {
+        const key = sub.household_number || sub.id;
+        if (!latestByHousehold.has(key)) {
+          latestByHousehold.set(key, sub);
+        }
+      });
+
+      // Flatten household_members from deduplicated submissions
+      const allMembers: any[] = [];
+      latestByHousehold.forEach((sub: any) => {
         const members = sub.household_members || [];
         if (Array.isArray(members)) {
           members.forEach((m: any) => {
