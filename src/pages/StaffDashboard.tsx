@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import {
   Home,
@@ -298,35 +299,32 @@ const StaffSidebar = ({
   const servicesItems = useMemo(() => [
     hasPermission(userRole, "certificate_requests") && { title: "Certificates", icon: FileText, tab: "certificate-requests", badge: pendingCertificatesCount && pendingCertificatesCount > 0 ? pendingCertificatesCount : undefined },
     hasPermission(userRole, "incidents") && { title: "Incident / Blotter", icon: AlertTriangle, tab: "incidents", badge: pendingIncidentsCount && pendingIncidentsCount > 0 ? pendingIncidentsCount : undefined },
-    hasPermission(userRole, "create_certificate") && { title: "Create Certificate", icon: Plus, tab: "create-certificate" },
   ].filter(Boolean) as any[], [userRole, pendingCertificatesCount, pendingIncidentsCount]);
 
-  // Census group
-  const censusItems = useMemo(() => [
-    hasPermission(userRole, "ecological_profile") && { title: "Ecological Census", icon: FileText, tab: "ecological-profile" },
-    hasPermission(userRole, "ecological_submissions") && { title: "Ecological Submissions", icon: FileText, tab: "ecological-submissions", badge: pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined },
+  // Census & Reporting group
+  const censusReportingItems = useMemo(() => [
+    (hasPermission(userRole, "ecological_profile") || hasPermission(userRole, "ecological_submissions")) && { title: "Ecological Census", icon: ClipboardList, tab: "ecological-census", badge: pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined },
+    hasPermission(userRole, "monitoring_reports") && { title: "RBI Form C Reports", icon: FileText, tab: "monitoring-reports" },
   ].filter(Boolean) as any[], [userRole, pendingEcologicalCount]);
 
-  // Residents group
-  const residentsItems = useMemo(() => [
-    hasPermission(userRole, "manage_residents") && { title: "Manage Residents", icon: Users, tab: "residents" },
-    hasPermission(userRole, "manage_households") && { title: "Households", icon: Home, tab: "households" },
+  // Registry group
+  const registryItems = useMemo(() => [
+    (hasPermission(userRole, "manage_residents") || hasPermission(userRole, "manage_households")) && { title: "Residents & Households", icon: Users, tab: "registry" },
   ].filter(Boolean) as any[], [userRole]);
 
-  // Reports group
-  const reportsItems = useMemo(() => [
-    hasPermission(userRole, "view_reports") && { title: "Analytics Reports", icon: BarChart3, tab: "view-reports" },
-    hasPermission(userRole, "monitoring_reports") && { title: "RBI Form C Reports", icon: FileText, tab: "monitoring-reports" },
-  ].filter(Boolean) as any[], [userRole]);
+  // Communication group
+  const communicationItems = useMemo(() => [
+    hasPermission(userRole, "announcements") && { title: "Announcements", icon: Bell, tab: "announcements" },
+    hasPermission(userRole, "messages") && { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessagesCount && unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
+  ].filter(Boolean) as any[], [userRole, unreadMessagesCount]);
 
   // Administration group
   const adminItems = useMemo(() => [
-    hasPermission(userRole, "announcements") && { title: "Announcements", icon: Bell, tab: "announcements" },
     hasPermission(userRole, "resident_approval") && { title: "Resident Approval", icon: CheckCircle, tab: "resident-approval", badge: pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined },
     hasPermission(userRole, "name_change_requests") && { title: "Name Change Requests", icon: User, tab: "name-change-requests", badge: pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined },
-    hasPermission(userRole, "messages") && { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessagesCount && unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
+    hasPermission(userRole, "view_reports") && { title: "Analytics Reports", icon: BarChart3, tab: "view-reports" },
     hasPermission(userRole, "settings") && { title: "Settings", icon: Settings, tab: "settings" },
-  ].filter(Boolean) as any[], [userRole, pendingRegistrationCount, pendingNameChangeCount, unreadMessagesCount]);
+  ].filter(Boolean) as any[], [userRole, pendingRegistrationCount, pendingNameChangeCount]);
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
@@ -347,9 +345,9 @@ const StaffSidebar = ({
 
         {/* Collapsible Groups */}
         <CollapsibleGroup label="Services" items={servicesItems} defaultOpen activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
-        <CollapsibleGroup label="Census" items={censusItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
-        <CollapsibleGroup label="Residents" items={residentsItems} defaultOpen activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
-        <CollapsibleGroup label="Reports" items={reportsItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
+        <CollapsibleGroup label="Census & Reporting" items={censusReportingItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
+        <CollapsibleGroup label="Registry" items={registryItems} defaultOpen activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
+        <CollapsibleGroup label="Communication" items={communicationItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
         <CollapsibleGroup label="Administration" items={adminItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
 
         {/* Logout */}
@@ -387,6 +385,7 @@ const StaffDashboard = () => {
   const [pendingIncidentsCount, setPendingIncidentsCount] = useState(0);
   const [pendingCertificatesCount, setPendingCertificatesCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [showCreateCertificate, setShowCreateCertificate] = useState(false);
   const prevUnreadCountRef = useRef(-1); // -1 means initial load, don't play sound
 
   // Auth is now handled by ProtectedRoute wrapper
@@ -1874,7 +1873,7 @@ const StaffDashboard = () => {
                         </CardContent>
                       </Card>
 
-                      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab("ecological-submissions")}>
+                      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab("ecological-census")}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <CardTitle className="text-sm font-medium">Pending Ecological</CardTitle>
                           <Clock className="h-4 w-4 text-muted-foreground" />
@@ -2011,7 +2010,7 @@ const StaffDashboard = () => {
                 <div className="mb-8">
                   <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
                   <div className="flex flex-wrap gap-3">
-                    <Button onClick={() => setActiveTab("create-certificate")}>
+                    <Button onClick={() => { setActiveTab("certificate-requests"); setShowCreateCertificate(true); }}>
                       <Plus className="h-4 w-4 mr-2" />
                       New Certificate Request
                     </Button>
@@ -2030,13 +2029,13 @@ const StaffDashboard = () => {
                       </Button>
                     )}
                     {hasPermission(user?.role, "ecological_submissions") && (
-                      <Button variant="outline" onClick={() => setActiveTab("ecological-submissions")}>
+                      <Button variant="outline" onClick={() => setActiveTab("ecological-census")}>
                         <ClipboardList className="h-4 w-4 mr-2" />
                         Review Ecological Submissions
                       </Button>
                     )}
                     {hasPermission(user?.role, "manage_households") && (
-                      <Button variant="outline" onClick={() => setActiveTab("households")}>
+                      <Button variant="outline" onClick={() => setActiveTab("registry")}>
                         <Home className="h-4 w-4 mr-2" />
                         Manage Households / Census
                       </Button>
@@ -2202,34 +2201,40 @@ const StaffDashboard = () => {
               </>
             )}
 
-            {activeTab === "create-certificate" && (
-              <Card className="max-w-2xl mx-auto">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Create Certificate for Resident
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Submit a new certificate request on behalf of a resident
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <CertificateRequestForm 
-                    onSuccess={(controlNumber) => {
-                      toast.success(`Certificate request created: ${controlNumber}`);
-                      loadRequests();
-                      setActiveTab("certificate-requests");
-                    }} 
-                  />
-                </CardContent>
-              </Card>
-            )}
-
             {activeTab === "certificate-requests" && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold">Certificate Requests</h2>
+                  {hasPermission(user?.role, "create_certificate") && (
+                    <Button onClick={() => setShowCreateCertificate(prev => !prev)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Certificate
+                    </Button>
+                  )}
                 </div>
+
+                {showCreateCertificate && (
+                  <Card className="max-w-2xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Create Certificate for Resident
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Submit a new certificate request on behalf of a resident
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <CertificateRequestForm
+                        onSuccess={(controlNumber) => {
+                          toast.success(`Certificate request created: ${controlNumber}`);
+                          loadRequests();
+                          setShowCreateCertificate(false);
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Status Filter Dropdown */}
                 <div className="flex items-center gap-4">
@@ -2875,21 +2880,40 @@ const StaffDashboard = () => {
 
             {activeTab === "view-reports" && <ViewReportsTab />}
 
-            {activeTab === "residents" && <ResidentsTab />}
-
-            {activeTab === "households" && <HouseholdsTab />}
+            {activeTab === "registry" && (
+              <Tabs defaultValue="residents">
+                <TabsList>
+                  <TabsTrigger value="residents">Residents</TabsTrigger>
+                  <TabsTrigger value="households">Households</TabsTrigger>
+                </TabsList>
+                <TabsContent value="residents"><ResidentsTab /></TabsContent>
+                <TabsContent value="households"><HouseholdsTab /></TabsContent>
+              </Tabs>
+            )}
 
             {activeTab === "incidents" && <IncidentsTab />}
 
             {activeTab === "settings" && <SettingsTab />}
 
-            
-
             {activeTab === "name-change-requests" && <NameChangeRequestsTab />}
 
-            {activeTab === "ecological-profile" && <EcologicalProfileTab />}
-            
-            {activeTab === "ecological-submissions" && <EcologicalSubmissionsTab />}
+            {activeTab === "ecological-census" && (
+              <Tabs defaultValue="census-form">
+                <TabsList>
+                  <TabsTrigger value="census-form">Census Form</TabsTrigger>
+                  <TabsTrigger value="submissions-queue">
+                    Submissions Queue
+                    {pendingEcologicalCount > 0 && (
+                      <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
+                        {pendingEcologicalCount}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="census-form"><EcologicalProfileTab /></TabsContent>
+                <TabsContent value="submissions-queue"><EcologicalSubmissionsTab /></TabsContent>
+              </Tabs>
+            )}
 
             
 
