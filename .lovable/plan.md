@@ -1,57 +1,90 @@
 
 
-## Plan: Enhance Ecological Profile Form for House-to-House Collection
+## Plan: Auto-Generate RBI Form C from Resident/Household Data
 
 ### Summary
-Add interview metadata fields, consent tracking, and stricter validation to the ecological profile submission form to support proper house-to-house census workflow.
+Enhance the existing sync mechanism to support semester filtering, compute all derivable sector indicators from resident fields, and mark non-collectible sectors as "Not collected".
 
-### 1. Database Migration
-Add 2 new columns to `ecological_profile_submissions`:
-- `interviewer_name TEXT` — name of the staff/interviewer conducting the profiling
-- `consent_datetime TIMESTAMPTZ` — timestamp when the respondent gave consent
+### Data Mapping: Resident Fields → RBI Form C Cells
 
-The table already has `interview_date`, `respondent_name`, `respondent_relation`, `household_number`, `house_number`, `street_purok`, and `additional_notes`.
+```text
+RBI Cell                          | Source Field(s)
+----------------------------------|---------------------------------------------
+Age Brackets (M/F)                | residents.birth_date + residents.gender
+Total Inhabitants                 | COUNT(residents) where approved & not deleted
+Total Households                  | COUNT(households)
+Avg Household Size                | inhabitants / households
+Labor Force                       | employment_status IN (Employed, Self-employed)
+Unemployed                        | employment_status = Unemployed
+Out of School Children (6-14)     | schooling_status = 'Out of School' AND age 6-14
+Out of School Youth (15-24)       | schooling_status = 'Out of School' AND age 15-24
+PWD                               | ecological_profile_submissions.pwd_count (household-level sum)
+Solo Parents                      | ecological_profile_submissions.solo_parent_count (sum)
+OFW                               | employment_category = 'OFW'
+Civil Status Single (18+)         | civil_status = Single AND age >= 18
+Civil Status Married (18+)        | civil_status = Married AND age >= 18
+Indigenous Peoples                | ethnic_group IS NOT NULL AND != '' (approx)
+Filipino / Foreigner              | Not collected → mark "N/A"
+```
 
-### 2. UI Changes to EcologicalProfileForm.tsx
+### Changes
 
-**Add to SubmissionData interface and defaultFormData:**
-- `interview_date: string` (currently auto-set to today on submit; make it a visible, editable date field)
-- `interviewer_name: string`
-- `consent_given: boolean` (local state, not persisted as boolean — triggers `consent_datetime`)
+#### 1. Edge Function (`supabase/functions/staff-auth/index.ts`) — Enhance `sync-monitoring-report-data`
 
-**Basic Info tab — add new fields at the top:**
-1. **Date of Interview** — date input, defaults to today, editable
-2. **Interviewer Name** — text input (free-text, the person conducting the interview)
+- Accept optional `semester` and `calendar_year` params (not used for filtering residents yet — residents don't have a "census period" — but stored for context)
+- Expand resident query to also fetch: `schooling_status`, `employment_category`, `ethnic_group`
+- Compute new sector counters:
+  - **OSC (6-14)**: `schooling_status = 'Out of School'` AND age 6-14
+  - **OSY (15-24)**: `schooling_status = 'Out of School'` AND age 15-24
+  - **OFW**: `employment_category = 'OFW'`
+  - **IPs**: `ethnic_group` is not null/empty
+- Fetch `ecological_profile_submissions` (approved) to sum `pwd_count` and `solo_parent_count` for PWD and Solo Parents sectors
+- For sectors that cannot be derived (Filipino/Foreigner), return `{ male: -1, female: -1 }` to signal "Not collected"
 
-**Review/Submit tab (or bottom of form) — add:**
-3. **Consent Checkbox** — "The respondent has given informed consent for this data collection" with a required check
-4. **Notes** — already exists as `additional_notes`, just ensure it's visible and labeled "Notes (optional)"
+#### 2. UI — `MonitoringReportForm.tsx`
 
-**Household Number field** — already exists; no change needed.
+- Add semester period selector at top: "1st Semester (Jan–Jun)" / "2nd Semester (Jul–Dec)" — already exists as a dropdown; ensure it defaults to current semester
+- Pass `semester` and `calendar_year` to sync call (for future filtering support)
+- When displaying sector rows, if male/female = -1, show "N/A" instead of 0 and disable the input
+- Add a visual indicator (italic gray text) for "Not collected" sectors
 
-### 3. Validation Changes in handleSubmit
+#### 3. No DB migration needed
+All required fields already exist in the `residents` and `ecological_profile_submissions` tables.
 
-Add these checks before submission:
-- `consent_given` must be `true` → error: "Respondent consent is required before submission"
-- `street_purok` must not be empty → error: "Purok/Street is required"
-- `house_number` must not be empty → error: "House number is required"
-- `interview_date` must not be empty
+### Aggregation Pseudocode
 
-On submit, set `consent_datetime` to `new Date().toISOString()` and include `interviewer_name` and `interview_date` in the payload.
+```text
+FOR EACH resident WHERE approved AND not deleted:
+  age = calculate_age(birth_date)
+  gender_key = 'male' | 'female'
 
-### 4. Staff Dashboard (EcologicalProfileTab.tsx)
+  // Age brackets
+  place into matching bracket by age
 
-Display `interviewer_name` and `interview_date` when viewing submission details (minor addition to the existing detail view).
+  // Sectors
+  IF employment_status IN ('Employed','Self-employed'): labor_force[gender_key]++
+  IF employment_status = 'Unemployed': unemployed[gender_key]++
+  IF schooling_status = 'Out of School' AND age 6-14: osc[gender_key]++
+  IF schooling_status = 'Out of School' AND age 15-24: osy[gender_key]++
+  IF employment_category = 'OFW': ofw[gender_key]++
+  IF age >= 18 AND civil_status = 'Single': single[gender_key]++
+  IF age >= 18 AND civil_status = 'Married': married[gender_key]++
+  IF ethnic_group NOT NULL/EMPTY: ips[gender_key]++
 
-### 5. Acceptance Tests (manual)
+// From ecological_profile_submissions (approved):
+pwd = SUM(pwd_count)  // no M/F breakdown available → total only
+solo_parents = SUM(solo_parent_count)  // no M/F breakdown → total only
+```
 
-1. Try submitting without checking consent → blocked with error toast
-2. Try submitting with empty house number or purok → blocked with error toast
-3. Fill all required fields + consent → submits successfully with `consent_datetime` and `interviewer_name` saved
-4. Staff can see interviewer name and interview date on the submission detail
+### Minimal Acceptance Tests
+1. Click "Sync from Database" on a new report → age brackets populate with correct M/F counts
+2. Sector rows for Labor Force, Unemployed, OSC, OSY, OFW, Single, Married compute correctly
+3. PWD and Solo Parents show totals from ecological submissions
+4. Filipino/Foreigner rows show "N/A" (not collected)
+5. Select semester, save draft, reopen → semester value persists
+6. Print preview shows all computed data correctly
 
-### Technical Details
-- **Migration**: `ALTER TABLE ecological_profile_submissions ADD COLUMN interviewer_name TEXT, ADD COLUMN consent_datetime TIMESTAMPTZ;`
-- **Files modified**: `src/components/resident/EcologicalProfileForm.tsx`, `src/components/staff/EcologicalProfileTab.tsx`
-- No new tables or RLS changes needed (existing policies cover these columns)
+### Files Modified
+- `supabase/functions/staff-auth/index.ts` — expand sync query + sector computation
+- `src/components/staff/MonitoringReportForm.tsx` — UI for N/A sectors, default semester
 
