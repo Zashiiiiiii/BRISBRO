@@ -1,51 +1,57 @@
 
 
-## Plan: Update Data Privacy Statement to Match Real Barangay Workflow
+## Plan: Enhance Ecological Profile Form for House-to-House Collection
 
-Two files to update: `DataPrivacyModal.tsx` (short modal) and `PrivacyPolicy.tsx` (full page).
+### Summary
+Add interview metadata fields, consent tracking, and stricter validation to the ecological profile submission form to support proper house-to-house census workflow.
 
-### Changes to DataPrivacyModal.tsx
+### 1. Database Migration
+Add 2 new columns to `ecological_profile_submissions`:
+- `interviewer_name TEXT` — name of the staff/interviewer conducting the profiling
+- `consent_datetime TIMESTAMPTZ` — timestamp when the respondent gave consent
 
-**1. "What Data We Collect"** — Rewrite to reflect Ecological Profile Census fields:
-- Personal demographics (name, birth date, gender, civil status, contact details)
-- Household information (address, purok, household composition, dwelling type, land ownership)
-- Socioeconomic data (education, employment, estimated monthly income)
-- Environmental sanitation (water source, waste management, toilet type)
-- Sensitive information (health/disability/family planning) — labeled as restricted-access
-- Transaction records (certificate requests, incident reports, messages)
+The table already has `interview_date`, `respondent_name`, `respondent_relation`, `household_number`, `house_number`, `street_purok`, and `additional_notes`.
 
-**2. "Who Can Access Your Data"** — Replace with:
-- Authorized Barangay Staff (Admin and Secretary) for processing and record-keeping
-- Residents can view and manage only their own data through the resident portal
-- Public tracking shows request status only — no personal data is exposed
+### 2. UI Changes to EcologicalProfileForm.tsx
 
-**3. "Purpose of Data Collection"** — Replace with:
-- Household profiling through the Ecological Profile Census
-- Service delivery and program planning (certificates, 4Ps, etc.)
-- Preparation of semi-annual monitoring reports (RBI Form C Revised 2024)
-- Government compliance and statistical reporting
-- Communication between residents and barangay staff
+**Add to SubmissionData interface and defaultFormData:**
+- `interview_date: string` (currently auto-set to today on submit; make it a visible, editable date field)
+- `interviewer_name: string`
+- `consent_given: boolean` (local state, not persisted as boolean — triggers `consent_datetime`)
 
-**4. Data Sharing** — Replace absolute "NOT shared" statement with nuanced version:
-- Not shared with commercial third parties
-- Aggregated statistical reports may be submitted to authorized government offices as required
-- Personal data shared only when required by law or with the resident's consent
+**Basic Info tab — add new fields at the top:**
+1. **Date of Interview** — date input, defaults to today, editable
+2. **Interviewer Name** — text input (free-text, the person conducting the interview)
 
-**5. Security Measures** — Remove "Regular security audits and monitoring" (no audit logs claim). Keep encryption, role-based access, secure backup.
+**Review/Submit tab (or bottom of form) — add:**
+3. **Consent Checkbox** — "The respondent has given informed consent for this data collection" with a required check
+4. **Notes** — already exists as `additional_notes`, just ensure it's visible and labeled "Notes (optional)"
 
-**6. Last Updated** — Change to "March 2026"
+**Household Number field** — already exists; no change needed.
 
-### Changes to PrivacyPolicy.tsx (Full Page)
+### 3. Validation Changes in handleSubmit
 
-Mirror all the same content changes above, plus:
-- Remove "System activity logs" and "Audit trails and activity logging" references
-- Update "Data Access" section to match Admin/Secretary roles (remove Kapitan/Kagawad/SK Chairman)
-- Update Purpose section to include household profiling and RBI Form C
-- Update Data Sharing to use nuanced language
-- Update footer version date to March 2026
+Add these checks before submission:
+- `consent_given` must be `true` → error: "Respondent consent is required before submission"
+- `street_purok` must not be empty → error: "Purok/Street is required"
+- `house_number` must not be empty → error: "House number is required"
+- `interview_date` must not be empty
+
+On submit, set `consent_datetime` to `new Date().toISOString()` and include `interviewer_name` and `interview_date` in the payload.
+
+### 4. Staff Dashboard (EcologicalProfileTab.tsx)
+
+Display `interviewer_name` and `interview_date` when viewing submission details (minor addition to the existing detail view).
+
+### 5. Acceptance Tests (manual)
+
+1. Try submitting without checking consent → blocked with error toast
+2. Try submitting with empty house number or purok → blocked with error toast
+3. Fill all required fields + consent → submits successfully with `consent_datetime` and `interviewer_name` saved
+4. Staff can see interviewer name and interview date on the submission detail
 
 ### Technical Details
-- Files: `src/components/DataPrivacyModal.tsx`, `src/pages/PrivacyPolicy.tsx`
-- No database or backend changes needed
-- Content-only updates to JSX
+- **Migration**: `ALTER TABLE ecological_profile_submissions ADD COLUMN interviewer_name TEXT, ADD COLUMN consent_datetime TIMESTAMPTZ;`
+- **Files modified**: `src/components/resident/EcologicalProfileForm.tsx`, `src/components/staff/EcologicalProfileTab.tsx`
+- No new tables or RLS changes needed (existing policies cover these columns)
 
