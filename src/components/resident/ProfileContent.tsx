@@ -50,6 +50,20 @@ const ProfileContent = () => {
     }
   }, [user]);
 
+  const checkPendingNameChange = async (rid: string) => {
+    try {
+      const { data } = await supabase
+        .from("name_change_requests")
+        .select("id")
+        .eq("resident_id", rid)
+        .eq("status", "pending")
+        .limit(1);
+      setHasPendingNameChange((data?.length || 0) > 0);
+    } catch (error) {
+      console.error("Error checking pending name change:", error);
+    }
+  };
+
 
   const loadProfile = async () => {
     setIsLoading(true);
