@@ -102,6 +102,8 @@ interface Submission {
   staff_notes: string | null;
   submitted_by_resident_id: string | null;
   interview_date: string | null;
+  consent_datetime: string | null;
+  interviewer_name: string | null;
   // Location data
   barangay: string | null;
   city: string | null;
