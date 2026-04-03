@@ -1009,7 +1009,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         value={formData.household_number}
                         onChange={(e) => setFormData({ ...formData, household_number: e.target.value })}
                         placeholder="e.g., HH-002"
-                        className={householdNumberError ? "border-destructive" : ""}
+                        className={householdNumberError ? "border-destructive" : householdNumberWarning ? "border-yellow-500" : ""}
                       />
                       {isCheckingHousehold && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -1019,6 +1019,12 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                       <p className="text-sm flex items-center gap-1 text-destructive">
                         <AlertCircle className="h-3 w-3" />
                         {householdNumberError}
+                      </p>
+                    )}
+                    {!householdNumberError && householdNumberWarning && (
+                      <p className="text-sm flex items-center gap-1 text-yellow-600">
+                        <AlertCircle className="h-3 w-3" />
+                        {householdNumberWarning}
                       </p>
                     )}
                   </div>
