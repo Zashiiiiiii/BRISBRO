@@ -229,6 +229,7 @@ const ResidentDashboard = () => {
   const [submittedControlNumber, setSubmittedControlNumber] = useState("");
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [ecoStatus, setEcoStatus] = useState<EcoStatus>("none");
+  const [isPendingVerification, setIsPendingVerification] = useState(false);
 
   // Pull-to-refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
