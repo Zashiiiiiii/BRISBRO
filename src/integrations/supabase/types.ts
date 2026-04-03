@@ -1792,7 +1792,6 @@ export type Database = {
           last_name: string
           middle_name: string
           place_of_origin: string
-          resident_type: string
         }[]
       }
       get_pending_requests: {
