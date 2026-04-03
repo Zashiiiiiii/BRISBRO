@@ -1523,7 +1523,23 @@ export type Database = {
           ethnic_group: string
           first_name: string
           gender: string
+          household_address: string
+          household_barangay: string
+          household_city: string
+          household_district: string
+          household_dwelling_type: string
+          household_ethnic_group: string
+          household_house_number: string
+          household_house_ownership: string
           household_id: string
+          household_lighting_source: string
+          household_lot_ownership: string
+          household_number: string
+          household_place_of_origin: string
+          household_province: string
+          household_street_purok: string
+          household_water_supply_level: string
+          household_years_staying: number
           id: string
           is_head_of_household: boolean
           last_name: string

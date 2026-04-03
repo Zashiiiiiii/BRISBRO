@@ -226,23 +226,36 @@ const ResidentsTab = () => {
       const to = from + ITEMS_PER_PAGE;
       const paginatedResidents = filteredResidents.slice(from, to);
 
-      const householdIds = [...new Set(paginatedResidents.map((r: any) => r.household_id).filter(Boolean))];
-      let householdMap: Record<string, Household> = {};
-      
-      if (householdIds.length > 0) {
-        const { data: households } = await supabase
-          .from('households')
-          .select('*')
-          .in('id', householdIds);
-        
-        if (households) {
-          householdMap = Object.fromEntries(households.map(h => [h.id, h]));
-        }
-      }
-
+      // Household data is now included from the RPC JOIN
       const residentsWithHouseholds = paginatedResidents.map((r: any) => ({
         ...r,
-        households: r.household_id ? householdMap[r.household_id] || null : null
+        households: r.household_id ? {
+          id: r.household_id,
+          household_number: r.household_number,
+          address: r.household_address,
+          barangay: r.household_barangay,
+          city: r.household_city,
+          province: r.household_province,
+          house_number: r.household_house_number,
+          street_purok: r.household_street_purok,
+          district: r.household_district,
+          place_of_origin: r.household_place_of_origin,
+          ethnic_group: r.household_ethnic_group,
+          house_ownership: r.household_house_ownership,
+          lot_ownership: r.household_lot_ownership,
+          dwelling_type: r.household_dwelling_type,
+          lighting_source: r.household_lighting_source,
+          water_supply_level: r.household_water_supply_level,
+          years_staying: r.household_years_staying,
+          toilet_facilities: null,
+          drainage_facilities: null,
+          garbage_disposal: null,
+          water_storage: null,
+          food_storage_type: null,
+          communication_services: null,
+          means_of_transport: null,
+          info_sources: null,
+        } as Household : null
       }));
 
       setResidents(residentsWithHouseholds as Resident[]);
