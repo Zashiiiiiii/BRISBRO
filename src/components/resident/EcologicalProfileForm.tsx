@@ -262,17 +262,20 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
   }, [user]);
 
   // Debounced household number check - only check for pending submissions, skip "already exists" warning
+  const [householdNumberWarning, setHouseholdNumberWarning] = useState<string | null>(null);
+
   useEffect(() => {
-    const checkPendingOnly = async (householdNumber: string) => {
+    const checkHouseholdNumber = async (householdNumber: string) => {
       if (!householdNumber.trim()) {
         setHouseholdNumberError(null);
+        setHouseholdNumberWarning(null);
         setExistingHouseholdId(null);
         return;
       }
 
       setIsCheckingHousehold(true);
       try {
-        // Only check for pending submissions to avoid double-submitting
+        // Check for pending submissions
         const { data: pendingSubmission } = await supabase
           .from("ecological_profile_submissions")
           .select("id, submission_number, status")
@@ -284,10 +287,27 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
           setHouseholdNumberError(
             `There's already a pending submission (${pendingSubmission.submission_number}) for this household number. Please wait for it to be reviewed.`
           );
+          setHouseholdNumberWarning(null);
           setExistingHouseholdId(null);
         } else {
           setHouseholdNumberError(null);
-          setExistingHouseholdId(null);
+
+          // Check if household number already exists in households table (warning only)
+          const { data: existingHousehold } = await supabase
+            .from("households")
+            .select("id, household_number")
+            .eq("household_number", householdNumber.trim())
+            .maybeSingle();
+
+          if (existingHousehold) {
+            setHouseholdNumberWarning(
+              `Household number "${householdNumber.trim()}" already exists. Submitting will update the existing household data.`
+            );
+            setExistingHouseholdId(existingHousehold.id);
+          } else {
+            setHouseholdNumberWarning(null);
+            setExistingHouseholdId(null);
+          }
         }
       } catch (error) {
         console.error("Error checking household number:", error);
@@ -298,7 +318,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
 
     const timeoutId = setTimeout(() => {
       if (formData.household_number) {
-        checkPendingOnly(formData.household_number);
+        checkHouseholdNumber(formData.household_number);
       }
     }, 500);
 
