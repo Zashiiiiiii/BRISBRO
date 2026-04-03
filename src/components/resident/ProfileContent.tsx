@@ -76,6 +76,7 @@ const ProfileContent = () => {
 
       if (data) {
         setResidentId(data.id);
+        checkPendingNameChange(data.id);
         setFormData({
           firstName: data.first_name || "", middleName: data.middle_name || "",
           lastName: data.last_name || "", suffix: data.suffix || "",
