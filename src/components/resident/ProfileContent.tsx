@@ -368,7 +368,7 @@ const ProfileContent = () => {
           }}
           open={showNameChangeForm}
           onOpenChange={setShowNameChangeForm}
-          onSuccess={() => { setShowNameChangeForm(false); loadProfile(); }}
+          onSuccess={() => { setShowNameChangeForm(false); loadProfile(); setHasPendingNameChange(true); }}
         />
       )}
     </Card>
