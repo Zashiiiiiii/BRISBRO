@@ -278,6 +278,8 @@ const EcologicalProfileTab = () => {
     },
     // Additional notes
     additionalNotes: "",
+    consentGiven: false,
+    consentDatetime: null as string | null,
   });
 
   // Load all data
