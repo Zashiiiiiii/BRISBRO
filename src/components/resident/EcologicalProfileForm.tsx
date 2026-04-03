@@ -175,7 +175,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
   const [householdNumberError, setHouseholdNumberError] = useState<string | null>(null);
   const [isCheckingHousehold, setIsCheckingHousehold] = useState(false);
   const [existingHouseholdId, setExistingHouseholdId] = useState<string | null>(null);
-  const [isHouseholdPreFilled, setIsHouseholdPreFilled] = useState(false);
   const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [consentGiven, setConsentGiven] = useState(false);
@@ -216,10 +215,8 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
               .single();
 
             if (householdData) {
-              setIsHouseholdPreFilled(true);
               setFormData(prev => ({
                 ...prev,
-                household_number: householdData.household_number || "",
                 address: householdData.address || "",
                 house_number: householdData.house_number || "",
                 street_purok: householdData.street_purok || "",
@@ -266,12 +263,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
 
   // Debounced household number check - only check for pending submissions, skip "already exists" warning
   useEffect(() => {
-    if (isHouseholdPreFilled) {
-      setHouseholdNumberError(null);
-      setExistingHouseholdId(null);
-      return;
-    }
-
     const checkPendingOnly = async (householdNumber: string) => {
       if (!householdNumber.trim()) {
         setHouseholdNumberError(null);
@@ -312,7 +303,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [formData.household_number, isHouseholdPreFilled]);
+  }, [formData.household_number]);
 
   const handleCheckboxArray = (field: keyof SubmissionData, value: string, checked: boolean) => {
     const currentArray = formData[field] as string[];
@@ -997,21 +988,14 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         id="household_number"
                         value={formData.household_number}
                         onChange={(e) => setFormData({ ...formData, household_number: e.target.value })}
-                        placeholder="e.g., 001"
-                        readOnly={isHouseholdPreFilled}
-                        className={isHouseholdPreFilled ? "bg-muted cursor-not-allowed" : householdNumberError ? "border-destructive" : ""}
+                        placeholder="e.g., HH-002"
+                        className={householdNumberError ? "border-destructive" : ""}
                       />
                       {isCheckingHousehold && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                       )}
                     </div>
-                    {isHouseholdPreFilled && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3 text-primary" />
-                        Auto-filled from your linked household
-                      </p>
-                    )}
-                    {!isHouseholdPreFilled && householdNumberError && (
+                    {householdNumberError && (
                       <p className="text-sm flex items-center gap-1 text-destructive">
                         <AlertCircle className="h-3 w-3" />
                         {householdNumberError}
