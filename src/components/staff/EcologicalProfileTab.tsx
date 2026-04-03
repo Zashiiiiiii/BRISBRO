@@ -655,6 +655,11 @@ const EcologicalProfileTab = () => {
       return;
     }
 
+    if (!censusData.consentGiven) {
+      toast.error("Respondent consent is required before saving census data");
+      return;
+    }
+
     setIsSaving(true);
     try {
       // Prepare education data
