@@ -2228,7 +2228,11 @@ const EcologicalProfileTab = () => {
       );
     }
 
-    const residents = selectedHousehold.residents || [];
+    const residents = [...(selectedHousehold.residents || [])].sort((a, b) => {
+      const aIsHead = a.is_head_of_household || a.relation_to_head?.toLowerCase() === "head" ? 1 : 0;
+      const bIsHead = b.is_head_of_household || b.relation_to_head?.toLowerCase() === "head" ? 1 : 0;
+      return bIsHead - aIsHead;
+    });
 
     return (
       <div className="space-y-6">

@@ -553,7 +553,11 @@ const HouseholdsTab = () => {
                   <div>
                     <Label className="text-muted-foreground">Household Members</Label>
                     <ul className="mt-2 space-y-1">
-                      {selectedHousehold.members.map(m => (
+                      {[...selectedHousehold.members].sort((a, b) => {
+                        const aIsHead = a.is_head_of_household || a.relation_to_head?.toLowerCase() === "head" ? 1 : 0;
+                        const bIsHead = b.is_head_of_household || b.relation_to_head?.toLowerCase() === "head" ? 1 : 0;
+                        return bIsHead - aIsHead;
+                      }).map(m => (
                         <li key={m.id} className="flex items-center gap-2">
                           {m.is_head_of_household && <Crown className="h-4 w-4 text-yellow-500" />}
                           {getFullName(m)}
