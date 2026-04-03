@@ -520,7 +520,7 @@ const ResidentsTab = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Name</TableHead>
-                          <TableHead>Contact</TableHead>
+                          <TableHead>Purok/Address</TableHead>
                           <TableHead>Household</TableHead>
                           <TableHead>Age</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
