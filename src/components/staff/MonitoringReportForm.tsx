@@ -430,10 +430,10 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
             </Button>
             <div>
               <h2 className="text-2xl font-bold">
-                {readOnly ? "View" : reportId ? "Edit" : "New"} RBI Form C Report (Revised 2024)
+                {readOnly ? "View" : reportId ? "Edit" : "New"} RBI Form C Report
               </h2>
               <p className="text-sm text-muted-foreground">
-                RBI Form C – Revised 2024
+                RBI Form C
               </p>
             </div>
           </div>
