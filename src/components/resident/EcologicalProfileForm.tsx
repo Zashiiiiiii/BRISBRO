@@ -316,8 +316,13 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     }
   };
 
-  // Debounced household number check
+  // Debounced household number check - skip if pre-filled from resident's own household
   useEffect(() => {
+    if (isHouseholdPreFilled) {
+      setHouseholdNumberError(null);
+      setExistingHouseholdId(null);
+      return;
+    }
     const timeoutId = setTimeout(() => {
       if (formData.household_number) {
         checkHouseholdNumber(formData.household_number);
@@ -325,7 +330,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [formData.household_number]);
+  }, [formData.household_number, isHouseholdPreFilled]);
 
   const handleCheckboxArray = (field: keyof SubmissionData, value: string, checked: boolean) => {
     const currentArray = formData[field] as string[];
