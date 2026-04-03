@@ -102,6 +102,8 @@ interface Submission {
   staff_notes: string | null;
   submitted_by_resident_id: string | null;
   interview_date: string | null;
+  consent_datetime: string | null;
+  interviewer_name: string | null;
   // Location data
   barangay: string | null;
   city: string | null;
@@ -891,6 +893,22 @@ const EcologicalSubmissionsTab = () => {
                       {selectedSubmission.interview_date 
                         ? format(new Date(selectedSubmission.interview_date), "MMM dd, yyyy")
                         : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Interviewer</Label>
+                    <p className="font-medium">{selectedSubmission.interviewer_name || "—"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Consent Status</Label>
+                    <p className="font-medium">
+                      {selectedSubmission.consent_datetime ? (
+                        <Badge variant="default" className="bg-green-600">
+                          Obtained — {format(new Date(selectedSubmission.consent_datetime), "MMM dd, yyyy HH:mm")}
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">Not recorded</Badge>
+                      )}
                     </p>
                   </div>
                   <div>
