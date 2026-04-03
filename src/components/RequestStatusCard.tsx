@@ -48,13 +48,7 @@ const RequestStatusCard = ({ request }: RequestStatusCardProps) => {
 
         <Separator />
 
-        {/* Purpose */}
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Purpose</p>
-          <p className="text-foreground">{request.purpose}</p>
-        </div>
-
-        {/* Remarks */}
+        {/* Remarks - show only status-related info, not personal data */}
         {request.remarks && (
           <>
             <Separator />
