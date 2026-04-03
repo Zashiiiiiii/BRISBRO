@@ -639,7 +639,6 @@ const ResidentsTab = () => {
                       {deletedResidents.map((resident) => (
                         <TableRow key={resident.id}>
                           <TableCell className="font-medium">{getDeletedFullName(resident)}</TableCell>
-                          <TableCell>{resident.contact_number || resident.email || "N/A"}</TableCell>
                           <TableCell>{new Date(resident.deleted_at).toLocaleDateString()}</TableCell>
                           <TableCell className="text-right">
                             <Button
