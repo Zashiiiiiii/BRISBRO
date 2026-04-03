@@ -304,7 +304,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [formData.household_number, isHouseholdPreFilled]);
+  }, [formData.household_number]);
 
   const handleCheckboxArray = (field: keyof SubmissionData, value: string, checked: boolean) => {
     const currentArray = formData[field] as string[];
