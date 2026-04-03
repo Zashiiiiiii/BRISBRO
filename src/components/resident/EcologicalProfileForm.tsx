@@ -216,10 +216,8 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
               .single();
 
             if (householdData) {
-              setIsHouseholdPreFilled(true);
               setFormData(prev => ({
                 ...prev,
-                household_number: householdData.household_number || "",
                 address: householdData.address || "",
                 house_number: householdData.house_number || "",
                 street_purok: householdData.street_purok || "",
