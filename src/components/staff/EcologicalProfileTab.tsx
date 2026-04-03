@@ -582,6 +582,8 @@ const EcologicalProfileTab = () => {
           respondentRelation: sub.respondent_relation || prev.respondentRelation,
           interviewDate: sub.interview_date || prev.interviewDate,
           interviewerName: (sub as any).interviewer_name || prev.interviewerName,
+          consentGiven: !!(sub as any).consent_datetime,
+          consentDatetime: (sub as any).consent_datetime || null,
           // Education data
           educationData: {
             preschool: { graduate: educationData.preschool || 0, undergraduate: 0 },
