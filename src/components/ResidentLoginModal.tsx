@@ -223,6 +223,7 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
           p_birth_date: format(signupBirthDate!, 'yyyy-MM-dd'),
           p_contact_number: signupContactNumber.trim(),
           p_address: signupAddress.trim(),
+          p_resident_type: signupResidentType || null,
         });
 
       if (registerError) {
