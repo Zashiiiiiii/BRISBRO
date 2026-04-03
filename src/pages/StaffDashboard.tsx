@@ -2539,24 +2539,6 @@ const StaffDashboard = () => {
                       {/* Show for approved selections */}
                       {selectedApprovedCount > 0 && (
                         <>
-                          <Button
-                            onClick={handleBulkDownload}
-                            disabled={isDownloading || isBatchUpdating}
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            {isDownloading ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Downloading ({downloadProgress.current}/{downloadProgress.total})
-                              </>
-                            ) : (
-                              <>
-                                <Download className="h-4 w-4 mr-2" />
-                                Download ZIP ({selectedApprovedCount})
-                              </>
-                            )}
-                          </Button>
                           
                           <Button
                             onClick={handleMarkAsReleased}
@@ -3143,16 +3125,6 @@ const StaffDashboard = () => {
               >
                 <Pencil className="h-4 w-4 mr-2" />
                 Update Status
-              </Button>
-            )}
-            {detailsRequest && detailsRequest.status === "approved" && (
-              <Button
-                variant="default"
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => handleDownloadCertificate(detailsRequest)}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download Certificate
               </Button>
             )}
             {detailsRequest && (detailsRequest.status === "pending" || detailsRequest.status === "verifying") && (
