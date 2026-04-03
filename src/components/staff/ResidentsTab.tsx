@@ -541,20 +541,11 @@ const ResidentsTab = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1">
-                                {resident.contact_number && (
-                                  <div className="flex items-center gap-1 text-sm">
-                                    <Phone className="h-3 w-3" />
-                                    {resident.contact_number}
-                                  </div>
-                                )}
-                                {resident.email && (
-                                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <Mail className="h-3 w-3" />
-                                    {resident.email}
-                                  </div>
-                                )}
-                              </div>
+                              {resident.households ? (
+                                <span className="text-sm">{resident.households.street_purok || resident.households.address || "N/A"}</span>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
                             </TableCell>
                             <TableCell>
                               {resident.households ? (
