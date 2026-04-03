@@ -175,6 +175,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
   const [householdNumberError, setHouseholdNumberError] = useState<string | null>(null);
   const [isCheckingHousehold, setIsCheckingHousehold] = useState(false);
   const [existingHouseholdId, setExistingHouseholdId] = useState<string | null>(null);
+  const [isHouseholdPreFilled, setIsHouseholdPreFilled] = useState(false);
   const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [consentGiven, setConsentGiven] = useState(false);
@@ -215,6 +216,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
               .single();
 
             if (householdData) {
+              setIsHouseholdPreFilled(true);
               setFormData(prev => ({
                 ...prev,
                 household_number: householdData.household_number || "",
@@ -314,8 +316,13 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     }
   };
 
-  // Debounced household number check
+  // Debounced household number check - skip if pre-filled from resident's own household
   useEffect(() => {
+    if (isHouseholdPreFilled) {
+      setHouseholdNumberError(null);
+      setExistingHouseholdId(null);
+      return;
+    }
     const timeoutId = setTimeout(() => {
       if (formData.household_number) {
         checkHouseholdNumber(formData.household_number);
@@ -323,7 +330,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [formData.household_number]);
+  }, [formData.household_number, isHouseholdPreFilled]);
 
   const handleCheckboxArray = (field: keyof SubmissionData, value: string, checked: boolean) => {
     const currentArray = formData[field] as string[];
@@ -1009,13 +1016,20 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         value={formData.household_number}
                         onChange={(e) => setFormData({ ...formData, household_number: e.target.value })}
                         placeholder="e.g., 001"
-                        className={householdNumberError && !existingHouseholdId ? "border-destructive" : householdNumberError && existingHouseholdId ? "border-yellow-500" : ""}
+                        readOnly={isHouseholdPreFilled}
+                        className={isHouseholdPreFilled ? "bg-muted cursor-not-allowed" : householdNumberError && !existingHouseholdId ? "border-destructive" : householdNumberError && existingHouseholdId ? "border-yellow-500" : ""}
                       />
                       {isCheckingHousehold && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                       )}
                     </div>
-                    {householdNumberError && (
+                    {isHouseholdPreFilled && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3 text-primary" />
+                        Auto-filled from your linked household
+                      </p>
+                    )}
+                    {!isHouseholdPreFilled && householdNumberError && (
                       <p className={`text-sm flex items-center gap-1 ${existingHouseholdId ? "text-yellow-600" : "text-destructive"}`}>
                         <AlertCircle className="h-3 w-3" />
                         {householdNumberError}
