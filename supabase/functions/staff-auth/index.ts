@@ -666,6 +666,9 @@ serve(async (req) => {
       const token = getTokenFromCookie(req);
       const residentId = body?.residentId;
       const approvedBy = body?.approvedBy;
+      const householdId = body?.householdId;
+      const newHousehold = body?.newHousehold;
+      const verificationMethod = body?.verificationMethod;
       
       const session = await validateStaffSession(token);
       if (!session) {
@@ -682,13 +685,40 @@ serve(async (req) => {
         );
       }
 
+      // If newHousehold is provided, create it first
+      let linkedHouseholdId = householdId || null;
+      if (newHousehold && newHousehold.householdNumber) {
+        try {
+          const { data: newHhId, error: hhError } = await supabase.rpc('staff_create_household', {
+            p_household_number: newHousehold.householdNumber,
+            p_address: newHousehold.address || null,
+            p_street_purok: newHousehold.streetPurok || null,
+          });
+          if (hhError) {
+            console.error('Error creating household:', hhError);
+            return new Response(
+              JSON.stringify({ error: 'Failed to create household: ' + hhError.message }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          linkedHouseholdId = newHhId;
+          console.log('Created new household:', newHhId);
+        } catch (hhErr) {
+          console.error('Error creating household:', hhErr);
+        }
+      }
+
+      const updateData: Record<string, unknown> = { 
+        approval_status: 'approved', 
+        approved_at: new Date().toISOString(),
+        approved_by: approvedBy || session.full_name,
+      };
+      if (linkedHouseholdId) updateData.household_id = linkedHouseholdId;
+      if (verificationMethod) updateData.verification_method = verificationMethod;
+
       const { error } = await supabase
         .from('residents')
-        .update({ 
-          approval_status: 'approved', 
-          approved_at: new Date().toISOString(),
-          approved_by: approvedBy || session.full_name
-        })
+        .update(updateData)
         .eq('id', residentId);
 
       if (error) {
@@ -708,7 +738,6 @@ serve(async (req) => {
           .single();
         
         if (resident?.email && !resident.user_id) {
-          // Look up auth user by email
           const { data: authData } = await supabase.auth.admin.listUsers();
           const authUser = authData?.users?.find(u => u.email === resident.email);
           if (authUser) {
@@ -726,6 +755,50 @@ serve(async (req) => {
       console.log('Resident approved:', residentId, 'by:', session.username);
       return new Response(
         JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get duplicate resident hints
+    if (action === 'get-duplicate-hints') {
+      const token = getTokenFromCookie(req);
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const firstName = body?.firstName;
+      const lastName = body?.lastName;
+      const birthDate = body?.birthDate || null;
+      const address = body?.address || null;
+
+      if (!firstName || !lastName) {
+        return new Response(
+          JSON.stringify({ data: [] }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase.rpc('get_duplicate_resident_hints', {
+        p_first_name: firstName,
+        p_last_name: lastName,
+        p_birth_date: birthDate,
+        p_address: address,
+      });
+
+      if (error) {
+        console.error('Error getting duplicate hints:', error);
+        return new Response(
+          JSON.stringify({ data: [] }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ data: data || [] }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
