@@ -3145,16 +3145,6 @@ const StaffDashboard = () => {
                 Update Status
               </Button>
             )}
-            {detailsRequest && detailsRequest.status === "approved" && (
-              <Button
-                variant="default"
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => handleDownloadCertificate(detailsRequest)}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download Certificate
-              </Button>
-            )}
             {detailsRequest && (detailsRequest.status === "pending" || detailsRequest.status === "verifying") && (
               <>
                 <Button 
