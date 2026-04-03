@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Save, Loader2, User, Phone, Mail, Calendar, Briefcase, GraduationCap, Heart, Users, Pencil, Clock, CheckCircle, XCircle, Home } from "lucide-react";
+import { Save, Loader2, User, Phone, Mail, Calendar, Briefcase, GraduationCap, Heart, Users, Pencil, Clock, CheckCircle, XCircle, Home, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useResidentAuth } from "@/hooks/useResidentAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +31,7 @@ const ProfileContent = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [residentId, setResidentId] = useState<string | null>(null);
   const [showNameChangeForm, setShowNameChangeForm] = useState(false);
+  const [hasPendingNameChange, setHasPendingNameChange] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "", middleName: "", lastName: "", suffix: "",
@@ -48,6 +50,20 @@ const ProfileContent = () => {
     }
   }, [user]);
 
+  const checkPendingNameChange = async (rid: string) => {
+    try {
+      const { data } = await supabase
+        .from("name_change_requests")
+        .select("id")
+        .eq("resident_id", rid)
+        .eq("status", "pending")
+        .limit(1);
+      setHasPendingNameChange((data?.length || 0) > 0);
+    } catch (error) {
+      console.error("Error checking pending name change:", error);
+    }
+  };
+
 
   const loadProfile = async () => {
     setIsLoading(true);
@@ -60,6 +76,7 @@ const ProfileContent = () => {
 
       if (data) {
         setResidentId(data.id);
+        checkPendingNameChange(data.id);
         setFormData({
           firstName: data.first_name || "", middleName: data.middle_name || "",
           lastName: data.last_name || "", suffix: data.suffix || "",
@@ -175,12 +192,27 @@ const ProfileContent = () => {
             </div>
 
             {residentId && (
-              <div className="p-3 bg-muted/50 rounded-lg border">
-                <p className="text-sm text-muted-foreground mb-2">Found a typo in your name? You can request a correction.</p>
-                <Button variant="outline" size="sm" onClick={() => setShowNameChangeForm(true)}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Request Name Change
-                </Button>
+              <div className="space-y-3">
+                {hasPendingNameChange && (
+                  <Alert className="border-yellow-200 bg-yellow-50">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <AlertDescription className="text-yellow-800">
+                      You have a pending name change request. Please wait for staff review before submitting a new one.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <div className="p-3 bg-muted/50 rounded-lg border">
+                  <p className="text-sm text-muted-foreground mb-2">Found a typo in your name? You can request a correction.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowNameChangeForm(true)}
+                    disabled={hasPendingNameChange}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Request Name Change
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -336,7 +368,7 @@ const ProfileContent = () => {
           }}
           open={showNameChangeForm}
           onOpenChange={setShowNameChangeForm}
-          onSuccess={() => { setShowNameChangeForm(false); loadProfile(); }}
+          onSuccess={() => { setShowNameChangeForm(false); loadProfile(); setHasPendingNameChange(true); }}
         />
       )}
     </Card>

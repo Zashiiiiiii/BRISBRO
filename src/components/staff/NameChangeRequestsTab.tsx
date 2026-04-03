@@ -60,6 +60,7 @@ interface NameChangeRequest {
   created_at: string;
   resident_email: string | null;
   resident_contact: string | null;
+  proof_document_url: string | null;
 }
 
 const NameChangeRequestsTab = () => {
@@ -385,6 +386,32 @@ const NameChangeRequestsTab = () => {
                   <Label>Reason for Change</Label>
                   <p className="text-sm p-3 bg-muted rounded-lg">{selectedRequest.reason}</p>
                 </div>
+
+                {selectedRequest.proof_document_url && (
+                  <div className="space-y-2">
+                    <Label>Proof Document</Label>
+                    <div className="p-3 bg-muted rounded-lg">
+                      {selectedRequest.proof_document_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                        <a href={selectedRequest.proof_document_url} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={selectedRequest.proof_document_url}
+                            alt="Proof document"
+                            className="max-h-48 rounded border object-contain"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          href={selectedRequest.proof_document_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary underline hover:text-primary/80"
+                        >
+                          View Proof Document
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>

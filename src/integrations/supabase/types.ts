@@ -1739,6 +1739,7 @@ export type Database = {
           current_middle_name: string
           current_suffix: string
           id: string
+          proof_document_url: string
           reason: string
           rejection_reason: string
           requested_first_name: string
