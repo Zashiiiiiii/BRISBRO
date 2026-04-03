@@ -495,6 +495,7 @@ const ResidentDashboard = () => {
           setActiveTab={handleTabChange}
           onLogout={handleLogout}
           unreadMessageCount={unreadMessageCount}
+          isPending={isPendingVerification}
         />
         
         <main 
