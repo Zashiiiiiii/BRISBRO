@@ -54,18 +54,7 @@ const RequestStatusCard = ({ request }: RequestStatusCardProps) => {
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle className="text-xl">Request Details</CardTitle>
-          <div className="flex items-center gap-2">
-            <StatusBadge status={request.status} />
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={handleDownloadImage}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </Button>
-          </div>
+          <StatusBadge status={request.status} />
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
