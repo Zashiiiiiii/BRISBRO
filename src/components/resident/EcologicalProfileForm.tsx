@@ -264,12 +264,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
 
   // Debounced household number check - only check for pending submissions, skip "already exists" warning
   useEffect(() => {
-    if (isHouseholdPreFilled) {
-      setHouseholdNumberError(null);
-      setExistingHouseholdId(null);
-      return;
-    }
-
     const checkPendingOnly = async (householdNumber: string) => {
       if (!householdNumber.trim()) {
         setHouseholdNumberError(null);
