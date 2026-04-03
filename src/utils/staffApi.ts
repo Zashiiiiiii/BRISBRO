@@ -42,8 +42,21 @@ export const getPendingRegistrations = async () => {
   return result.data || [];
 };
 
-export const approveResident = async (residentId: string, approvedBy: string) => {
-  return callStaffApi('approve-resident', { residentId, approvedBy });
+export const approveResident = async (
+  residentId: string, 
+  approvedBy: string, 
+  options?: { 
+    householdId?: string; 
+    newHousehold?: { householdNumber: string; address?: string; streetPurok?: string }; 
+    verificationMethod?: string 
+  }
+) => {
+  return callStaffApi('approve-resident', { residentId, approvedBy, ...options });
+};
+
+export const getDuplicateHints = async (firstName: string, lastName: string, birthDate?: string, address?: string) => {
+  const result = await callStaffApi('get-duplicate-hints', { firstName, lastName, birthDate, address });
+  return result.data || [];
 };
 
 export const rejectResident = async (residentId: string, rejectedBy: string, rejectionReason?: string) => {

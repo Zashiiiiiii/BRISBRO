@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,6 +81,7 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
   const [signupContactNumber, setSignupContactNumber] = useState("");
   const [signupAddress, setSignupAddress] = useState("");
   const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [signupResidentType, setSignupResidentType] = useState("");
 
   // Status checker state
   const [statusEmail, setStatusEmail] = useState("");
@@ -221,6 +223,7 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
           p_birth_date: format(signupBirthDate!, 'yyyy-MM-dd'),
           p_contact_number: signupContactNumber.trim(),
           p_address: signupAddress.trim(),
+          p_resident_type: signupResidentType || null,
         });
 
       if (registerError) {
@@ -463,6 +466,21 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input id="signup-address" type="text" placeholder="House/Block/Lot, Street, Purok" value={signupAddress} onChange={(e) => setSignupAddress(e.target.value)} className="pl-10" required />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Resident Type (Optional)</Label>
+              <Select value={signupResidentType} onValueChange={setSignupResidentType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your resident type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="tenant">Tenant</SelectItem>
+                  <SelectItem value="boarder">Boarder</SelectItem>
+                  <SelectItem value="relative">Relative</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">

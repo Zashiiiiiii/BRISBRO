@@ -52,6 +52,7 @@ import MessagesContent from "@/components/resident/MessagesContent";
 import IncidentsContent from "@/components/resident/IncidentsContent";
 import RequestsContent from "@/components/resident/RequestsContent";
 import SettingsContent from "@/components/resident/SettingsContent";
+import PendingVerificationBanner from "@/components/resident/PendingVerificationBanner";
 interface Request {
   id: string;
   controlNumber: string;
@@ -79,25 +80,29 @@ const ResidentSidebar = ({
   setActiveTab, 
   onLogout,
   unreadMessageCount,
+  isPending,
 }: { 
   activeTab: string; 
   setActiveTab: (tab: string) => void;
   onLogout: () => void;
   unreadMessageCount?: number;
+  isPending?: boolean;
 }) => {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
-  const menuItems = [
+  const allMenuItems = [
     { title: "Dashboard", icon: Home, tab: "dashboard" },
     { title: "My Profile", icon: User, tab: "profile" },
-    { title: "My Requests", icon: Clock, tab: "requests" },
-    { title: "Request Certificate", icon: FileText, tab: "request" },
-    { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessageCount > 0 ? unreadMessageCount : undefined },
-    { title: "Incident Reports", icon: AlertCircle, tab: "incidents" },
-    { title: "Ecological Profile", icon: Leaf, tab: "ecological-profile" },
+    { title: "My Requests", icon: Clock, tab: "requests", restricted: true },
+    { title: "Request Certificate", icon: FileText, tab: "request", restricted: true },
+    { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessageCount > 0 ? unreadMessageCount : undefined, restricted: true },
+    { title: "Incident Reports", icon: AlertCircle, tab: "incidents", restricted: true },
+    { title: "Ecological Profile", icon: Leaf, tab: "ecological-profile", restricted: true },
     { title: "Settings", icon: Settings, tab: "settings" },
   ];
+
+  const menuItems = isPending ? allMenuItems.filter(i => !i.restricted) : allMenuItems;
 
   return (
     <Sidebar collapsible="icon">
@@ -225,6 +230,7 @@ const ResidentDashboard = () => {
   const [submittedControlNumber, setSubmittedControlNumber] = useState("");
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [ecoStatus, setEcoStatus] = useState<EcoStatus>("none");
+  const [isPendingVerification, setIsPendingVerification] = useState(false);
 
   // Pull-to-refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -272,6 +278,15 @@ const ResidentDashboard = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
+      // Check approval status
+      if (profile?.id) {
+        const { data: resData } = await supabase
+          .from("residents")
+          .select("approval_status")
+          .eq("id", profile.id)
+          .maybeSingle();
+        setIsPendingVerification(resData?.approval_status !== 'approved');
+      }
       // Load user's requests
       const { data: requestsData } = await supabase
         .from("certificate_requests")
@@ -481,6 +496,7 @@ const ResidentDashboard = () => {
           setActiveTab={handleTabChange}
           onLogout={handleLogout}
           unreadMessageCount={unreadMessageCount}
+          isPending={isPendingVerification}
         />
         
         <main 
@@ -525,6 +541,8 @@ const ResidentDashboard = () => {
                   </div>
                 </div>
               </div>
+
+              {isPendingVerification && <PendingVerificationBanner />}
 
               {/* Status Cards Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

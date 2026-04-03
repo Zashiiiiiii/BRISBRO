@@ -1555,6 +1555,28 @@ export type Database = {
           suffix: string
         }[]
       }
+      get_duplicate_resident_hints: {
+        Args: {
+          p_address?: string
+          p_birth_date?: string
+          p_first_name: string
+          p_last_name: string
+        }
+        Returns: {
+          approval_status: string
+          birth_date: string
+          contact_number: string
+          email: string
+          first_name: string
+          household_address: string
+          household_id: string
+          household_number: string
+          id: string
+          last_name: string
+          match_score: number
+          middle_name: string
+        }[]
+      }
       get_ecological_submission_by_household: {
         Args: { p_household_number: string }
         Returns: {
@@ -1753,6 +1775,7 @@ export type Database = {
           last_name: string
           middle_name: string
           place_of_origin: string
+          resident_type: string
         }[]
       }
       get_pending_requests: {
