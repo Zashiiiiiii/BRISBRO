@@ -176,7 +176,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
   const [isCheckingHousehold, setIsCheckingHousehold] = useState(false);
   const [existingHouseholdId, setExistingHouseholdId] = useState<string | null>(null);
   const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null);
-  const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [consentGiven, setConsentGiven] = useState(false);
 
