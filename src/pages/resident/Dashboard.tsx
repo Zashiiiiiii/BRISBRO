@@ -277,6 +277,15 @@ const ResidentDashboard = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
+      // Check approval status
+      if (profile?.id) {
+        const { data: resData } = await supabase
+          .from("residents")
+          .select("approval_status")
+          .eq("id", profile.id)
+          .maybeSingle();
+        setIsPendingVerification(resData?.approval_status !== 'approved');
+      }
       // Load user's requests
       const { data: requestsData } = await supabase
         .from("certificate_requests")
