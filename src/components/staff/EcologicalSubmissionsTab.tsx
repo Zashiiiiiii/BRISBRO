@@ -896,6 +896,22 @@ const EcologicalSubmissionsTab = () => {
                     </p>
                   </div>
                   <div>
+                    <Label className="text-muted-foreground text-xs">Interviewer</Label>
+                    <p className="font-medium">{selectedSubmission.interviewer_name || "—"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Consent Status</Label>
+                    <p className="font-medium">
+                      {selectedSubmission.consent_datetime ? (
+                        <Badge variant="default" className="bg-green-600">
+                          Obtained — {format(new Date(selectedSubmission.consent_datetime), "MMM dd, yyyy HH:mm")}
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">Not recorded</Badge>
+                      )}
+                    </p>
+                  </div>
+                  <div>
                     <Label className="text-muted-foreground text-xs">Respondent Name</Label>
                     <p className="font-medium">{selectedSubmission.respondent_name || "—"}</p>
                   </div>

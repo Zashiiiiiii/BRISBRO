@@ -1790,6 +1790,36 @@ const EcologicalProfileTab = () => {
               </div>
             </div>
 
+            {/* Consent Checkbox */}
+            <div className="pt-4 border-t">
+              <div className="flex items-start space-x-3 p-4 rounded-lg border bg-muted/50">
+                <Checkbox
+                  id="staff_consent_given"
+                  checked={censusData.consentGiven}
+                  onCheckedChange={(checked) => {
+                    setCensusData((prev) => ({
+                      ...prev,
+                      consentGiven: !!checked,
+                      consentDatetime: checked ? new Date().toISOString() : null,
+                    }));
+                  }}
+                />
+                <div className="space-y-1">
+                  <label htmlFor="staff_consent_given" className="text-sm font-medium leading-none cursor-pointer">
+                    Respondent Consent Obtained *
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    The respondent has given informed consent for this house-to-house data collection as part of the Barangay Ecological Profile Census, per the Data Privacy Policy.
+                  </p>
+                  {censusData.consentDatetime && (
+                    <p className="text-xs text-muted-foreground">
+                      Consent recorded: {format(new Date(censusData.consentDatetime), "MMM dd, yyyy HH:mm")}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Address Info */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
               <div>
