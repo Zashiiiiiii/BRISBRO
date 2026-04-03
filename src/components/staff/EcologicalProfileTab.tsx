@@ -753,6 +753,10 @@ const EcologicalProfileTab = () => {
         p_death_data: censusData.deathData || null,
         p_additional_notes: censusData.additionalNotes || null,
         p_staff_id: "Staff",
+        p_consent_datetime: censusData.consentGiven
+          ? (censusData.consentDatetime || new Date().toISOString())
+          : null,
+        p_interviewer_name: censusData.interviewerName || null,
       });
 
       if (error) throw error;
