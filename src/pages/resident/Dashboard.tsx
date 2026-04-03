@@ -79,25 +79,29 @@ const ResidentSidebar = ({
   setActiveTab, 
   onLogout,
   unreadMessageCount,
+  isPending,
 }: { 
   activeTab: string; 
   setActiveTab: (tab: string) => void;
   onLogout: () => void;
   unreadMessageCount?: number;
+  isPending?: boolean;
 }) => {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
-  const menuItems = [
+  const allMenuItems = [
     { title: "Dashboard", icon: Home, tab: "dashboard" },
     { title: "My Profile", icon: User, tab: "profile" },
-    { title: "My Requests", icon: Clock, tab: "requests" },
-    { title: "Request Certificate", icon: FileText, tab: "request" },
-    { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessageCount > 0 ? unreadMessageCount : undefined },
-    { title: "Incident Reports", icon: AlertCircle, tab: "incidents" },
-    { title: "Ecological Profile", icon: Leaf, tab: "ecological-profile" },
+    { title: "My Requests", icon: Clock, tab: "requests", restricted: true },
+    { title: "Request Certificate", icon: FileText, tab: "request", restricted: true },
+    { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessageCount > 0 ? unreadMessageCount : undefined, restricted: true },
+    { title: "Incident Reports", icon: AlertCircle, tab: "incidents", restricted: true },
+    { title: "Ecological Profile", icon: Leaf, tab: "ecological-profile", restricted: true },
     { title: "Settings", icon: Settings, tab: "settings" },
   ];
+
+  const menuItems = isPending ? allMenuItems.filter(i => !i.restricted) : allMenuItems;
 
   return (
     <Sidebar collapsible="icon">
