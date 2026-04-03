@@ -642,7 +642,7 @@ serve(async (req) => {
 
       const { data, error } = await supabase
         .from('residents')
-        .select('id, first_name, middle_name, last_name, email, contact_number, birth_date, place_of_origin, approval_status, created_at')
+        .select('id, first_name, middle_name, last_name, email, contact_number, birth_date, place_of_origin, approval_status, created_at, resident_type')
         .eq('approval_status', 'pending')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
