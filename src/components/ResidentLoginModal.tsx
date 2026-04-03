@@ -81,6 +81,7 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
   const [signupContactNumber, setSignupContactNumber] = useState("");
   const [signupAddress, setSignupAddress] = useState("");
   const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [signupResidentType, setSignupResidentType] = useState("");
 
   // Status checker state
   const [statusEmail, setStatusEmail] = useState("");
