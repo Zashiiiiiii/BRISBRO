@@ -192,12 +192,27 @@ const ProfileContent = () => {
             </div>
 
             {residentId && (
-              <div className="p-3 bg-muted/50 rounded-lg border">
-                <p className="text-sm text-muted-foreground mb-2">Found a typo in your name? You can request a correction.</p>
-                <Button variant="outline" size="sm" onClick={() => setShowNameChangeForm(true)}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Request Name Change
-                </Button>
+              <div className="space-y-3">
+                {hasPendingNameChange && (
+                  <Alert className="border-yellow-200 bg-yellow-50">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <AlertDescription className="text-yellow-800">
+                      You have a pending name change request. Please wait for staff review before submitting a new one.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <div className="p-3 bg-muted/50 rounded-lg border">
+                  <p className="text-sm text-muted-foreground mb-2">Found a typo in your name? You can request a correction.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowNameChangeForm(true)}
+                    disabled={hasPendingNameChange}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Request Name Change
+                  </Button>
+                </div>
               </div>
             )}
 
