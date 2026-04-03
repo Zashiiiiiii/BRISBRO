@@ -28,7 +28,7 @@ const RequestStatusCard = ({ request }: RequestStatusCardProps) => {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Request Information */}
+        {/* Request Information - status only, minimal PII */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-muted-foreground mb-1">Control Number</p>
@@ -37,10 +37,6 @@ const RequestStatusCard = ({ request }: RequestStatusCardProps) => {
           <div>
             <p className="text-sm text-muted-foreground mb-1">Certificate Type</p>
             <p className="font-semibold text-foreground">{request.certificateType}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Resident Name</p>
-            <p className="font-semibold text-foreground">{request.residentName}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground mb-1">Date Requested</p>
@@ -52,13 +48,7 @@ const RequestStatusCard = ({ request }: RequestStatusCardProps) => {
 
         <Separator />
 
-        {/* Purpose */}
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Purpose</p>
-          <p className="text-foreground">{request.purpose}</p>
-        </div>
-
-        {/* Remarks */}
+        {/* Remarks - show only status-related info, not personal data */}
         {request.remarks && (
           <>
             <Separator />

@@ -520,7 +520,7 @@ const ResidentsTab = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Name</TableHead>
-                          <TableHead>Contact</TableHead>
+                          <TableHead>Purok/Address</TableHead>
                           <TableHead>Household</TableHead>
                           <TableHead>Age</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
@@ -541,20 +541,11 @@ const ResidentsTab = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1">
-                                {resident.contact_number && (
-                                  <div className="flex items-center gap-1 text-sm">
-                                    <Phone className="h-3 w-3" />
-                                    {resident.contact_number}
-                                  </div>
-                                )}
-                                {resident.email && (
-                                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <Mail className="h-3 w-3" />
-                                    {resident.email}
-                                  </div>
-                                )}
-                              </div>
+                              {resident.households ? (
+                                <span className="text-sm">{resident.households.street_purok || resident.households.address || "N/A"}</span>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
                             </TableCell>
                             <TableCell>
                               {resident.households ? (
@@ -639,8 +630,7 @@ const ResidentsTab = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Contact</TableHead>
+                         <TableHead>Name</TableHead>
                         <TableHead>Deleted At</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -649,7 +639,6 @@ const ResidentsTab = () => {
                       {deletedResidents.map((resident) => (
                         <TableRow key={resident.id}>
                           <TableCell className="font-medium">{getDeletedFullName(resident)}</TableCell>
-                          <TableCell>{resident.contact_number || resident.email || "N/A"}</TableCell>
                           <TableCell>{new Date(resident.deleted_at).toLocaleDateString()}</TableCell>
                           <TableCell className="text-right">
                             <Button
@@ -701,20 +690,8 @@ const ResidentsTab = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-muted-foreground">Contact Number</Label>
-                  <p>{selectedResident.contact_number || "N/A"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Email</Label>
-                  <p>{selectedResident.email || "N/A"}</p>
-                </div>
-                <div>
                   <Label className="text-muted-foreground">Civil Status</Label>
                   <p>{selectedResident.civil_status || "N/A"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Religion</Label>
-                  <p>{selectedResident.religion || "N/A"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Occupation</Label>
@@ -738,6 +715,51 @@ const ResidentsTab = () => {
                   </div>
                 </>
               )}
+
+              <Separator />
+              <details className="group">
+                <summary className="cursor-pointer flex items-center gap-2 text-sm font-medium text-destructive/80 hover:text-destructive select-none">
+                  <svg className="h-4 w-4 transition-transform group-open:rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" /></svg>
+                  Sensitive Data
+                </summary>
+                <p className="text-xs text-muted-foreground mt-1 mb-3 pl-6">
+                  This section contains personally identifiable information (PII). Handle with care per the Data Privacy Policy.
+                </p>
+                <div className="grid grid-cols-2 gap-4 pl-6 border-l-2 border-destructive/20">
+                  <div>
+                    <Label className="text-muted-foreground">Contact Number</Label>
+                    <p>{selectedResident.contact_number || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Email</Label>
+                    <p>{selectedResident.email || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Birth Date</Label>
+                    <p>{selectedResident.birth_date || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Religion</Label>
+                    <p>{selectedResident.religion || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Ethnic Group</Label>
+                    <p>{selectedResident.ethnic_group || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Monthly Income (Cash)</Label>
+                    <p>{selectedResident.monthly_income_cash || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Monthly Income (Kind)</Label>
+                    <p>{selectedResident.monthly_income_kind || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Place of Origin</Label>
+                    <p>{selectedResident.place_of_origin || "N/A"}</p>
+                  </div>
+                </div>
+              </details>
             </div>
           )}
         </DialogContent>

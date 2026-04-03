@@ -691,6 +691,30 @@ const IncidentsTab = () => {
                   </div>
                 )}
               </div>
+
+              <details className="group">
+                <summary className="cursor-pointer flex items-center gap-2 text-sm font-medium text-destructive/80 hover:text-destructive select-none">
+                  <svg className="h-4 w-4 transition-transform group-open:rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" /></svg>
+                  Sensitive Contact Details
+                </summary>
+                <p className="text-xs text-muted-foreground mt-1 mb-3 pl-6">
+                  PII data — handle per Data Privacy Policy.
+                </p>
+                <div className="grid grid-cols-2 gap-4 pl-6 border-l-2 border-destructive/20">
+                  <div>
+                    <Label className="text-muted-foreground">Complainant Contact</Label>
+                    <p>{selectedIncident.complainantContact || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Complainant Address</Label>
+                    <p>{selectedIncident.complainantAddress || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Respondent Address</Label>
+                    <p>{selectedIncident.respondentAddress || "N/A"}</p>
+                  </div>
+                </div>
+              </details>
               <div>
                 <Label className="text-muted-foreground">Description</Label>
                 <p className="mt-1 bg-muted p-3 rounded-lg text-sm">{selectedIncident.incidentDescription}</p>
