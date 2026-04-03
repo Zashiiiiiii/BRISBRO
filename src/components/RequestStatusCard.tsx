@@ -19,33 +19,8 @@ interface RequestStatusCardProps {
 }
 
 const RequestStatusCard = ({ request }: RequestStatusCardProps) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleDownloadImage = async () => {
-    if (!cardRef.current) return;
-
-    try {
-      toast.info("Generating image...");
-      
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-      });
-      
-      const image = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = `certificate-request-${request.controlNumber}.png`;
-      link.click();
-      
-      toast.success("Certificate details downloaded successfully!");
-    } catch (error) {
-      toast.error("Failed to download image. Please try again.");
-    }
-  };
-
   return (
-    <Card className="shadow-medium" ref={cardRef}>
+    <Card className="shadow-medium">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle className="text-xl">Request Details</CardTitle>
