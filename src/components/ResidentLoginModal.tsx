@@ -469,6 +469,21 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
             </div>
 
             <div className="space-y-1.5">
+              <Label>Resident Type (Optional)</Label>
+              <Select value={signupResidentType} onValueChange={setSignupResidentType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your resident type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="tenant">Tenant</SelectItem>
+                  <SelectItem value="boarder">Boarder</SelectItem>
+                  <SelectItem value="relative">Relative</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="signup-email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
