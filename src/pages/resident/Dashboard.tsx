@@ -542,6 +542,8 @@ const ResidentDashboard = () => {
                 </div>
               </div>
 
+              {isPendingVerification && <PendingVerificationBanner />}
+
               {/* Status Cards Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* My Latest Request Status */}
