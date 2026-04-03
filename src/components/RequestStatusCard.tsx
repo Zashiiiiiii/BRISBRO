@@ -1,13 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import StatusBadge, { RequestStatus } from "./StatusBadge";
 import StatusTimeline from "./StatusTimeline";
 import { format } from "date-fns";
-import { Download } from "lucide-react";
-import { toast } from "sonner";
-import html2canvas from "html2canvas";
-import { useRef } from "react";
 
 export interface RequestData {
   controlNumber: string;
