@@ -52,6 +52,7 @@ import MessagesContent from "@/components/resident/MessagesContent";
 import IncidentsContent from "@/components/resident/IncidentsContent";
 import RequestsContent from "@/components/resident/RequestsContent";
 import SettingsContent from "@/components/resident/SettingsContent";
+import PendingVerificationBanner from "@/components/resident/PendingVerificationBanner";
 interface Request {
   id: string;
   controlNumber: string;
