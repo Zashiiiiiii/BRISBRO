@@ -1016,13 +1016,20 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         value={formData.household_number}
                         onChange={(e) => setFormData({ ...formData, household_number: e.target.value })}
                         placeholder="e.g., 001"
-                        className={householdNumberError && !existingHouseholdId ? "border-destructive" : householdNumberError && existingHouseholdId ? "border-yellow-500" : ""}
+                        readOnly={isHouseholdPreFilled}
+                        className={isHouseholdPreFilled ? "bg-muted cursor-not-allowed" : householdNumberError && !existingHouseholdId ? "border-destructive" : householdNumberError && existingHouseholdId ? "border-yellow-500" : ""}
                       />
                       {isCheckingHousehold && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                       )}
                     </div>
-                    {householdNumberError && (
+                    {isHouseholdPreFilled && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3 text-primary" />
+                        Auto-filled from your linked household
+                      </p>
+                    )}
+                    {!isHouseholdPreFilled && householdNumberError && (
                       <p className={`text-sm flex items-center gap-1 ${existingHouseholdId ? "text-yellow-600" : "text-destructive"}`}>
                         <AlertCircle className="h-3 w-3" />
                         {householdNumberError}
