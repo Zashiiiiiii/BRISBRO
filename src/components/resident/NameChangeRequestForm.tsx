@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Loader2, Send, Upload, X } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -38,7 +38,6 @@ const NameChangeRequestForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [checkingPending, setCheckingPending] = useState(true);
-  const [proofFile, setProofFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     requestedFirstName: currentName.firstName,
     requestedMiddleName: currentName.middleName,
@@ -70,25 +69,6 @@ const NameChangeRequestForm = ({
     } finally {
       setCheckingPending(false);
     }
-  };
-
-  const uploadProof = async (): Promise<string | null> => {
-    if (!proofFile) return null;
-
-    const fileExt = proofFile.name.split(".").pop();
-    const filePath = `${residentId}/${Date.now()}.${fileExt}`;
-
-    const { error } = await supabase.storage
-      .from("name-change-proofs")
-      .upload(filePath, proofFile);
-
-    if (error) throw new Error("Failed to upload proof document");
-
-    const { data: urlData } = supabase.storage
-      .from("name-change-proofs")
-      .getPublicUrl(filePath);
-
-    return urlData.publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,12 +107,7 @@ const NameChangeRequestForm = ({
 
     setIsSubmitting(true);
     try {
-      let proofUrl: string | null = null;
-      if (proofFile) {
-        proofUrl = await uploadProof();
-      }
-
-      const insertPayload: Record<string, unknown> = {
+      const { error } = await supabase.from("name_change_requests").insert({
         resident_id: residentId,
         current_first_name: currentName.firstName,
         current_middle_name: currentName.middleName || null,
@@ -143,12 +118,7 @@ const NameChangeRequestForm = ({
         requested_last_name: formData.requestedLastName.trim(),
         requested_suffix: formData.requestedSuffix.trim() || null,
         reason: formData.reason.trim(),
-      };
-      if (proofUrl) {
-        insertPayload.proof_document_url = proofUrl;
-      }
-
-      const { error } = await supabase.from("name_change_requests").insert(insertPayload as any);
+      } as any);
 
       if (error) throw error;
 
@@ -163,7 +133,6 @@ const NameChangeRequestForm = ({
         requestedSuffix: currentName.suffix,
         reason: "",
       });
-      setProofFile(null);
     } catch (error: any) {
       console.error("Error submitting name change request:", error);
       toast.error(error.message || "Failed to submit request");
@@ -265,43 +234,6 @@ const NameChangeRequestForm = ({
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label>Proof Document (Optional)</Label>
-                {proofFile ? (
-                  <div className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
-                    <span className="text-sm truncate flex-1">{proofFile.name}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setProofFile(null)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <Input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          if (file.size > 5 * 1024 * 1024) {
-                            toast.error("File must be less than 5MB");
-                            return;
-                          }
-                          setProofFile(file);
-                        }
-                      }}
-                      className="cursor-pointer"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Upload a supporting document (ID, birth certificate, etc.). Max 5MB.
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
 
             <DialogFooter>
