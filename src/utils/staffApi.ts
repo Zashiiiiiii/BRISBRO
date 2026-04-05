@@ -30,6 +30,11 @@ const callStaffApi = async (action: string, body: Record<string, unknown> = {}):
   const data = await response.json();
 
   if (!response.ok) {
+    // Suppress 401 errors when the user has already logged out (race condition)
+    if (response.status === 401 && !localStorage.getItem('bris_staff_token')) {
+      console.warn(`Staff API call "${action}" returned 401 after logout — suppressed.`);
+      return {};
+    }
     throw new Error(data.error || 'Request failed');
   }
 
