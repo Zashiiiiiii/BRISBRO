@@ -10,8 +10,10 @@ import {
   Clock,
   XCircle,
   UserCheck,
-  UserX
+  UserX,
+  Shield
 } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
