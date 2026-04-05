@@ -1421,13 +1421,13 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                 </div>
               </TabsContent>
 
-              {/* Education & Health Tab */}
-              <TabsContent value="education-health" className="space-y-4 mt-0">
+              {/* Education Tab */}
+              <TabsContent value="education" className="space-y-4 mt-0">
                 <Card>
                   <CardHeader className="py-3">
                     <CardTitle className="text-base flex items-center gap-2">
                       <GraduationCap className="h-4 w-4" />
-                      Education & Family Planning
+                      Education
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -1463,109 +1463,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                             />
                           </div>
                         ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="family-planning"
-                          checked={(formData.health_data as any)?.familyPlanningAcceptor || false}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            health_data: {
-                              ...(formData.health_data as any),
-                              familyPlanningAcceptor: !!checked
-                            }
-                          })}
-                        />
-                        <label htmlFor="family-planning" className="text-sm font-medium">Family Planning Acceptor</label>
-                      </div>
-                      {(formData.health_data as any)?.familyPlanningAcceptor && (
-                        <div className="ml-6 space-y-2">
-                          <Label>Type of Family Planning Method</Label>
-                          <Select
-                            value={(formData.health_data as any)?.familyPlanningType || ""}
-                            onValueChange={(v) => setFormData({
-                              ...formData,
-                              health_data: {
-                                ...(formData.health_data as any),
-                                familyPlanningType: v
-                              }
-                            })}
-                          >
-                            <SelectTrigger className="w-[200px]">
-                              <SelectValue placeholder="Select method" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {["Pills", "IUD", "Condom", "Injectable", "Implant", "BTL", "Vasectomy", "Natural", "Others"].map((t) => (
-                                <SelectItem key={t} value={t}>{t}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="pt-4 border-t">
-                      <Label className="font-medium">Special Categories</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-                        <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">Senior Citizens (60+)</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={(formData.health_data as any)?.seniorCount || ""}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              health_data: {
-                                ...(formData.health_data as any),
-                                seniorCount: parseInt(e.target.value) || 0
-                              }
-                            })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">Solo Parents</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={formData.solo_parent_count}
-                            onChange={(e) => setFormData({ ...formData, solo_parent_count: parseInt(e.target.value) || 0 })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">PWD</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={formData.pwd_count}
-                            onChange={(e) => setFormData({ ...formData, pwd_count: parseInt(e.target.value) || 0 })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">Pregnant Women</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={(formData.health_data as any)?.pregnantCount || ""}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              health_data: {
-                                ...(formData.health_data as any),
-                                pregnantCount: parseInt(e.target.value) || 0
-                              }
-                            })}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 mt-4">
-                        <Checkbox
-                          id="is_4ps"
-                          checked={formData.is_4ps_beneficiary}
-                          onCheckedChange={(checked) => setFormData({ ...formData, is_4ps_beneficiary: !!checked })}
-                        />
-                        <label htmlFor="is_4ps" className="text-sm font-medium">4Ps Beneficiary</label>
                       </div>
                     </div>
                   </CardContent>
