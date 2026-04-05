@@ -28,7 +28,8 @@ import {
   UserPlus,
   GraduationCap,
   Leaf,
-  Stethoscope
+  Stethoscope,
+  Heart
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
