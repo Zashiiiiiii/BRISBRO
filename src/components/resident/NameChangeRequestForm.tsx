@@ -133,7 +133,6 @@ const NameChangeRequestForm = ({
         requestedSuffix: currentName.suffix,
         reason: "",
       });
-      setProofFile(null);
     } catch (error: any) {
       console.error("Error submitting name change request:", error);
       toast.error(error.message || "Failed to submit request");
