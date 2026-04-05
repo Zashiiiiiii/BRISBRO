@@ -499,15 +499,12 @@ const MonitoringReportForm = ({ reportId, readOnly = false, onBack }: Monitoring
                   <p className="text-xs text-muted-foreground">
                     Auto-populate age brackets, sector indicators, inhabitants, and household counts from resident records.
                   </p>
-                  {dataQuality && (dataQuality.missingBirthDate > 0 || dataQuality.missingGender > 0 || dataQuality.notLinkedToHousehold > 0) && (
+                  {dataQuality && (dataQuality.missingGender > 0 || dataQuality.notLinkedToHousehold > 0) && (
                     <Alert className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
                       <AlertTriangle className="h-4 w-4 text-yellow-600" />
                       <AlertDescription className="text-sm">
                         <span className="font-medium">Data Quality Warnings</span> — these do not block submission:
                         <ul className="mt-1 list-disc list-inside text-xs space-y-0.5">
-                          {dataQuality.missingBirthDate > 0 && (
-                            <li>{dataQuality.missingBirthDate} resident{dataQuality.missingBirthDate > 1 ? "s" : ""} missing birth date</li>
-                          )}
                           {dataQuality.missingGender > 0 && (
                             <li>{dataQuality.missingGender} resident{dataQuality.missingGender > 1 ? "s" : ""} missing gender</li>
                           )}
