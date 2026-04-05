@@ -71,25 +71,6 @@ const NameChangeRequestForm = ({
     }
   };
 
-  const uploadProof = async (): Promise<string | null> => {
-    if (!proofFile) return null;
-
-    const fileExt = proofFile.name.split(".").pop();
-    const filePath = `${residentId}/${Date.now()}.${fileExt}`;
-
-    const { error } = await supabase.storage
-      .from("name-change-proofs")
-      .upload(filePath, proofFile);
-
-    if (error) throw new Error("Failed to upload proof document");
-
-    const { data: urlData } = supabase.storage
-      .from("name-change-proofs")
-      .getPublicUrl(filePath);
-
-    return urlData.publicUrl;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
