@@ -38,7 +38,6 @@ const NameChangeRequestForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [checkingPending, setCheckingPending] = useState(true);
-  const [proofFile, setProofFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     requestedFirstName: currentName.firstName,
     requestedMiddleName: currentName.middleName,
