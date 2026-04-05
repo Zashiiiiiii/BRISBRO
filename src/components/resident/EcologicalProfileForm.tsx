@@ -824,10 +824,10 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     { id: "basic-info", label: "Basic Info", icon: FileText },
     { id: "housing", label: "Housing", icon: Home },
     { id: "services", label: "Services", icon: Zap },
-    { id: "education-health", label: "Education & Health", icon: GraduationCap },
+    { id: "education", label: "Education", icon: GraduationCap },
     { id: "members", label: "Household Members", icon: Users },
     { id: "environmental", label: "Environmental", icon: Leaf },
-    { id: "health-info", label: "Health Info", icon: Stethoscope },
+    { id: "health", label: "Health", icon: Stethoscope },
   ];
 
   if (isLoading) {
