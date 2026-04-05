@@ -3014,22 +3014,6 @@ const StaffDashboard = () => {
                     <p className="font-medium">{detailsRequest.residentName}</p>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Birth Date</Label>
-                    <p>{detailsRequest.birthDate || 'Not provided'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Phone className="h-3 w-3" /> Contact Number
-                    </Label>
-                    <p>{detailsRequest.contactNumber || 'Not provided'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Mail className="h-3 w-3" /> Email
-                    </Label>
-                    <p>{detailsRequest.email || 'Not provided'}</p>
-                  </div>
-                  <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">Household Number</Label>
                     <p>{detailsRequest.householdNumber || 'Not provided'}</p>
                   </div>
@@ -3039,6 +3023,44 @@ const StaffDashboard = () => {
                       <p className="text-sm">{detailsRequest.residentNotes}</p>
                     </div>
                   )}
+                </div>
+
+                {/* Sensitive Contact Details - collapsed by default */}
+                <div className="pl-6">
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="sensitive-details" className="border rounded-lg">
+                      <AccordionTrigger className="px-4 py-3 text-sm font-medium hover:no-underline">
+                        <span className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-amber-500" />
+                          Sensitive Contact Details
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4">
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Contains personal information. Handle per data privacy policy.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Phone className="h-3 w-3" /> Contact Number
+                            </Label>
+                            <p>{detailsRequest.contactNumber || 'Not provided'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" /> Email
+                            </Label>
+                            <p>{detailsRequest.email || 'Not provided'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Birth Date</Label>
+                            <p>{detailsRequest.birthDate || 'Not provided'}</p>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </div>
               </div>
 
