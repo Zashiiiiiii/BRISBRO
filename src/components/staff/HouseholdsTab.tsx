@@ -15,6 +15,7 @@ import {
   X,
   UserPlus,
   Crown,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import TableSkeleton from "./TableSkeleton";
@@ -167,6 +175,7 @@ const HouseholdsTab = () => {
   const [householdToDelete, setHouseholdToDelete] = useState<Household | null>(null);
   const [formData, setFormData] = useState<HouseholdFormData>(emptyFormData);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSensitiveColumns, setShowSensitiveColumns] = useState(false);
 
   const loadHouseholds = useCallback(async () => {
     setIsLoading(true);
@@ -522,13 +531,17 @@ const HouseholdsTab = () => {
       </CardContent>
 
       {/* View Dialog */}
-      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+      <Dialog open={showViewDialog} onOpenChange={(open) => {
+        setShowViewDialog(open);
+        if (!open) setShowSensitiveColumns(false);
+      }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Household Details</DialogTitle>
           </DialogHeader>
           {selectedHousehold && (
             <div className="space-y-4">
+              {/* Summary section - always visible */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Household Number</Label>
@@ -547,26 +560,80 @@ const HouseholdsTab = () => {
                   <p>{selectedHousehold.members?.length || 0} members</p>
                 </div>
               </div>
+
+              {/* Members accordion */}
               {selectedHousehold.members && selectedHousehold.members.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <Label className="text-muted-foreground">Household Members</Label>
-                    <ul className="mt-2 space-y-1">
-                      {[...selectedHousehold.members].sort((a, b) => {
-                        const aIsHead = a.is_head_of_household || a.relation_to_head?.toLowerCase() === "head" ? 1 : 0;
-                        const bIsHead = b.is_head_of_household || b.relation_to_head?.toLowerCase() === "head" ? 1 : 0;
-                        return bIsHead - aIsHead;
-                      }).map(m => (
-                        <li key={m.id} className="flex items-center gap-2">
-                          {m.is_head_of_household && <Crown className="h-4 w-4 text-yellow-500" />}
-                          {getFullName(m)}
-                          {m.relation_to_head && <span className="text-muted-foreground text-sm">({m.relation_to_head})</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </>
+                <Accordion type="single" collapsible defaultValue="members" className="w-full">
+                  <AccordionItem value="members" className="border rounded-lg">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                      <span className="flex items-center gap-2 text-sm font-medium">
+                        <Users className="h-4 w-4" />
+                        Household Members ({selectedHousehold.members.length})
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      {/* Sensitive columns toggle */}
+                      <div className="flex items-center justify-between mb-3 p-2 rounded-md bg-muted/50">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-amber-600" />
+                          <span className="text-sm font-medium">Show Sensitive Columns</span>
+                        </div>
+                        <Switch
+                          checked={showSensitiveColumns}
+                          onCheckedChange={setShowSensitiveColumns}
+                        />
+                      </div>
+                      {showSensitiveColumns && (
+                        <p className="text-xs text-amber-600 mb-3 flex items-center gap-1">
+                          <Shield className="h-3 w-3" />
+                          Contains personal information. Handle per data privacy policy.
+                        </p>
+                      )}
+
+                      <div className="rounded-md border overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Relation</TableHead>
+                              <TableHead>Gender</TableHead>
+                              {showSensitiveColumns && (
+                                <>
+                                  <TableHead>Birth Date</TableHead>
+                                  <TableHead>Contact</TableHead>
+                                </>
+                              )}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {[...selectedHousehold.members].sort((a, b) => {
+                              const aIsHead = a.is_head_of_household || a.relation_to_head?.toLowerCase() === "head" ? 1 : 0;
+                              const bIsHead = b.is_head_of_household || b.relation_to_head?.toLowerCase() === "head" ? 1 : 0;
+                              return bIsHead - aIsHead;
+                            }).map(m => (
+                              <TableRow key={m.id}>
+                                <TableCell>
+                                  <div className="flex items-center gap-1">
+                                    {m.is_head_of_household && <Crown className="h-3 w-3 text-amber-500 flex-shrink-0" />}
+                                    <span className="font-medium">{getFullName(m)}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>{m.relation_to_head || "—"}</TableCell>
+                                <TableCell>{m.gender || "—"}</TableCell>
+                                {showSensitiveColumns && (
+                                  <>
+                                    <TableCell>{m.birth_date || "—"}</TableCell>
+                                    <TableCell>{m.contact_number || "—"}</TableCell>
+                                  </>
+                                )}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               )}
             </div>
           )}
