@@ -34,16 +34,16 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
-const PRIVACY_NOTICE_KEY = "bris_privacy_notice_shown";
+const PRIVACY_NOTICE_KEY = "bris_privacy_notice_acknowledged";
+// Must match the "Last Updated" text in DataPrivacyModal.tsx
+const PRIVACY_POLICY_VERSION = "2026-03";
 
 const AppContent = () => {
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
 
   useEffect(() => {
-    // Check if privacy notice has been shown before
-    const hasShownNotice = localStorage.getItem(PRIVACY_NOTICE_KEY);
-    if (!hasShownNotice) {
-      // Delay showing modal slightly for better UX
+    const acknowledgedVersion = localStorage.getItem(PRIVACY_NOTICE_KEY);
+    if (acknowledgedVersion !== PRIVACY_POLICY_VERSION) {
       const timer = setTimeout(() => {
         setShowPrivacyNotice(true);
       }, 1000);
@@ -53,7 +53,7 @@ const AppContent = () => {
 
   const handlePrivacyNoticeClose = (open: boolean) => {
     if (!open) {
-      localStorage.setItem(PRIVACY_NOTICE_KEY, "true");
+      localStorage.setItem(PRIVACY_NOTICE_KEY, PRIVACY_POLICY_VERSION);
       setShowPrivacyNotice(false);
     }
   };
