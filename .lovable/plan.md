@@ -1,70 +1,40 @@
 
 
-# Formalize Name Change Requests Workflow
+# Fix: Add `proof_document_url` Column to `name_change_requests`
 
-## What Already Exists
-- `name_change_requests` table with status, reason, review fields
-- `NameChangeRequestForm` component (resident side) with name fields + reason
-- `NameChangeRequestsTab` (staff side) with approve/reject flow
-- `staff_approve_name_change` and `staff_reject_name_change` RPCs
-- Name fields already read-only in ProfileContent
-- "Request Name Change" button already present in profile
+**Chosen Option: A** — Keep the proof upload feature and add the missing database column.
 
-## What's Missing
+## Why It's Failing
+The `name_change_requests` table does not have a `proof_document_url` column, but the `NameChangeRequestForm` code and `get_name_change_requests_for_staff` RPC both reference it. The schema cache rejects the insert.
 
-### 1. Proof Upload (Optional)
-- Add `proof_document_url TEXT` column to `name_change_requests`
-- Use Supabase Storage bucket `name-change-proofs` for file uploads
-- Update `NameChangeRequestForm` to include optional file upload field
-- Update staff view dialog to show/download proof document
+## Steps
 
-### 2. Prevent Multiple Pending Requests
-- Before submitting in `NameChangeRequestForm`, query for existing pending request
-- If found, show error toast and block submission
-- Add a DB constraint or check in the insert logic
-
-### 3. Pending Banner in Profile
-- In `ProfileContent`, query `name_change_requests` for any pending request
-- If found, show an alert banner above the name fields: "You have a pending name change request"
-- Disable the "Request Name Change" button when pending
-
-### 4. Staff: View Proof in Dialog
-- In the view dialog in `NameChangeRequestsTab`, render proof image/link if `proof_document_url` exists
-- Update `get_name_change_requests_for_staff` RPC to return `proof_document_url`
-
----
-
-## Database Changes (Migration)
+### 1. Database Migration
+Add the missing column and create the storage bucket with policies:
 
 ```sql
--- Add proof column
-ALTER TABLE name_change_requests ADD COLUMN proof_document_url TEXT;
+ALTER TABLE public.name_change_requests ADD COLUMN proof_document_url TEXT;
 
--- Create storage bucket
 INSERT INTO storage.buckets (id, name, public) VALUES ('name-change-proofs', 'name-change-proofs', true);
 
--- Storage policies for residents to upload
-CREATE POLICY "Residents can upload proofs" ON storage.objects FOR INSERT TO authenticated
+CREATE POLICY "Residents can upload name change proofs"
+ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (bucket_id = 'name-change-proofs');
 
-CREATE POLICY "Anyone can view proofs" ON storage.objects FOR SELECT TO authenticated
+CREATE POLICY "Anyone can view name change proofs"
+ON storage.objects FOR SELECT TO authenticated
 USING (bucket_id = 'name-change-proofs');
 ```
 
-Update `get_name_change_requests_for_staff` to include the new column.
+### 2. Code Change — `NameChangeRequestForm.tsx`
+Add null-safe handling: only include `proof_document_url` in the insert payload when a file was uploaded and a URL was obtained. If no file, omit the field or set to `null`.
 
----
+### 3. Schema Types Refresh
+After migration, the generated types will auto-update to include the new column, resolving the schema cache error.
 
 ## Files to Modify
-
 | File | Change |
 |------|--------|
-| Migration SQL | Add `proof_document_url`, storage bucket + policies |
-| `get_name_change_requests_for_staff` | Return `proof_document_url` |
-| `NameChangeRequestForm.tsx` | Add file upload field, check for existing pending request before submit |
-| `ProfileContent.tsx` | Query pending requests, show banner, disable button when pending |
-| `NameChangeRequestsTab.tsx` | Display proof document in view dialog |
-
-## Status Values (unchanged)
-- `pending` → `approved` (updates resident record) or `rejected` (stores reason)
+| New migration | Add column + storage bucket + policies |
+| `src/components/resident/NameChangeRequestForm.tsx` | Null-safe `proof_document_url` in insert payload |
 
