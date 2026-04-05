@@ -205,10 +205,10 @@ export const trackRequest = async (controlNumber: string): Promise<RequestStatus
     return {
       controlNumber: request.control_number,
       certificateType: request.certificate_type,
-      residentName: request.full_name,
+      residentName: '', // Stripped for public privacy
       dateRequested: new Date(request.created_at || Date.now()),
       status: statusMap[request.status || 'Pending'] || 'pending',
-      purpose: request.purpose || '',
+      purpose: '', // Stripped for public privacy
       remarks: request.notes || request.rejection_reason || undefined,
     };
   }
