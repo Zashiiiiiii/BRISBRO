@@ -127,10 +127,10 @@ const CENSUS_TABS = [
   { id: "basic-info", label: "Basic Info", icon: FileText },
   { id: "housing", label: "Housing", icon: Home },
   { id: "services", label: "Services", icon: Zap },
-  { id: "education-health", label: "Education & Health", icon: GraduationCap },
+  { id: "education", label: "Education", icon: GraduationCap },
   { id: "household-members", label: "Household Members", icon: Users },
   { id: "environmental", label: "Environmental", icon: Leaf },
-  { id: "health-info", label: "Health Info", icon: Stethoscope },
+  { id: "health", label: "Health", icon: Stethoscope },
 ];
 
 // Options for form fields
