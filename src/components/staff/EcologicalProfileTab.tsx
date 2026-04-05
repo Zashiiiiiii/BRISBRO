@@ -2454,8 +2454,8 @@ const EcologicalProfileTab = () => {
     );
   };
 
-  // Render Health Info Tab
-  const renderHealthInfoTab = () => {
+  // Render Health Tab
+  const renderHealthTab = () => {
     if (!selectedHousehold) {
       return (
         <Alert>
