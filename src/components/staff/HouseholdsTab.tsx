@@ -175,6 +175,7 @@ const HouseholdsTab = () => {
   const [householdToDelete, setHouseholdToDelete] = useState<Household | null>(null);
   const [formData, setFormData] = useState<HouseholdFormData>(emptyFormData);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSensitiveColumns, setShowSensitiveColumns] = useState(false);
 
   const loadHouseholds = useCallback(async () => {
     setIsLoading(true);
