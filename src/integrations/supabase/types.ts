@@ -973,6 +973,7 @@ export type Database = {
           current_middle_name: string | null
           current_suffix: string | null
           id: string
+          proof_document_url: string | null
           reason: string
           rejection_reason: string | null
           requested_first_name: string
@@ -992,6 +993,7 @@ export type Database = {
           current_middle_name?: string | null
           current_suffix?: string | null
           id?: string
+          proof_document_url?: string | null
           reason: string
           rejection_reason?: string | null
           requested_first_name: string
@@ -1011,6 +1013,7 @@ export type Database = {
           current_middle_name?: string | null
           current_suffix?: string | null
           id?: string
+          proof_document_url?: string | null
           reason?: string
           rejection_reason?: string | null
           requested_first_name?: string
