@@ -1,82 +1,47 @@
 
 
-# Refactor Ecological Census Sections — Remove Duplication
+# Remove Proof Upload from Name Change Requests
 
-## Problem
-The census form has two overlapping sections:
-- **"Education & Health"** — contains: Education table, Family Planning, Special Categories (senior, solo parent, PWD, pregnant, 4Ps)
-- **"Health Info"** — contains: Malnutrition, Immunization, Disability, Death Records, Additional Notes
+## Changes
 
-Family planning, special categories (pregnant women, seniors), and 4Ps are health-related but live in the "Education & Health" section.
+### 1. Resident Form — `src/components/resident/NameChangeRequestForm.tsx`
+- Remove `proofFile` state, `uploadProof` function
+- Remove `Upload`, `X` from lucide imports
+- Remove proof file upload UI block (the entire "Proof Document (Optional)" section)
+- Remove `proof_document_url` from insert payload
+- Remove `setProofFile(null)` from reset logic
+- Final insert payload: `resident_id`, `current_*` fields, `requested_*` fields, `reason`
 
-## New Section Structure
+### 2. Staff View — `src/components/staff/NameChangeRequestsTab.tsx`
+- Remove the `proof_document_url` conditional block (lines 390-414) that renders image/link
+- Remove `proof_document_url` from the `NameChangeRequest` interface (line 63)
+- Keep all Approve/Reject workflow untouched
 
-| # | Section ID | Label | Icon | Contents |
-|---|-----------|-------|------|----------|
-| 1 | basic-info | Basic Info | FileText | *(unchanged)* |
-| 2 | housing | Housing | Home | *(unchanged)* |
-| 3 | services | Services | Zap | *(unchanged)* |
-| 4 | **education** | **Education** | GraduationCap | Education table only |
-| 5 | household-members / members | Household Members | Users | *(unchanged)* |
-| 6 | environmental | Environmental | Leaf | *(unchanged)* |
-| 7 | **health** | **Health** | Stethoscope | Family Planning, Special Categories (senior/solo parent/PWD/pregnant/4Ps), Malnutrition, Immunization, Disability, Death Records, Additional Notes |
+### 3. No database migration needed
+- The `proof_document_url` column can stay nullable in the DB — it simply won't be populated anymore. No schema change required.
 
-Key changes:
-- `education-health` renamed to `education`, stripped of family planning + special categories cards
-- `health-info` renamed to `health`, absorbs family planning + special categories from old education-health
-- Navigation order stays the same (education before members, health at end)
+## Updated Request Payload
+```
+{
+  resident_id, 
+  current_first_name, current_middle_name, current_last_name, current_suffix,
+  requested_first_name, requested_middle_name, requested_last_name, requested_suffix,
+  reason
+}
+```
+`status` and `created_at` are set by DB defaults.
 
-## Files to Change
+## Files to Edit
+| File | Change |
+|------|--------|
+| `src/components/resident/NameChangeRequestForm.tsx` | Remove proof state, upload function, upload UI, payload field |
+| `src/components/staff/NameChangeRequestsTab.tsx` | Remove proof display block and interface field |
 
-### 1. Staff Form — `src/components/staff/EcologicalProfileTab.tsx`
-
-**CENSUS_TABS** (line 126-134):
-- Change `{ id: "education-health", label: "Education & Health", icon: GraduationCap }` → `{ id: "education", label: "Education", icon: GraduationCap }`
-- Change `{ id: "health-info", label: "Health Info", icon: Stethoscope }` → `{ id: "health", label: "Health", icon: Stethoscope }`
-
-**fieldToSection mapping** (lines 361-379):
-- `educationData` → `"education"`
-- `familyPlanning` → `"health"` (was `"education-health"`)
-- All existing health-info keys → `"health"` (was `"health-info"`)
-
-**renderEducationHealthTab** (lines 2069-2259):
-- Rename to `renderEducationTab`
-- Remove the Family Planning card (lines 2147-2189)
-- Remove the Special Categories card (lines 2191-2257)
-- Keep only the Education Background table
-
-**renderHealthInfoTab** (lines 2568-2924):
-- Rename to `renderHealthTab`
-- Add Family Planning card at the top (moved from education tab)
-- Add Special Categories card after Family Planning (moved from education tab)
-- Existing content (malnutrition, immunization, disability, notes, generate report) follows after
-
-**Switch statement** (lines 3046-3052):
-- `case "education"` → `renderEducationTab()`
-- `case "health"` → `renderHealthTab()`
-
-### 2. Resident Form — `src/components/resident/EcologicalProfileForm.tsx`
-
-**tabs array** (lines 823-831):
-- Change `{ id: "education-health", label: "Education & Health" }` → `{ id: "education", label: "Education" }`
-- Change `{ id: "health-info", label: "Health Info" }` → `{ id: "health", label: "Health" }`
-
-**TabsContent for education-health** (lines 1423-1571):
-- Change `value="education-health"` → `value="education"`
-- Update card title to "Education"
-- Remove Family Planning section (lines 1468-1506)
-- Remove Special Categories section (lines 1509-1568) including senior, solo parent, PWD, pregnant, 4Ps
-
-**TabsContent for health-info** (lines 1631-1751):
-- Change `value="health-info"` → `value="health"`
-- Add Family Planning fields at the top (moved from education tab)
-- Add Special Categories fields after Family Planning (moved from education tab)
-- Existing malnutrition, disability, death records, additional notes remain
-
-### 3. Data Mapping — No Changes Needed
-- The save logic in `EcologicalProfileForm.tsx` (lines 527-540) maps by field name (`education_data`, `health_data`, `family_planning`, etc.) to database columns — these are independent of section IDs
-- The staff form's `censusData` state keys are also field-based, not section-based
-- The `fieldToSection` mapping in the staff form just needs key updates (covered above)
-- CSV export (`ecologicalCsv.ts`) maps by database column names, unaffected
-- Report generation (`MonitoringReportPrint.tsx`, `MonitoringReportsTab.tsx`) reads from database columns, unaffected
+## Acceptance Tests
+1. Open Name Change Request modal — no file upload input visible
+2. Submit a request with changed name + reason — succeeds without errors
+3. Modal closes on success, does not navigate away or refresh page
+4. Re-open modal — form fields pre-filled with current name, reason empty (no stale state)
+5. Staff view — review dialog shows current/requested name + reason, no proof section
+6. Approve/Reject workflow still works end-to-end
 
