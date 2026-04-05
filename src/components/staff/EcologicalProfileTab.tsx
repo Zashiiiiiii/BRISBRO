@@ -2066,8 +2066,8 @@ const EcologicalProfileTab = () => {
     );
   };
 
-  // Render Education & Health Tab
-  const renderEducationHealthTab = () => {
+  // Render Education Tab
+  const renderEducationTab = () => {
     if (!selectedHousehold) {
       return (
         <Alert>
