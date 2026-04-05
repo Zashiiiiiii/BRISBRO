@@ -60,7 +60,6 @@ interface NameChangeRequest {
   created_at: string;
   resident_email: string | null;
   resident_contact: string | null;
-  proof_document_url: string | null;
 }
 
 const NameChangeRequestsTab = () => {
