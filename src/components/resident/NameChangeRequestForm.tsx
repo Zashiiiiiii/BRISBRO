@@ -234,43 +234,6 @@ const NameChangeRequestForm = ({
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label>Proof Document (Optional)</Label>
-                {proofFile ? (
-                  <div className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
-                    <span className="text-sm truncate flex-1">{proofFile.name}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setProofFile(null)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <Input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          if (file.size > 5 * 1024 * 1024) {
-                            toast.error("File must be less than 5MB");
-                            return;
-                          }
-                          setProofFile(file);
-                        }
-                      }}
-                      className="cursor-pointer"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Upload a supporting document (ID, birth certificate, etc.). Max 5MB.
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
 
             <DialogFooter>
