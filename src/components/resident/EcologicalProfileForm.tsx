@@ -1628,8 +1628,123 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                 </Card>
               </TabsContent>
 
-              {/* Health Info Tab */}
-              <TabsContent value="health-info" className="space-y-4 mt-0">
+              {/* Health Tab */}
+              <TabsContent value="health" className="space-y-4 mt-0">
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Heart className="h-4 w-4" />
+                      Family Planning
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="family-planning"
+                        checked={(formData.health_data as any)?.familyPlanningAcceptor || false}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          health_data: {
+                            ...(formData.health_data as any),
+                            familyPlanningAcceptor: !!checked
+                          }
+                        })}
+                      />
+                      <label htmlFor="family-planning" className="text-sm font-medium">Family Planning Acceptor</label>
+                    </div>
+                    {(formData.health_data as any)?.familyPlanningAcceptor && (
+                      <div className="ml-6 space-y-2">
+                        <Label>Type of Family Planning Method</Label>
+                        <Select
+                          value={(formData.health_data as any)?.familyPlanningType || ""}
+                          onValueChange={(v) => setFormData({
+                            ...formData,
+                            health_data: {
+                              ...(formData.health_data as any),
+                              familyPlanningType: v
+                            }
+                          })}
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Select method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Pills", "IUD", "Condom", "Injectable", "Implant", "BTL", "Vasectomy", "Natural", "Others"].map((t) => (
+                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-base">Special Categories</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Senior Citizens (60+)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={(formData.health_data as any)?.seniorCount || ""}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            health_data: {
+                              ...(formData.health_data as any),
+                              seniorCount: parseInt(e.target.value) || 0
+                            }
+                          })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Solo Parents</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={formData.solo_parent_count}
+                          onChange={(e) => setFormData({ ...formData, solo_parent_count: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">PWD</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={formData.pwd_count}
+                          onChange={(e) => setFormData({ ...formData, pwd_count: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Pregnant Women</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={(formData.health_data as any)?.pregnantCount || ""}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            health_data: {
+                              ...(formData.health_data as any),
+                              pregnantCount: parseInt(e.target.value) || 0
+                            }
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4">
+                      <Checkbox
+                        id="is_4ps"
+                        checked={formData.is_4ps_beneficiary}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_4ps_beneficiary: !!checked })}
+                      />
+                      <label htmlFor="is_4ps" className="text-sm font-medium">4Ps Beneficiary</label>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader className="py-3">
                     <CardTitle className="text-base flex items-center gap-2">

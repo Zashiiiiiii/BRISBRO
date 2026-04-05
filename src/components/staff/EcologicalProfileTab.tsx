@@ -3045,10 +3045,10 @@ const EcologicalProfileTab = () => {
               case "basic-info": return renderBasicInfoTab();
               case "housing": return renderHousingTab();
               case "services": return renderServicesTab();
-              case "education-health": return renderEducationHealthTab();
+              case "education": return renderEducationTab();
               case "household-members": return renderHouseholdMembersTab();
               case "environmental": return renderEnvironmentalTab();
-              case "health-info": return renderHealthInfoTab();
+              case "health": return renderHealthTab();
               default: return null;
             }
           };
