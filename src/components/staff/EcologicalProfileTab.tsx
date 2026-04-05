@@ -127,10 +127,10 @@ const CENSUS_TABS = [
   { id: "basic-info", label: "Basic Info", icon: FileText },
   { id: "housing", label: "Housing", icon: Home },
   { id: "services", label: "Services", icon: Zap },
-  { id: "education-health", label: "Education & Health", icon: GraduationCap },
+  { id: "education", label: "Education", icon: GraduationCap },
   { id: "household-members", label: "Household Members", icon: Users },
   { id: "environmental", label: "Environmental", icon: Leaf },
-  { id: "health-info", label: "Health Info", icon: Stethoscope },
+  { id: "health", label: "Health", icon: Stethoscope },
 ];
 
 // Options for form fields
@@ -363,18 +363,18 @@ const EcologicalProfileTab = () => {
     interviewerName: "basic-info",
     respondentName: "basic-info",
     respondentRelation: "basic-info",
-    educationData: "education-health",
-    familyPlanning: "education-health",
-    healthData: "health-info",
-    immunizationData: "health-info",
-    pregnantData: "health-info",
-    disabilityData: "health-info",
-    deathData: "health-info",
-    seniorData: "health-info",
-    soloParentCount: "health-info",
-    pwdCount: "health-info",
-    is4PsBeneficiary: "health-info",
-    additionalNotes: "health-info",
+    educationData: "education",
+    familyPlanning: "health",
+    healthData: "health",
+    immunizationData: "health",
+    pregnantData: "health",
+    disabilityData: "health",
+    deathData: "health",
+    seniorData: "health",
+    soloParentCount: "health",
+    pwdCount: "health",
+    is4PsBeneficiary: "health",
+    additionalNotes: "health",
     foodProduction: "environmental",
     animals: "environmental",
   }), []);
@@ -2066,8 +2066,8 @@ const EcologicalProfileTab = () => {
     );
   };
 
-  // Render Education & Health Tab
-  const renderEducationHealthTab = () => {
+  // Render Education Tab
+  const renderEducationTab = () => {
     if (!selectedHousehold) {
       return (
         <Alert>
@@ -2144,117 +2144,6 @@ const EcologicalProfileTab = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5" />
-              Family Planning
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={censusData.familyPlanning.isAcceptor}
-                  onCheckedChange={(checked) => setCensusData((prev) => ({
-                    ...prev,
-                    familyPlanning: { ...prev.familyPlanning, isAcceptor: checked as boolean },
-                  }))}
-                />
-                <Label>Family Planning Acceptor</Label>
-              </div>
-            </div>
-            {censusData.familyPlanning.isAcceptor && (
-              <div className="space-y-2">
-                <Label>Type of Family Planning Method</Label>
-                <Select
-                  value={censusData.familyPlanning.type}
-                  onValueChange={(value) => setCensusData((prev) => ({
-                    ...prev,
-                    familyPlanning: { ...prev.familyPlanning, type: value },
-                  }))}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FAMILY_PLANNING_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Special Categories</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Senior Citizens (60+)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={censusData.seniorData.count}
-                  onChange={(e) => setCensusData((prev) => ({
-                    ...prev,
-                    seniorData: { ...prev.seniorData, count: parseInt(e.target.value) || 0 },
-                  }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Solo Parents</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={censusData.soloParentCount}
-                  onChange={(e) => setCensusData((prev) => ({
-                    ...prev,
-                    soloParentCount: parseInt(e.target.value) || 0,
-                  }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>PWD</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={censusData.pwdCount}
-                  onChange={(e) => setCensusData((prev) => ({
-                    ...prev,
-                    pwdCount: parseInt(e.target.value) || 0,
-                  }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Pregnant Women</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={censusData.pregnantData.count}
-                  onChange={(e) => setCensusData((prev) => ({
-                    ...prev,
-                    pregnantData: { ...prev.pregnantData, count: parseInt(e.target.value) || 0 },
-                  }))}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <Checkbox
-                checked={censusData.is4PsBeneficiary}
-                onCheckedChange={(checked) => setCensusData((prev) => ({
-                  ...prev,
-                  is4PsBeneficiary: checked as boolean,
-                }))}
-              />
-              <Label>4Ps Beneficiary</Label>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   };
@@ -2371,6 +2260,7 @@ const EcologicalProfileTab = () => {
     return (
       <div className="space-y-6">
         <Card>
+
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Droplets className="h-5 w-5" />
@@ -2565,8 +2455,8 @@ const EcologicalProfileTab = () => {
     );
   };
 
-  // Render Health Info Tab
-  const renderHealthInfoTab = () => {
+  // Render Health Tab
+  const renderHealthTab = () => {
     if (!selectedHousehold) {
       return (
         <Alert>
@@ -2579,6 +2469,118 @@ const EcologicalProfileTab = () => {
 
     return (
       <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5" />
+              Family Planning
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={censusData.familyPlanning.isAcceptor}
+                  onCheckedChange={(checked) => setCensusData((prev) => ({
+                    ...prev,
+                    familyPlanning: { ...prev.familyPlanning, isAcceptor: checked as boolean },
+                  }))}
+                />
+                <Label>Family Planning Acceptor</Label>
+              </div>
+            </div>
+            {censusData.familyPlanning.isAcceptor && (
+              <div className="space-y-2">
+                <Label>Type of Family Planning Method</Label>
+                <Select
+                  value={censusData.familyPlanning.type}
+                  onValueChange={(value) => setCensusData((prev) => ({
+                    ...prev,
+                    familyPlanning: { ...prev.familyPlanning, type: value },
+                  }))}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FAMILY_PLANNING_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Special Categories</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Senior Citizens (60+)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={censusData.seniorData.count}
+                  onChange={(e) => setCensusData((prev) => ({
+                    ...prev,
+                    seniorData: { ...prev.seniorData, count: parseInt(e.target.value) || 0 },
+                  }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Solo Parents</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={censusData.soloParentCount}
+                  onChange={(e) => setCensusData((prev) => ({
+                    ...prev,
+                    soloParentCount: parseInt(e.target.value) || 0,
+                  }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>PWD</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={censusData.pwdCount}
+                  onChange={(e) => setCensusData((prev) => ({
+                    ...prev,
+                    pwdCount: parseInt(e.target.value) || 0,
+                  }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Pregnant Women</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={censusData.pregnantData.count}
+                  onChange={(e) => setCensusData((prev) => ({
+                    ...prev,
+                    pregnantData: { ...prev.pregnantData, count: parseInt(e.target.value) || 0 },
+                  }))}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <Checkbox
+                checked={censusData.is4PsBeneficiary}
+                onCheckedChange={(checked) => setCensusData((prev) => ({
+                  ...prev,
+                  is4PsBeneficiary: checked as boolean,
+                }))}
+              />
+              <Label>4Ps Beneficiary</Label>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -3045,10 +3047,10 @@ const EcologicalProfileTab = () => {
               case "basic-info": return renderBasicInfoTab();
               case "housing": return renderHousingTab();
               case "services": return renderServicesTab();
-              case "education-health": return renderEducationHealthTab();
+              case "education": return renderEducationTab();
               case "household-members": return renderHouseholdMembersTab();
               case "environmental": return renderEnvironmentalTab();
-              case "health-info": return renderHealthInfoTab();
+              case "health": return renderHealthTab();
               default: return null;
             }
           };
