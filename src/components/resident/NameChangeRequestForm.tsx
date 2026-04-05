@@ -132,7 +132,7 @@ const NameChangeRequestForm = ({
         proofUrl = await uploadProof();
       }
 
-      const { error } = await supabase.from("name_change_requests").insert({
+      const insertPayload: Record<string, unknown> = {
         resident_id: residentId,
         current_first_name: currentName.firstName,
         current_middle_name: currentName.middleName || null,
@@ -143,8 +143,12 @@ const NameChangeRequestForm = ({
         requested_last_name: formData.requestedLastName.trim(),
         requested_suffix: formData.requestedSuffix.trim() || null,
         reason: formData.reason.trim(),
-        proof_document_url: proofUrl,
-      });
+      };
+      if (proofUrl) {
+        insertPayload.proof_document_url = proofUrl;
+      }
+
+      const { error } = await supabase.from("name_change_requests").insert(insertPayload as any);
 
       if (error) throw error;
 
