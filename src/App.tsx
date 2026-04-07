@@ -169,7 +169,7 @@ const AppContent = () => {
           </ResidentProtectedRoute>
         } />
         <Route path="/resident/requests" element={
-          <Navigate to="/resident/dashboard?tab=requests" replace />
+          <Navigate to="/resident/dashboard?tab=services" replace />
         } />
         <Route path="/resident/messages" element={
           <ResidentProtectedRoute>
@@ -187,7 +187,7 @@ const AppContent = () => {
           </ResidentProtectedRoute>
         } />
         <Route path="/resident/ecological-profile" element={
-          <Navigate to="/resident/dashboard?tab=ecological-profile" replace />
+          <Navigate to="/resident/dashboard?tab=services" replace />
         } />
         
         {/* Staff Settings */}
