@@ -194,24 +194,17 @@ interface Announcement {
   imageUrl?: string;
 }
 
-const CollapsibleGroup = ({ label, items, defaultOpen = false, activeTab, isCollapsed, onMenuClick, renderMenuItem: renderItem }: { 
+const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed }: { 
   label: string; 
-  items: any[]; 
+  children: React.ReactNode;
   defaultOpen?: boolean;
-  activeTab: string;
   isCollapsed: boolean;
-  onMenuClick: (item: { tab?: string; route?: string }) => void;
-  renderMenuItem: (item: any) => React.ReactNode;
 }) => {
-  if (items.length === 0) return null;
-  
   if (isCollapsed) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <SidebarMenu>
-            {items.map(renderItem)}
-          </SidebarMenu>
+          {children}
         </SidebarGroupContent>
       </SidebarGroup>
     );
@@ -228,12 +221,30 @@ const CollapsibleGroup = ({ label, items, defaultOpen = false, activeTab, isColl
         </SidebarGroupLabel>
         <CollapsibleContent>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map(renderItem)}
-            </SidebarMenu>
+            {children}
           </SidebarGroupContent>
         </CollapsibleContent>
       </SidebarGroup>
+    </Collapsible>
+  );
+};
+
+const SubCollapsibleGroup = ({ label, children, defaultOpen = false }: {
+  label: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) => {
+  return (
+    <Collapsible defaultOpen={defaultOpen} className="group/sub-collapsible">
+      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+        {label}
+        <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]/sub-collapsible:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="ml-2 border-l border-border pl-2 mt-0.5">
+          {children}
+        </div>
+      </CollapsibleContent>
     </Collapsible>
   );
 };
@@ -257,7 +268,6 @@ const StaffSidebar = ({
   pendingRegistrationCount?: number;
   pendingEcologicalCount?: number;
   pendingNameChangeCount?: number;
-  
   pendingIncidentsCount?: number;
   pendingCertificatesCount?: number;
   unreadMessagesCount?: number;
@@ -265,72 +275,37 @@ const StaffSidebar = ({
   const { state } = useSidebar();
   const navigate = useNavigate();
   const isCollapsed = state === "collapsed";
-  const showAdminSection = canAccessAdminSection(userRole);
 
-  const handleMenuClick = useCallback((item: { tab?: string; route?: string }) => {
-    if (item.route) {
-      navigate(item.route);
-    } else if (item.tab) {
-      setActiveTab(item.tab);
-    }
-  }, [navigate, setActiveTab]);
+  const handleMenuClick = useCallback((tab: string) => {
+    setActiveTab(tab);
+  }, [setActiveTab]);
 
-  const renderMenuItem = useCallback((item: { title: string; icon: any; tab?: string; route?: string; badge?: number }) => (
-    <SidebarMenuItem key={item.title}>
+  const MenuItem = useCallback(({ title, icon: Icon, tab, badge }: { title: string; icon: any; tab: string; badge?: number }) => (
+    <SidebarMenuItem>
       <SidebarMenuButton
-        onClick={() => handleMenuClick(item)}
-        className={`hover:bg-muted/50 ${activeTab === item.tab ? "bg-muted text-primary font-medium" : ""}`}
+        onClick={() => handleMenuClick(tab)}
+        className={`hover:bg-muted/50 ${activeTab === tab ? "bg-muted text-primary font-medium" : ""}`}
       >
-        <item.icon className="h-4 w-4" />
+        <Icon className="h-4 w-4" />
         {!isCollapsed && (
           <span className="flex items-center justify-between flex-1">
-            {item.title}
-            {item.badge && item.badge > 0 && (
+            {title}
+            {badge && badge > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
-                {item.badge}
+                {badge}
               </Badge>
             )}
           </span>
         )}
-        {isCollapsed && item.badge && item.badge > 0 && (
+        {isCollapsed && badge && badge > 0 && (
           <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
-            {item.badge}
+            {badge}
           </span>
         )}
       </SidebarMenuButton>
     </SidebarMenuItem>
   ), [activeTab, isCollapsed, handleMenuClick]);
 
-  // Services group
-  const servicesItems = useMemo(() => [
-    hasPermission(userRole, "certificate_requests") && { title: "Certificates", icon: FileText, tab: "certificate-requests", badge: pendingCertificatesCount && pendingCertificatesCount > 0 ? pendingCertificatesCount : undefined },
-    hasPermission(userRole, "incidents") && { title: "Incident / Blotter", icon: AlertTriangle, tab: "incidents", badge: pendingIncidentsCount && pendingIncidentsCount > 0 ? pendingIncidentsCount : undefined },
-  ].filter(Boolean) as any[], [userRole, pendingCertificatesCount, pendingIncidentsCount]);
-
-  // Census & Reporting group
-  const censusReportingItems = useMemo(() => [
-    (hasPermission(userRole, "ecological_profile") || hasPermission(userRole, "ecological_submissions")) && { title: "Ecological Census", icon: ClipboardList, tab: "ecological-census", badge: pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined },
-    hasPermission(userRole, "monitoring_reports") && { title: "RBI Form C Reports", icon: FileText, tab: "monitoring-reports" },
-  ].filter(Boolean) as any[], [userRole, pendingEcologicalCount]);
-
-  // Registry group
-  const registryItems = useMemo(() => [
-    (hasPermission(userRole, "manage_residents") || hasPermission(userRole, "manage_households")) && { title: "Residents & Households", icon: Users, tab: "registry" },
-  ].filter(Boolean) as any[], [userRole]);
-
-  // Communication group
-  const communicationItems = useMemo(() => [
-    hasPermission(userRole, "announcements") && { title: "Announcements", icon: Bell, tab: "announcements" },
-    hasPermission(userRole, "messages") && { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessagesCount && unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
-  ].filter(Boolean) as any[], [userRole, unreadMessagesCount]);
-
-  // Administration group
-  const adminItems = useMemo(() => [
-    hasPermission(userRole, "resident_approval") && { title: "Resident Approval", icon: CheckCircle, tab: "resident-approval", badge: pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined },
-    hasPermission(userRole, "name_change_requests") && { title: "Name Change Requests", icon: User, tab: "name-change-requests", badge: pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined },
-    hasPermission(userRole, "view_reports") && { title: "Analytics Reports", icon: BarChart3, tab: "view-reports" },
-    hasPermission(userRole, "settings") && { title: "Settings", icon: Settings, tab: "settings" },
-  ].filter(Boolean) as any[], [userRole, pendingRegistrationCount, pendingNameChangeCount]);
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
@@ -340,21 +315,111 @@ const StaffSidebar = ({
           </h2>
         </div>
         
-        {/* Dashboard Home */}
+        {/* Home */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {renderMenuItem({ title: "Dashboard", icon: Home, tab: "home" })}
+              <MenuItem title="Home" icon={Home} tab="home" />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Collapsible Groups */}
-        <CollapsibleGroup label="Services" items={servicesItems} defaultOpen activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
-        <CollapsibleGroup label="Census & Reporting" items={censusReportingItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
-        <CollapsibleGroup label="Registry" items={registryItems} defaultOpen activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
-        <CollapsibleGroup label="Communication" items={communicationItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
-        <CollapsibleGroup label="Administration" items={adminItems} activeTab={activeTab} isCollapsed={isCollapsed} onMenuClick={handleMenuClick} renderMenuItem={renderMenuItem} />
+        {/* Services */}
+        <CollapsibleGroup label="Services" defaultOpen isCollapsed={isCollapsed}>
+          <SidebarMenu>
+            {hasPermission(userRole, "certificate_requests") && (
+              <MenuItem title="Certificates" icon={FileText} tab="certificate-requests" badge={pendingCertificatesCount && pendingCertificatesCount > 0 ? pendingCertificatesCount : undefined} />
+            )}
+            {hasPermission(userRole, "incidents") && (
+              <MenuItem title="Incident / Blotter" icon={AlertTriangle} tab="incidents" badge={pendingIncidentsCount && pendingIncidentsCount > 0 ? pendingIncidentsCount : undefined} />
+            )}
+          </SidebarMenu>
+        </CollapsibleGroup>
+
+        {/* Census & Reports */}
+        <CollapsibleGroup label="Census & Reports" isCollapsed={isCollapsed}>
+          <SidebarMenu>
+            {(hasPermission(userRole, "ecological_profile") || hasPermission(userRole, "ecological_submissions")) && (
+              <MenuItem title="Ecological Census" icon={ClipboardList} tab="ecological-census" badge={pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined} />
+            )}
+          </SidebarMenu>
+          {!isCollapsed && (
+            <SubCollapsibleGroup label="Reports">
+              <SidebarMenu>
+                {hasPermission(userRole, "monitoring_reports") && (
+                  <MenuItem title="RBI Form C Reports" icon={FileText} tab="monitoring-reports" />
+                )}
+                {hasPermission(userRole, "view_reports") && (
+                  <MenuItem title="Analytics Reports" icon={BarChart3} tab="view-reports" />
+                )}
+              </SidebarMenu>
+            </SubCollapsibleGroup>
+          )}
+          {isCollapsed && (
+            <SidebarMenu>
+              {hasPermission(userRole, "monitoring_reports") && (
+                <MenuItem title="RBI Form C Reports" icon={FileText} tab="monitoring-reports" />
+              )}
+              {hasPermission(userRole, "view_reports") && (
+                <MenuItem title="Analytics Reports" icon={BarChart3} tab="view-reports" />
+              )}
+            </SidebarMenu>
+          )}
+        </CollapsibleGroup>
+
+        {/* Registry */}
+        <CollapsibleGroup label="Registry" isCollapsed={isCollapsed}>
+          <SidebarMenu>
+            {(hasPermission(userRole, "manage_residents") || hasPermission(userRole, "manage_households")) && (
+              <MenuItem title="Residents & Households" icon={Users} tab="registry" />
+            )}
+          </SidebarMenu>
+          {!isCollapsed && (
+            <SubCollapsibleGroup label="Resident Requests">
+              <SidebarMenu>
+                {hasPermission(userRole, "resident_approval") && (
+                  <MenuItem title="Registration Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />
+                )}
+                {hasPermission(userRole, "name_change_requests") && (
+                  <MenuItem title="Name Change Requests" icon={User} tab="name-change-requests" badge={pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined} />
+                )}
+              </SidebarMenu>
+            </SubCollapsibleGroup>
+          )}
+          {isCollapsed && (
+            <SidebarMenu>
+              {hasPermission(userRole, "resident_approval") && (
+                <MenuItem title="Registration Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />
+              )}
+              {hasPermission(userRole, "name_change_requests") && (
+                <MenuItem title="Name Change Requests" icon={User} tab="name-change-requests" badge={pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined} />
+              )}
+            </SidebarMenu>
+          )}
+        </CollapsibleGroup>
+
+        {/* Communication */}
+        <CollapsibleGroup label="Communication" isCollapsed={isCollapsed}>
+          <SidebarMenu>
+            {hasPermission(userRole, "announcements") && (
+              <MenuItem title="Announcements" icon={Bell} tab="announcements" />
+            )}
+            {hasPermission(userRole, "messages") && (
+              <MenuItem title="Messages" icon={MessageSquare} tab="messages" badge={unreadMessagesCount && unreadMessagesCount > 0 ? unreadMessagesCount : undefined} />
+            )}
+          </SidebarMenu>
+        </CollapsibleGroup>
+
+        {/* Settings */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {hasPermission(userRole, "settings") && (
+                <MenuItem title="Settings" icon={Settings} tab="settings" />
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         {/* Logout */}
         <SidebarGroup>
