@@ -676,7 +676,7 @@ const IncidentsTab = () => {
 
               {selectedIncident.rejectionReason && (
                 <div className="bg-destructive/10 border border-destructive/20 p-3 rounded-lg">
-                  <p className="font-medium text-destructive text-sm">Rejection Reason:</p>
+                  <p className="font-medium text-destructive text-sm">Reason for Returning:</p>
                   <p className="text-sm">{selectedIncident.rejectionReason}</p>
                 </div>
               )}

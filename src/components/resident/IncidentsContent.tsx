@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, Plus, Clock, CheckCircle, XCircle, Loader2, Eye, AlertCircle } from "lucide-react";
+import { AlertTriangle, Plus, Clock, CheckCircle, XCircle, Loader2, Eye, AlertCircle, ArrowRightLeft } from "lucide-react";
+import { getApprovalLabel, getCaseStatusLabel } from "@/utils/incidentStatusLabels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,8 +84,8 @@ const IncidentsContent = () => {
         loadIncidents(resId);
         if (payload.eventType === 'UPDATE') {
           const newData = payload.new as any;
-          if (newData.approval_status === 'approved') toast.success("Your incident report has been approved!");
-          else if (newData.approval_status === 'rejected') toast.error("Your incident report has been rejected.");
+          if (newData.approval_status === 'approved') toast.success("Your incident report has been recorded!");
+          else if (newData.approval_status === 'rejected') toast.info("Your incident report has been returned for revision.");
         }
       }).subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -97,7 +98,7 @@ const IncidentsContent = () => {
       rejected: { variant: "destructive", icon: <XCircle className="h-3 w-3 mr-1" /> },
     };
     const { variant, icon } = config[status] || config.pending;
-    return <Badge variant={variant} className="capitalize">{icon}{status}</Badge>;
+    return <Badge variant={variant}>{icon}{getApprovalLabel(status)}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
@@ -105,10 +106,11 @@ const IncidentsContent = () => {
       open: { variant: "destructive", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
       investigating: { variant: "default", icon: <Clock className="h-3 w-3 mr-1" /> },
       resolved: { variant: "outline", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+      referred: { variant: "secondary", icon: <ArrowRightLeft className="h-3 w-3 mr-1" /> },
       closed: { variant: "secondary", icon: <XCircle className="h-3 w-3 mr-1" /> },
     };
     const { variant, icon } = config[status] || config.open;
-    return <Badge variant={variant} className="capitalize">{icon}{status}</Badge>;
+    return <Badge variant={variant}>{icon}{getCaseStatusLabel(status)}</Badge>;
   };
 
   const residentName = profile?.firstName && profile?.lastName
@@ -148,7 +150,7 @@ const IncidentsContent = () => {
                     <TableHead>Report No.</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Approval</TableHead>
+                    <TableHead>Review Status</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -202,7 +204,7 @@ const IncidentsContent = () => {
               </div>
               {selectedIncident.approvalStatus === "rejected" && selectedIncident.rejectionReason && (
                 <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
-                  <p className="font-medium text-destructive">Rejection Reason:</p>
+                  <p className="font-medium text-destructive">Reason for Returning:</p>
                   <p className="text-sm">{selectedIncident.rejectionReason}</p>
                 </div>
               )}
