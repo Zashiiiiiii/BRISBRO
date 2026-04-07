@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import EcologicalProfileContent from "@/components/resident/EcologicalProfileContent";
 import { 
   FileText, 
   Bell, 
