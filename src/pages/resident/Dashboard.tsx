@@ -20,6 +20,7 @@ import {
   Leaf,
   CalendarDays,
   RefreshCw,
+  Briefcase,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -93,17 +94,21 @@ const ResidentSidebar = ({
   const isCollapsed = state === "collapsed";
 
   const allMenuItems = [
-    { title: "Dashboard", icon: Home, tab: "dashboard" },
-    { title: "My Profile", icon: User, tab: "profile" },
-    { title: "My Requests", icon: Clock, tab: "requests", restricted: true },
-    { title: "Request Certificate", icon: FileText, tab: "request", restricted: true },
+    { title: "Home", icon: Home, tab: "home" },
+    { title: "Profile", icon: User, tab: "profile" },
+    { title: "Services", icon: Briefcase, tab: "services", restricted: true },
     { title: "Messages", icon: MessageSquare, tab: "messages", badge: unreadMessageCount > 0 ? unreadMessageCount : undefined, restricted: true },
-    { title: "Incident Reports", icon: AlertCircle, tab: "incidents", restricted: true },
-    { title: "Ecological Profile", icon: Leaf, tab: "ecological-profile", restricted: true },
     { title: "Settings", icon: Settings, tab: "settings" },
   ];
 
   const menuItems = isPending ? allMenuItems.filter(i => !i.restricted) : allMenuItems;
+
+  // Highlight Services when on a sub-tab
+  const serviceSubTabs = ["requests", "request", "incidents", "ecological-profile"];
+  const getIsActive = (tab: string) => {
+    if (tab === "services") return activeTab === "services" || serviceSubTabs.includes(activeTab);
+    return activeTab === tab;
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -124,7 +129,7 @@ const ResidentSidebar = ({
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     onClick={() => setActiveTab(item.tab)}
-                    className={`hover:bg-muted/50 ${activeTab === item.tab ? "bg-muted text-primary font-medium" : ""}`}
+                    className={`hover:bg-muted/50 ${getIsActive(item.tab) ? "bg-muted text-primary font-medium" : ""}`}
                   >
                     <item.icon className="h-4 w-4" />
                     {!isCollapsed && (
@@ -215,14 +220,19 @@ const AnnouncementItem = ({ announcement }: { announcement: Announcement }) => {
   );
 };
 
-const MOBILE_TAB_ORDER = ["dashboard", "requests", "messages", "incidents", "profile"];
+const MOBILE_TAB_ORDER = ["home", "services", "messages", "profile"];
 
 const ResidentDashboard = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { user, profile, isAuthenticated, isLoading: authLoading, logout } = useResidentAuth();
-  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "dashboard");
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get("tab");
+    // Map legacy "dashboard" to "home"
+    if (tab === "dashboard") return "home";
+    return tab || "home";
+  });
   const [requests, setRequests] = useState<Request[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -399,7 +409,7 @@ const ResidentDashboard = () => {
       setIsPulling(false);
       loadData().finally(() => {
         setIsRefreshing(false);
-        toast.success("Dashboard refreshed");
+        toast.success("Refreshed");
       });
     } else {
       setPullDistance(0);
@@ -414,11 +424,9 @@ const ResidentDashboard = () => {
         return;
       }
       if (deltaX < 0 && currentIndex < MOBILE_TAB_ORDER.length - 1) {
-        // Swipe left → next tab
         setSwipeDirection("left");
         handleTabChange(MOBILE_TAB_ORDER[currentIndex + 1]);
       } else if (deltaX > 0 && currentIndex > 0) {
-        // Swipe right → previous tab
         setSwipeDirection("right");
         handleTabChange(MOBILE_TAB_ORDER[currentIndex - 1]);
       }
@@ -426,7 +434,8 @@ const ResidentDashboard = () => {
 
     touchStartRef.current = null;
   }, [isMobile, isPulling, pullDistance, isRefreshing, activeTab]);
-    const handleLogout = async () => {
+
+  const handleLogout = async () => {
     if (user && profile) {
       const fullName = profile.firstName && profile.lastName 
         ? `${profile.firstName} ${profile.lastName}`
@@ -440,17 +449,15 @@ const ResidentDashboard = () => {
 
   const handleTabChange = (tab: string) => {
     setTabBounceKey(prev => prev + 1);
-    // Clear swipe animation after it plays
     setTimeout(() => setSwipeDirection(null), 250);
     setActiveTab(tab);
   };
 
   const handleRequestSuccess = (controlNumber: string) => {
     setSubmittedControlNumber(controlNumber);
-    loadData(); // Refresh the requests list
+    loadData();
     toast.success("Certificate request submitted successfully!");
   };
-
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -484,6 +491,13 @@ const ResidentDashboard = () => {
       </div>
     );
   }
+
+  // Determine back navigation target
+  const serviceSubTabs = ["requests", "request", "incidents", "ecological-profile"];
+  const getBackTarget = () => {
+    if (serviceSubTabs.includes(activeTab)) return { label: "Back to Services", tab: "services" };
+    return { label: "Back to Home", tab: "home" };
+  };
 
   return (
     <SidebarProvider>
@@ -521,7 +535,8 @@ const ResidentDashboard = () => {
             </div>
           )}
 
-          {activeTab === "dashboard" && (
+          {/* ===== HOME TAB ===== */}
+          {activeTab === "home" && (
             <>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
@@ -578,15 +593,15 @@ const ResidentDashboard = () => {
                         {latestRequest.status === "rejected" && latestRequest.rejectionReason && (
                           <p className="text-sm text-destructive">Reason: {latestRequest.rejectionReason}</p>
                         )}
-                        <Button variant="link" size="sm" className="px-0" onClick={() => setActiveTab("requests")}>
+                        <Button variant="link" size="sm" className="px-0" onClick={() => handleTabChange("requests")}>
                           View all requests →
                         </Button>
                       </div>
                     ) : (
                       <div className="text-center py-4 text-muted-foreground">
                         <p className="text-sm">No requests yet</p>
-                        <Button variant="link" size="sm" onClick={() => setActiveTab("request")}>
-                          Request your first certificate
+                        <Button variant="link" size="sm" onClick={() => handleTabChange("services")}>
+                          Go to Services →
                         </Button>
                       </div>
                     )}
@@ -641,7 +656,7 @@ const ResidentDashboard = () => {
                           variant="link"
                           size="sm"
                           className="px-0"
-                          onClick={() => setActiveTab("ecological-profile")}
+                          onClick={() => handleTabChange("ecological-profile")}
                         >
                           {ecoStatus === "none" ? "Submit Profile →" : "Update Profile →"}
                         </Button>
@@ -651,42 +666,24 @@ const ResidentDashboard = () => {
                 </Card>
               </div>
 
-              {/* Quick Actions - reduced */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <Card 
-                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary"
-                  onClick={() => setActiveTab("request")}
-                >
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Request Certificate</h3>
-                      <p className="text-sm text-muted-foreground">Apply for barangay documents</p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 ml-auto text-muted-foreground" />
-                  </CardContent>
-                </Card>
+              {/* Quick Action - Go to Services */}
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary mb-6"
+                onClick={() => handleTabChange("services")}
+              >
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Briefcase className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Go to Services</h3>
+                    <p className="text-sm text-muted-foreground">Certificates, incidents, ecological profile</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 ml-auto text-muted-foreground" />
+                </CardContent>
+              </Card>
 
-                <Card 
-                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-accent"
-                  onClick={() => setActiveTab("incidents")}
-                >
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-                      <AlertCircle className="h-6 w-6 text-accent" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Report Incident</h3>
-                      <p className="text-sm text-muted-foreground">File a blotter or complaint</p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 ml-auto text-muted-foreground" />
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Announcements - full width */}
+              {/* Announcements */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
@@ -723,13 +720,79 @@ const ResidentDashboard = () => {
             </>
           )}
 
+          {/* ===== SERVICES LANDING ===== */}
+          {activeTab === "services" && (
+            <>
+              <div className="flex items-center gap-4 mb-6">
+                <SidebarTrigger />
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">Services</h1>
+                  <p className="text-muted-foreground">Access barangay services</p>
+                </div>
+              </div>
+
+              {isPendingVerification && <PendingVerificationBanner />}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card 
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleTabChange("requests")}
+                >
+                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                    <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+                      <FileText className="h-7 w-7 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Certificate Requests</h3>
+                      <p className="text-sm text-muted-foreground mt-1">Request and track barangay certificates</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </CardContent>
+                </Card>
+
+                <Card 
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleTabChange("incidents")}
+                >
+                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                    <div className="h-14 w-14 rounded-full bg-accent/10 flex items-center justify-center">
+                      <AlertCircle className="h-7 w-7 text-accent" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Incident Reports</h3>
+                      <p className="text-sm text-muted-foreground mt-1">File blotter records or complaints</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </CardContent>
+                </Card>
+
+                <Card 
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleTabChange("ecological-profile")}
+                >
+                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                    <div className="h-14 w-14 rounded-full bg-accent/10 flex items-center justify-center">
+                      <Leaf className="h-7 w-7 text-accent" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Ecological Profile</h3>
+                      <p className="text-sm text-muted-foreground mt-1">Submit household ecological census data</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+
+          {/* ===== REQUEST CERTIFICATE (sub-tab of Services) ===== */}
           {activeTab === "request" && (
             <>
               <div className="flex items-center gap-4 mb-6">
                 <SidebarTrigger />
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                <Button variant="ghost" size="sm" onClick={() => handleTabChange("services")}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  Back to Services
                 </Button>
               </div>
 
@@ -758,7 +821,6 @@ const ResidentDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-
             </>
           )}
 
@@ -771,86 +833,92 @@ const ResidentDashboard = () => {
               isResidentFlow
               onViewRequests={() => {
                 setSubmittedControlNumber("");
-                setActiveTab("requests");
+                handleTabChange("requests");
               }}
             />
           )}
 
+          {/* ===== REQUESTS LIST (sub-tab of Services) ===== */}
           {activeTab === "requests" && (
             <>
               <div className="flex items-center gap-4 mb-6">
                 <SidebarTrigger />
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                <Button variant="ghost" size="sm" onClick={() => handleTabChange("services")}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  Back to Services
                 </Button>
               </div>
-              <RequestsContent onNewRequest={() => setActiveTab("request")} />
+              <RequestsContent onNewRequest={() => handleTabChange("request")} />
             </>
           )}
 
+          {/* ===== PROFILE ===== */}
           {activeTab === "profile" && (
             <>
               <div className="flex items-center gap-4 mb-6">
                 <SidebarTrigger />
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                <Button variant="ghost" size="sm" onClick={() => handleTabChange("home")}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  Back to Home
                 </Button>
               </div>
               <ProfileContent />
             </>
           )}
 
+          {/* ===== MESSAGES ===== */}
           {activeTab === "messages" && (
             <>
               <div className="flex items-center gap-4 mb-6">
                 <SidebarTrigger />
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                <Button variant="ghost" size="sm" onClick={() => handleTabChange("home")}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  Back to Home
                 </Button>
               </div>
               <MessagesContent />
             </>
           )}
 
+          {/* ===== INCIDENTS (sub-tab of Services) ===== */}
           {activeTab === "incidents" && (
             <>
               <div className="flex items-center gap-4 mb-6">
                 <SidebarTrigger />
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                <Button variant="ghost" size="sm" onClick={() => handleTabChange("services")}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  Back to Services
                 </Button>
               </div>
               <IncidentsContent />
             </>
           )}
 
+          {/* ===== SETTINGS ===== */}
           {activeTab === "settings" && (
             <>
               <div className="flex items-center gap-4 mb-6">
                 <SidebarTrigger />
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                <Button variant="ghost" size="sm" onClick={() => handleTabChange("home")}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  Back to Home
                 </Button>
               </div>
               <SettingsContent />
             </>
           )}
 
+          {/* ===== ECOLOGICAL PROFILE (sub-tab of Services) ===== */}
           {activeTab === "ecological-profile" && (
             <>
               <div className="flex items-center gap-4 mb-6">
                 <SidebarTrigger />
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab("dashboard")}>
+                <Button variant="ghost" size="sm" onClick={() => handleTabChange("services")}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  Back to Services
                 </Button>
               </div>
-              <EcologicalProfileContent onSuccess={() => setActiveTab("dashboard")} />
+              <EcologicalProfileContent onSuccess={() => handleTabChange("services")} />
             </>
           )}
         </main>
@@ -862,13 +930,12 @@ const ResidentDashboard = () => {
         <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t shadow-medium">
           <div className="flex items-center justify-around h-16">
             {[
-              { icon: Home, label: "Home", tab: "dashboard" },
-              { icon: FileText, label: "Requests", tab: "requests" },
+              { icon: Home, label: "Home", tab: "home" },
+              { icon: Briefcase, label: "Services", tab: "services" },
               { icon: MessageSquare, label: "Messages", tab: "messages" },
-              { icon: AlertCircle, label: "Incidents", tab: "incidents" },
               { icon: User, label: "Profile", tab: "profile" },
             ].map((item) => {
-              const isActive = activeTab === item.tab;
+              const isActive = activeTab === item.tab || (item.tab === "services" && serviceSubTabs.includes(activeTab));
               return (
                 <button
                   key={item.tab}
