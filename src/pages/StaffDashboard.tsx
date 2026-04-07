@@ -229,11 +229,15 @@ const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed }:
   );
 };
 
-const SubCollapsibleGroup = ({ label, children, defaultOpen = false }: {
+const SubCollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed = false }: {
   label: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  isCollapsed?: boolean;
 }) => {
+  if (isCollapsed) {
+    return <>{children}</>;
+  }
   return (
     <Collapsible defaultOpen={defaultOpen} className="group/sub-collapsible">
       <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
@@ -281,7 +285,7 @@ const StaffSidebar = ({
   }, [setActiveTab]);
 
   const MenuItem = useCallback(({ title, icon: Icon, tab, badge }: { title: string; icon: any; tab: string; badge?: number }) => (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="relative">
       <SidebarMenuButton
         tooltip={title}
         isActive={activeTab === tab}
@@ -290,28 +294,28 @@ const StaffSidebar = ({
         <Icon className="h-4 w-4" />
         <span className="flex items-center justify-between flex-1">
           {title}
-          {badge && badge > 0 && (
+          {!isCollapsed && badge && badge > 0 && (
             <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
               {badge}
             </Badge>
           )}
         </span>
-        {isCollapsed && badge && badge > 0 && (
-          <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
-            {badge}
-          </span>
-        )}
       </SidebarMenuButton>
+      {isCollapsed && badge && badge > 0 && (
+        <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center z-10">
+          {badge}
+        </span>
+      )}
     </SidebarMenuItem>
   ), [activeTab, isCollapsed, handleMenuClick]);
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="p-4">
-          <h2 className={`font-bold text-lg text-primary ${isCollapsed ? "hidden" : "block"}`}>
-            Staff Portal
-          </h2>
+        <div className={isCollapsed ? "p-2" : "p-4"}>
+          {!isCollapsed && (
+            <h2 className="font-bold text-lg text-primary">Staff Portal</h2>
+          )}
         </div>
         
         {/* Home */}
@@ -342,7 +346,7 @@ const StaffSidebar = ({
               <MenuItem title="Ecological Census" icon={ClipboardList} tab="ecological-census" badge={pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined} />
             )}
           </SidebarMenu>
-          <SubCollapsibleGroup label="Reports">
+          <SubCollapsibleGroup label="Reports" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {hasPermission(userRole, "monitoring_reports") && (
                 <MenuItem title="RBI Form C Reports" icon={FileText} tab="monitoring-reports" />
@@ -361,7 +365,7 @@ const StaffSidebar = ({
               <MenuItem title="Residents & Households" icon={Users} tab="registry" />
             )}
           </SidebarMenu>
-          <SubCollapsibleGroup label="Resident Requests">
+          <SubCollapsibleGroup label="Resident Requests" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {hasPermission(userRole, "resident_approval") && (
                 <MenuItem title="Registration Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />

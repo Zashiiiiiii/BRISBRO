@@ -113,20 +113,20 @@ const ResidentSidebar = ({
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="p-4">
-          <h2 className={`font-bold text-lg text-primary ${isCollapsed ? "hidden" : "block"}`}>
-            Resident Portal
-          </h2>
+        <div className={isCollapsed ? "p-2" : "p-4"}>
+          {!isCollapsed && (
+            <h2 className="font-bold text-lg text-primary">Resident Portal</h2>
+          )}
         </div>
         
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "hidden" : "block"}>
-            Navigation
-          </SidebarGroupLabel>
+          {!isCollapsed && (
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.title} className="relative">
                   <SidebarMenuButton
                     tooltip={item.title}
                     isActive={getIsActive(item.tab)}
@@ -135,18 +135,18 @@ const ResidentSidebar = ({
                     <item.icon className="h-4 w-4" />
                     <span className="flex items-center justify-between flex-1">
                       {item.title}
-                      {item.badge && item.badge > 0 && (
+                      {!isCollapsed && item.badge && item.badge > 0 && (
                         <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
                           {item.badge}
                         </Badge>
                       )}
                     </span>
-                    {isCollapsed && item.badge && item.badge > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
-                        {item.badge}
-                      </span>
-                    )}
                   </SidebarMenuButton>
+                  {isCollapsed && item.badge && item.badge > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center z-10">
+                      {item.badge}
+                    </span>
+                  )}
                 </SidebarMenuItem>
               ))}
               <SidebarMenuItem>
