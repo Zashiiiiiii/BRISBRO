@@ -218,7 +218,7 @@ const IncidentsTab = () => {
   const handleApproveIncident = async (incident: Incident) => {
     try {
       await approveIncidentForStaff(incident.id, user?.fullName || "Staff");
-      toast.success("Incident report approved");
+      toast.success("Incident report recorded");
       loadIncidents();
     } catch (error: any) {
       console.error("Error approving incident:", error);
@@ -240,7 +240,7 @@ const IncidentsTab = () => {
         rejectionReason
       );
 
-      toast.success("Incident report rejected");
+      toast.success("Incident report returned");
       setShowRejectDialog(false);
       setRejectionReason("");
       setSelectedIncident(null);
@@ -256,7 +256,7 @@ const IncidentsTab = () => {
   const handleUpdateStatus = async (incident: Incident, newStatus: string) => {
     try {
       await updateIncidentStatusForStaff(incident.id, newStatus, user?.fullName || "Staff");
-      toast.success(`Incident marked as ${newStatus}`);
+      toast.success(`Incident marked as ${getCaseStatusLabel(newStatus)}`);
       loadIncidents();
     } catch (error: any) {
       console.error("Error updating incident:", error);
