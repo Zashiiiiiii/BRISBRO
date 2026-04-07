@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { getApprovalLabel } from "@/utils/incidentStatusLabels";
 import { format } from "date-fns";
 import { 
   FileText, 
@@ -472,9 +473,9 @@ const ViewReportsTab = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="pending">{activeTab === "incidents" ? "Pending Review" : "Pending"}</SelectItem>
+                <SelectItem value="approved">{activeTab === "incidents" ? "Recorded" : "Approved"}</SelectItem>
+                <SelectItem value="rejected">{activeTab === "incidents" ? "Returned" : "Rejected"}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -583,7 +584,7 @@ const ViewReportsTab = () => {
                           <TableCell>{incident.incidentDate}</TableCell>
                           <TableCell>{incident.incidentType}</TableCell>
                           <TableCell>{incident.complainantName}</TableCell>
-                          <TableCell>{getApprovalBadge(incident.approvalStatus)}</TableCell>
+                          <TableCell>{getApprovalBadge(incident.approvalStatus, true)}</TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="outline"
@@ -666,12 +667,12 @@ const ViewReportsTab = () => {
           {selectedIncident && (
             <div className="space-y-4">
               <div className="flex gap-2 flex-wrap">
-                {getApprovalBadge(selectedIncident.approvalStatus)}
+                {getApprovalBadge(selectedIncident.approvalStatus, true)}
               </div>
 
               {selectedIncident.approvalStatus === "rejected" && selectedIncident.rejectionReason && (
                 <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
-                  <p className="font-medium text-destructive">Rejection Reason:</p>
+                  <p className="font-medium text-destructive">Reason for Returning:</p>
                   <p className="text-sm">{selectedIncident.rejectionReason}</p>
                 </div>
               )}
