@@ -11,8 +11,10 @@ import {
   XCircle,
   UserCheck,
   UserX,
-  Shield
+  Shield,
+  ArrowRightLeft,
 } from "lucide-react";
+import { getApprovalLabel, getCaseStatusLabel } from "@/utils/incidentStatusLabels";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -282,15 +284,16 @@ const IncidentsTab = () => {
       open: { variant: "destructive", icon: <AlertTriangle className="h-3 w-3 mr-1" /> },
       investigating: { variant: "default", icon: <Clock className="h-3 w-3 mr-1" /> },
       resolved: { variant: "outline", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+      referred: { variant: "secondary", icon: <ArrowRightLeft className="h-3 w-3 mr-1" /> },
       closed: { variant: "secondary", icon: <XCircle className="h-3 w-3 mr-1" /> },
     };
 
     const { variant, icon } = config[status] || config.open;
 
     return (
-      <Badge variant={variant} className="capitalize">
+      <Badge variant={variant}>
         {icon}
-        {status}
+        {getCaseStatusLabel(status)}
       </Badge>
     );
   };
@@ -305,9 +308,9 @@ const IncidentsTab = () => {
     const { variant, icon } = config[status] || config.pending;
 
     return (
-      <Badge variant={variant} className="capitalize">
+      <Badge variant={variant}>
         {icon}
-        {status}
+        {getApprovalLabel(status)}
       </Badge>
     );
   };
@@ -350,8 +353,8 @@ const IncidentsTab = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="approved">Approved</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+            <TabsTrigger value="approved">Recorded</TabsTrigger>
+            <TabsTrigger value="rejected">Returned</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -373,9 +376,10 @@ const IncidentsTab = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="investigating">Investigating</SelectItem>
+                <SelectItem value="open">Ongoing</SelectItem>
+                <SelectItem value="investigating">Under Investigation</SelectItem>
                 <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="referred">Referred</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
             </Select>
@@ -490,13 +494,22 @@ const IncidentsTab = () => {
                               </Button>
                             )}
                             {incident.status === "investigating" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUpdateStatus(incident, "resolved")}
-                              >
-                                Resolve
-                              </Button>
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleUpdateStatus(incident, "resolved")}
+                                >
+                                  Resolve
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleUpdateStatus(incident, "referred")}
+                                >
+                                  Refer
+                                </Button>
+                              </>
                             )}
                           </>
                         )}
@@ -757,17 +770,17 @@ const IncidentsTab = () => {
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Incident Report</DialogTitle>
+            <DialogTitle>Return Incident Report</DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting this incident report.
+              Please provide a reason for returning this incident report.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label>Rejection Reason *</Label>
+            <Label>Reason for returning *</Label>
             <Textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Explain why this incident report is being rejected..."
+              placeholder="Explain why this incident report is being returned..."
               rows={4}
               className="mt-2"
             />
@@ -785,7 +798,8 @@ const IncidentsTab = () => {
               disabled={isSaving || !rejectionReason.trim()}
             >
               {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Reject Report
+              Return Report
+            </Button>
             </Button>
           </DialogFooter>
         </DialogContent>
