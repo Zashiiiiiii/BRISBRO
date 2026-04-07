@@ -22,7 +22,7 @@ import ResidentProfile from "./pages/resident/Profile";
 import ResidentMessages from "./pages/resident/Messages";
 import ResidentSettings from "./pages/resident/Settings";
 import ResidentIncidents from "./pages/resident/Incidents";
-import ResidentEcologicalProfile from "./pages/resident/EcologicalProfile";
+
 import StaffIncidents from "./pages/staff/Incidents";
 import StaffSettings from "./pages/staff/Settings";
 import StaffResidents from "./pages/staff/Residents";
