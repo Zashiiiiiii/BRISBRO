@@ -1,78 +1,60 @@
 
 
-# Simplify Resident Portal Sidebar
+# Improve Staff & Resident Portal Sidebars
 
 ## Current State
-The sidebar has 8 individual items: Dashboard, My Profile, My Requests, Request Certificate, Messages, Incident Reports, Ecological Profile, Settings, plus Logout. The "Services" tabs (Request Certificate, My Requests, Incidents, Ecological Profile) are all separate top-level items.
-
-## Target Sidebar Structure
-
-```text
-Home
-Profile
-Services          ← click to go to services page with card/tab layout
-Messages          ← with unread badge
-Settings
-Logout
-```
-
-## New "Services" Tab Content
-When `activeTab === "services"`, render a card-based landing with three service cards:
-- **Certificate Requests** → switches to existing `request` / `requests` tabs (combined view)
-- **Incident Reports** → switches to existing `incidents` tab
-- **Ecological Profile** → switches to existing `ecological-profile` tab
-
-Each card shows an icon, title, description, and a chevron. The "Back to Home" button on sub-tabs (`request`, `requests`, `incidents`, `ecological-profile`) changes to "Back to Services" and returns to the `services` tab.
+- Both sidebars already use `collapsible="icon"` and `SidebarTrigger`, so icon-only mode works mechanically.
+- **Missing**: No `tooltip` props on menu buttons, so collapsed state shows icons with no labels. No dedicated collapse toggle in the sidebar footer. Staff sidebar's `SubCollapsibleGroup` items are hidden when collapsed instead of shown as flat icons. Resident sidebar has no collapsible groups (flat list).
 
 ## Changes
 
-### File: `src/pages/resident/Dashboard.tsx`
+### 1. Staff Sidebar (`src/pages/StaffDashboard.tsx`)
 
-**1. Sidebar (`ResidentSidebar`)**
-- Reduce `allMenuItems` to 5 items: `home` (was "dashboard"), `profile`, `services`, `messages`, `settings`
-- Rename tab value `"dashboard"` → `"home"` throughout
-- Remove individual entries for `requests`, `request`, `incidents`, `ecological-profile`
-- Keep `isPending` restriction on `services` and `messages`
+**MenuItem component** — add `tooltip={title}` to every `SidebarMenuButton` and use `isActive` prop instead of manual className for active state:
+```tsx
+<SidebarMenuButton
+  tooltip={title}
+  isActive={activeTab === tab}
+  onClick={...}
+>
+```
 
-**2. New Services landing (inline)**
-- Add `activeTab === "services"` block rendering three clickable cards:
-  - "Certificate Requests" → `setActiveTab("requests")` (shows RequestsContent with a "New Request" button that goes to `request` tab)
-  - "Incident Reports" → `setActiveTab("incidents")`
-  - "Ecological Profile" → `setActiveTab("ecological-profile")`
+**Sidebar footer** — add a `SidebarTrigger` button at the bottom of the sidebar (inside `SidebarContent`) as a collapse/expand toggle with a `PanelLeft` / `ChevronLeft` icon. This ensures the user can toggle from within the sidebar itself.
 
-**3. Back navigation**
-- Sub-tabs `request`, `requests`, `incidents`, `ecological-profile` → "Back to Services" button returns to `services` tab
-- Tabs `profile`, `messages`, `settings` → "Back to Home" button returns to `home` tab
+**SubCollapsibleGroup fix** — remove the duplicated `{isCollapsed && <SidebarMenu>...}` blocks in Census & Reports and Registry sections. The `CollapsibleGroup` already renders children flat when collapsed; the sub-items just need to always render (the parent `CollapsibleGroup` handles collapsed display).
 
-**4. Home tab**
-- Rename heading from "Welcome" greeting stays, but quick action cards now say "Go to Services" as a single card instead of separate certificate/incident cards
-- Keep announcements, latest request status, ecological status cards
+### 2. Resident Sidebar (`src/pages/resident/Dashboard.tsx`)
 
-**5. Mobile bottom nav**
-- Update to: Home, Services, Messages, Profile (4 items instead of 5)
-- `Services` opens the services landing
+**Add `tooltip` prop** to every `SidebarMenuButton` (Home, Profile, Services, Messages, Settings, Logout).
 
-**6. `MOBILE_TAB_ORDER`** 
-- Update for swipe: `["home", "services", "messages", "profile"]`
+**Add sidebar footer toggle** — same `SidebarTrigger` at the bottom of the sidebar for collapse/expand.
 
-**7. Default tab / URL param**
-- Change default from `"dashboard"` to `"home"`
-- Update `searchParams` references
+### 3. Files to Update
 
-### File: `src/App.tsx`
-- Update any `?tab=dashboard` redirect to `?tab=home`
+| File | What changes |
+|------|-------------|
+| `src/pages/StaffDashboard.tsx` | `MenuItem`: add `tooltip` + `isActive` props. Remove duplicated collapsed icon blocks in Registry/Census sections. Add `SidebarTrigger` footer. |
+| `src/pages/resident/Dashboard.tsx` | Add `tooltip` to all `SidebarMenuButton`s. Add `SidebarTrigger` footer. Add `tooltip` to Logout button. |
 
-## What stays the same
-- All content components (`RequestsContent`, `IncidentsContent`, `EcologicalProfileContent`, etc.) remain unchanged
-- All routes and permissions preserved
-- Sidebar collapse/expand behavior unchanged
+### 4. Sidebar Footer Toggle (both portals)
+
+```tsx
+{/* Collapse/Expand toggle at bottom */}
+<div className="mt-auto border-t border-border p-2">
+  <SidebarTrigger className="w-full" />
+</div>
+```
+
+Placed after the Logout group, before closing `</SidebarContent>`.
+
+### 5. Mobile Behavior
+No changes needed — the existing `SidebarProvider` already handles mobile via a Sheet overlay. The `SidebarTrigger` in the main content area opens/closes it on mobile. The footer toggle will be hidden on mobile since the sidebar is offcanvas.
 
 ## Acceptance Tests
-1. Sidebar shows exactly: Home, Profile, Services, Messages, Settings, Logout
-2. Clicking "Services" shows three service cards
-3. Clicking a service card loads the correct content with "Back to Services" navigation
-4. Home tab shows welcome message, status cards, and announcements
-5. Mobile bottom nav shows 4 items: Home, Services, Messages, Profile
-6. Unread message badge still visible on Messages
-7. Pending verification still restricts Services and Messages
+1. **Staff Portal**: Hover any icon in collapsed mode → tooltip shows the item name.
+2. **Staff Portal**: Click footer toggle → sidebar collapses to icons; click again → expands back.
+3. **Staff Portal**: Collapsible groups (Services, Census, Registry, Communication) expand/collapse with chevron. Sub-groups (Reports, Resident Requests) also expand/collapse.
+4. **Staff Portal**: Active tab remains highlighted in both expanded and collapsed states.
+5. **Resident Portal**: Same tooltip, toggle, and highlight behavior.
+6. **Mobile**: Sidebar opens as overlay sheet; no layout breakage; footer toggle hidden.
 
