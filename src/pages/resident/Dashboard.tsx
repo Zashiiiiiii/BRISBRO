@@ -128,20 +128,19 @@ const ResidentSidebar = ({
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={getIsActive(item.tab)}
                     onClick={() => setActiveTab(item.tab)}
-                    className={`hover:bg-muted/50 ${getIsActive(item.tab) ? "bg-muted text-primary font-medium" : ""}`}
                   >
                     <item.icon className="h-4 w-4" />
-                    {!isCollapsed && (
-                      <span className="flex items-center justify-between flex-1">
-                        {item.title}
-                        {item.badge && item.badge > 0 && (
-                          <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
-                            {item.badge}
-                          </Badge>
-                        )}
-                      </span>
-                    )}
+                    <span className="flex items-center justify-between flex-1">
+                      {item.title}
+                      {item.badge && item.badge > 0 && (
+                        <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </span>
                     {isCollapsed && item.badge && item.badge > 0 && (
                       <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
                         {item.badge}
@@ -152,16 +151,22 @@ const ResidentSidebar = ({
               ))}
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  tooltip="Logout"
                   onClick={onLogout}
                   className="hover:bg-destructive/10 text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
-                  {!isCollapsed && <span>Logout</span>}
+                  <span>Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Collapse/Expand toggle */}
+        <div className="mt-auto border-t border-border p-2">
+          <SidebarTrigger className="w-full" />
+        </div>
       </SidebarContent>
     </Sidebar>
   );
