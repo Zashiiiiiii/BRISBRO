@@ -229,29 +229,6 @@ const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed }:
   );
 };
 
-const SubCollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed = false }: {
-  label: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-  isCollapsed?: boolean;
-}) => {
-  if (isCollapsed) {
-    return <>{children}</>;
-  }
-  return (
-    <Collapsible defaultOpen={defaultOpen} className="group/sub-collapsible">
-      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-        {label}
-        <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]/sub-collapsible:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="ml-2 border-l border-border pl-2 mt-0.5">
-          {children}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-};
 
 const StaffSidebar = ({ 
   activeTab, 
@@ -345,17 +322,13 @@ const StaffSidebar = ({
             {(hasPermission(userRole, "ecological_profile") || hasPermission(userRole, "ecological_submissions")) && (
               <MenuItem title="Ecological Census" icon={ClipboardList} tab="ecological-census" badge={pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined} />
             )}
+            {hasPermission(userRole, "monitoring_reports") && (
+              <MenuItem title="RBI Form C Reports" icon={FileText} tab="monitoring-reports" />
+            )}
+            {hasPermission(userRole, "view_reports") && (
+              <MenuItem title="Analytics Reports" icon={BarChart3} tab="view-reports" />
+            )}
           </SidebarMenu>
-          <SubCollapsibleGroup label="Reports" isCollapsed={isCollapsed}>
-            <SidebarMenu>
-              {hasPermission(userRole, "monitoring_reports") && (
-                <MenuItem title="RBI Form C Reports" icon={FileText} tab="monitoring-reports" />
-              )}
-              {hasPermission(userRole, "view_reports") && (
-                <MenuItem title="Analytics Reports" icon={BarChart3} tab="view-reports" />
-              )}
-            </SidebarMenu>
-          </SubCollapsibleGroup>
         </CollapsibleGroup>
 
         {/* Registry */}
@@ -365,16 +338,6 @@ const StaffSidebar = ({
               <MenuItem title="Residents & Households" icon={Users} tab="registry" />
             )}
           </SidebarMenu>
-          <SubCollapsibleGroup label="Resident Requests" isCollapsed={isCollapsed}>
-            <SidebarMenu>
-              {hasPermission(userRole, "resident_approval") && (
-                <MenuItem title="Registration Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />
-              )}
-              {hasPermission(userRole, "name_change_requests") && (
-                <MenuItem title="Name Change Requests" icon={User} tab="name-change-requests" badge={pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined} />
-              )}
-            </SidebarMenu>
-          </SubCollapsibleGroup>
         </CollapsibleGroup>
 
         {/* Communication */}
@@ -389,16 +352,20 @@ const StaffSidebar = ({
           </SidebarMenu>
         </CollapsibleGroup>
 
-        {/* Settings */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {hasPermission(userRole, "settings") && (
-                <MenuItem title="Settings" icon={Settings} tab="settings" />
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Administration */}
+        <CollapsibleGroup label="Administration" defaultOpen isCollapsed={isCollapsed}>
+          <SidebarMenu>
+            {hasPermission(userRole, "resident_approval") && (
+              <MenuItem title="Resident Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />
+            )}
+            {hasPermission(userRole, "name_change_requests") && (
+              <MenuItem title="Name Change Requests" icon={User} tab="name-change-requests" badge={pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined} />
+            )}
+            {hasPermission(userRole, "settings") && (
+              <MenuItem title="Settings" icon={Settings} tab="settings" />
+            )}
+          </SidebarMenu>
+        </CollapsibleGroup>
 
         {/* Logout */}
         <SidebarGroup>
