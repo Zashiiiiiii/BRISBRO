@@ -212,7 +212,7 @@ const ViewReportsTab = () => {
     };
   }, [loadIncidents, loadCertificates]);
 
-  const getApprovalBadge = (status: string) => {
+  const getApprovalBadge = (status: string, isIncident = false) => {
     const config: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ReactNode }> = {
       pending: { variant: "secondary", icon: <Clock className="h-3 w-3 mr-1" /> },
       approved: { variant: "outline", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
@@ -222,10 +222,11 @@ const ViewReportsTab = () => {
       released: { variant: "outline", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
     };
     const { variant, icon } = config[status] || config.pending;
+    const label = isIncident ? getApprovalLabel(status) : status;
     return (
-      <Badge variant={variant} className="capitalize">
+      <Badge variant={variant} className={isIncident ? "" : "capitalize"}>
         {icon}
-        {status}
+        {label}
       </Badge>
     );
   };
