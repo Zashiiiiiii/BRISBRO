@@ -283,20 +283,19 @@ const StaffSidebar = ({
   const MenuItem = useCallback(({ title, icon: Icon, tab, badge }: { title: string; icon: any; tab: string; badge?: number }) => (
     <SidebarMenuItem>
       <SidebarMenuButton
+        tooltip={title}
+        isActive={activeTab === tab}
         onClick={() => handleMenuClick(tab)}
-        className={`hover:bg-muted/50 ${activeTab === tab ? "bg-muted text-primary font-medium" : ""}`}
       >
         <Icon className="h-4 w-4" />
-        {!isCollapsed && (
-          <span className="flex items-center justify-between flex-1">
-            {title}
-            {badge && badge > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
-                {badge}
-              </Badge>
-            )}
-          </span>
-        )}
+        <span className="flex items-center justify-between flex-1">
+          {title}
+          {badge && badge > 0 && (
+            <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
+              {badge}
+            </Badge>
+          )}
+        </span>
         {isCollapsed && badge && badge > 0 && (
           <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
             {badge}
@@ -343,19 +342,7 @@ const StaffSidebar = ({
               <MenuItem title="Ecological Census" icon={ClipboardList} tab="ecological-census" badge={pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined} />
             )}
           </SidebarMenu>
-          {!isCollapsed && (
-            <SubCollapsibleGroup label="Reports">
-              <SidebarMenu>
-                {hasPermission(userRole, "monitoring_reports") && (
-                  <MenuItem title="RBI Form C Reports" icon={FileText} tab="monitoring-reports" />
-                )}
-                {hasPermission(userRole, "view_reports") && (
-                  <MenuItem title="Analytics Reports" icon={BarChart3} tab="view-reports" />
-                )}
-              </SidebarMenu>
-            </SubCollapsibleGroup>
-          )}
-          {isCollapsed && (
+          <SubCollapsibleGroup label="Reports">
             <SidebarMenu>
               {hasPermission(userRole, "monitoring_reports") && (
                 <MenuItem title="RBI Form C Reports" icon={FileText} tab="monitoring-reports" />
@@ -364,7 +351,7 @@ const StaffSidebar = ({
                 <MenuItem title="Analytics Reports" icon={BarChart3} tab="view-reports" />
               )}
             </SidebarMenu>
-          )}
+          </SubCollapsibleGroup>
         </CollapsibleGroup>
 
         {/* Registry */}
@@ -374,19 +361,7 @@ const StaffSidebar = ({
               <MenuItem title="Residents & Households" icon={Users} tab="registry" />
             )}
           </SidebarMenu>
-          {!isCollapsed && (
-            <SubCollapsibleGroup label="Resident Requests">
-              <SidebarMenu>
-                {hasPermission(userRole, "resident_approval") && (
-                  <MenuItem title="Registration Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />
-                )}
-                {hasPermission(userRole, "name_change_requests") && (
-                  <MenuItem title="Name Change Requests" icon={User} tab="name-change-requests" badge={pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined} />
-                )}
-              </SidebarMenu>
-            </SubCollapsibleGroup>
-          )}
-          {isCollapsed && (
+          <SubCollapsibleGroup label="Resident Requests">
             <SidebarMenu>
               {hasPermission(userRole, "resident_approval") && (
                 <MenuItem title="Registration Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />
@@ -395,7 +370,7 @@ const StaffSidebar = ({
                 <MenuItem title="Name Change Requests" icon={User} tab="name-change-requests" badge={pendingNameChangeCount && pendingNameChangeCount > 0 ? pendingNameChangeCount : undefined} />
               )}
             </SidebarMenu>
-          )}
+          </SubCollapsibleGroup>
         </CollapsibleGroup>
 
         {/* Communication */}
@@ -427,16 +402,22 @@ const StaffSidebar = ({
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  tooltip="Logout"
                   onClick={onLogout}
                   className="hover:bg-destructive/10 text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
-                  {!isCollapsed && <span>Logout</span>}
+                  <span>Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Collapse/Expand toggle */}
+        <div className="mt-auto border-t border-border p-2">
+          <SidebarTrigger className="w-full" />
+        </div>
       </SidebarContent>
     </Sidebar>
   );
