@@ -800,7 +800,6 @@ const IncidentsTab = () => {
               {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Return Report
             </Button>
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
