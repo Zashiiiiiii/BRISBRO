@@ -771,8 +771,8 @@ const ResidentDashboard = () => {
                   onClick={() => handleTabChange("ecological-profile")}
                 >
                   <CardContent className="p-6 flex flex-col items-center text-center gap-3">
-                    <div className="h-14 w-14 rounded-full bg-green-500/10 flex items-center justify-center">
-                      <Leaf className="h-7 w-7 text-green-600" />
+                    <div className="h-14 w-14 rounded-full bg-accent/10 flex items-center justify-center">
+                      <Leaf className="h-7 w-7 text-accent" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg">Ecological Profile</h3>
