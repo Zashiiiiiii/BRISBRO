@@ -1,126 +1,98 @@
 
 
-# Polish Collapsed Sidebar Behavior
+# Final Polished Sidebar Behavior — BRISPRO
 
-## Problem
-When collapsed to icon-only mode, both sidebars show clipped/partial text from:
-1. `SubCollapsibleGroup` labels ("Reports", "Resident Requests") still render as visible text
-2. The portal title div ("Staff Portal" / "Resident Portal") still takes vertical space even when hidden
-3. Badge counts inside the `<span>` wrapper get clipped alongside text
+## What's changing
 
-## Root Cause
-- `SidebarMenuButton` correctly constrains to 32x32px via `group-data-[collapsible=icon]:!size-8`, hiding overflow text -- this works fine for menu items
-- `SubCollapsibleGroup` has no awareness of collapsed state -- its trigger label and border-left container render regardless
-- The `CollapsibleGroup` correctly strips its label when collapsed but `SubCollapsibleGroup` children are nested inside and still show their own labels
+The current sidebar implementation is close but has two issues: (1) the Staff Portal structure doesn't match the requested grouping (Settings is standalone, admin items are under Registry), and (2) collapsed mode still leaks partial text from `SubCollapsibleGroup` labels in some edge cases. This plan finalizes both.
 
-## Solution
+## A) Staff Portal — Final Sidebar Tree
 
-### File: `src/pages/StaffDashboard.tsx`
-
-**1. `SubCollapsibleGroup` -- hide in collapsed mode**
-Pass `isCollapsed` prop. When collapsed, skip the collapsible wrapper entirely and render children flat (just the `SidebarMenu` items, no label, no border-left indent). This matches what `CollapsibleGroup` already does.
-
-```tsx
-const SubCollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed = false }: {
-  label: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-  isCollapsed?: boolean;
-}) => {
-  if (isCollapsed) {
-    return <>{children}</>;
-  }
-  // ... existing collapsible render
-};
+```text
+EXPANDED                              COLLAPSED
+┌──────────────────────────┐          ┌────┐
+│ Staff Portal             │          │    │
+│                          │          │ 🏠 │  Home
+│ 🏠 Home                  │          │────│
+│                          │          │ 📄 │  Certificates (badge)
+│ ▾ SERVICES               │          │ ⚠  │  Incident / Blotter (badge)
+│   📄 Certificates    3   │          │────│
+│   ⚠  Incident / Blotter │          │ 📋 │  Ecological Census (badge)
+│                          │          │ 📄 │  RBI Form C Reports
+│ ▾ CENSUS & REPORTS       │          │ 📊 │  Analytics Reports
+│   📋 Ecological Census   │          │────│
+│   📄 RBI Form C Reports  │          │ 👥 │  Residents & Households
+│   📊 Analytics Reports   │          │────│
+│                          │          │ 🔔 │  Announcements
+│ ▾ REGISTRY               │          │ 💬 │  Messages (badge)
+│   👥 Residents & H'holds │          │────│
+│                          │          │ ✓  │  Resident Approval (badge)
+│ ▾ COMMUNICATION          │          │ 👤 │  Name Change Requests (badge)
+│   🔔 Announcements       │          │ ⚙  │  Settings
+│   💬 Messages         2  │          │────│
+│                          │          │ 🚪 │  Logout
+│ ▾ ADMINISTRATION         │          │────│
+│   ✓  Resident Approval 5 │          │ ◀▶ │  Toggle
+│   👤 Name Change Req.  1 │          └────┘
+│   ⚙  Settings            │
+│                          │
+│ 🚪 Logout                │
+│──────────────────────────│
+│ ◀▶ Collapse/Expand       │
+└──────────────────────────┘
 ```
 
-Update all `SubCollapsibleGroup` usages to pass `isCollapsed={isCollapsed}`.
+**Key structural change:** Move Settings from standalone into a new "Administration" group alongside Resident Approval and Name Change Requests. Remove "Resident Requests" sub-collapsible from Registry — those items move to Administration. Remove the "Reports" sub-collapsible from Census & Reports — flatten all three items directly under the group.
 
-**2. Portal title -- collapse cleanly**
-Replace the title div with a version that fully collapses (no padding/spacing) in icon mode:
+## B) Resident Portal — Final Sidebar Tree (no changes needed)
 
-```tsx
-<div className={cn("p-4", isCollapsed && "p-2")}>
-  {!isCollapsed && (
-    <h2 className="font-bold text-lg text-primary">Staff Portal</h2>
-  )}
-</div>
+Already correct:
+```text
+Home · Profile · Services · Messages · Settings · Logout
 ```
+Services landing shows cards for Certificate Requests, Incident Reports, Ecological Profile.
 
-**3. Badge positioning in collapsed mode**
-The collapsed badge dot is already rendered but may be clipped by the 32x32 button overflow. Move the badge outside the `SidebarMenuButton` or use `overflow-visible` on the button wrapper. Update `MenuItem`:
+## C) Expanded Mode Behavior
 
-```tsx
-<SidebarMenuItem className="relative">
-  <SidebarMenuButton tooltip={title} isActive={activeTab === tab} onClick={...}>
-    <Icon className="h-4 w-4" />
-    <span>{title}</span>
-    {!isCollapsed && badge > 0 && (
-      <Badge variant="destructive" className="ml-auto h-5 min-w-[20px] px-1.5 text-xs">
-        {badge}
-      </Badge>
-    )}
-  </SidebarMenuButton>
-  {isCollapsed && badge > 0 && (
-    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center z-10">
-      {badge}
-    </span>
-  )}
-</SidebarMenuItem>
-```
+- Section groups expand/collapse via chevron (already working via `CollapsibleGroup`)
+- "Services" and "Administration" default open; others default closed
+- Active item gets `bg-accent text-accent-foreground` highlight (built-in `isActive`)
+- Role-based visibility preserved via `hasPermission()` checks
+- Badges show inline count next to item title
 
-This moves the collapsed badge dot to the `SidebarMenuItem` (parent `li`) so it's not clipped by the button's overflow.
+## D) Collapsed Mode Behavior
 
-### File: `src/pages/resident/Dashboard.tsx`
+- Icons only — all text hidden, all group labels hidden
+- Thin visual separators (1px border or small gap) between groups replace label text
+- Tooltip on hover shows full item name (already working via `tooltip` prop)
+- Badge dots positioned on `SidebarMenuItem` (absolute `-top-1 -right-1`), outside button overflow
+- Active item highlight preserved (built-in `isActive` still applies background)
+- **No submenus in collapsed mode** — all items render flat as individual icons. This is the cleaner option because: (a) popout submenus add complexity and feel jarring on a barangay portal, (b) the flat icon list is short enough to scan, (c) expanding the sidebar is one click away via the footer toggle
 
-**1. Same portal title fix** -- collapse padding and hide text cleanly.
+## E) Visual Cues
 
-**2. Same badge fix** -- move collapsed badge dot to the `SidebarMenuItem` parent, outside the button.
+| State | Treatment |
+|-------|-----------|
+| Active item | `bg-accent text-accent-foreground` (SidebarMenuButton `isActive`) |
+| Hover | `bg-muted/50` subtle background |
+| Tooltip | Standard Radix tooltip, appears on collapsed icons after short delay |
+| Badge (expanded) | Red `Badge` pill with count, right-aligned in button |
+| Badge (collapsed) | Red dot with count, absolute-positioned top-right of icon |
+| Group separator (collapsed) | Small `my-1` gap between groups — no text, no lines |
+| Destructive logout | Red text + red hover background in both modes |
 
-### Files to Update
+## F) Files to Update
 
 | File | Changes |
 |------|---------|
-| `src/pages/StaffDashboard.tsx` | `SubCollapsibleGroup`: add `isCollapsed` prop, render flat when collapsed. Portal title: collapse cleanly. `MenuItem`: move badge dot outside button. |
-| `src/pages/resident/Dashboard.tsx` | Portal title: collapse cleanly. Badge: move dot outside button. |
+| `src/pages/StaffDashboard.tsx` | 1. Remove `SubCollapsibleGroup` usage entirely — flatten Reports items directly into Census & Reports group, move Resident Approval + Name Change + Settings into new "Administration" `CollapsibleGroup`. 2. Add `my-1` separator class between collapsed groups for visual spacing. 3. Delete `SubCollapsibleGroup` component (no longer needed). |
+| `src/pages/resident/Dashboard.tsx` | Minor: add `my-1` gap between groups in collapsed mode for consistent spacing. No structural changes needed. |
 
-No changes needed to `sidebar.tsx` -- the built-in `SidebarGroupLabel` already hides via `-mt-8` and `opacity-0` in icon mode, and `SidebarMenuButton` already constrains to icon size. The fixes are all in the custom wrapper components.
+No changes to `sidebar.tsx`, `badge.tsx`, `tooltip.tsx`, or any other UI primitives.
 
-## Collapsed vs Expanded Behavior
+## Implementation Notes
 
-```text
-EXPANDED                          COLLAPSED (icon-only)
-┌─────────────────────┐           ┌────┐
-│ Staff Portal        │           │    │
-│                     │           │ 🏠 │  ← tooltip: "Home"
-│ ▾ Services          │           │ 📄 │  ← tooltip: "Certificates" + badge dot
-│   📄 Certificates 3 │           │ ⚠  │  ← tooltip: "Incident / Blotter"
-│   ⚠  Incident       │           │ 📋 │  ← tooltip: "Ecological Census"
-│                     │           │ 📄 │  ← tooltip: "RBI Form C Reports"
-│ ▾ Census & Reports  │           │ 📊 │  ← tooltip: "Analytics Reports"
-│   📋 Eco Census     │           │ 👥 │
-│   ▾ Reports         │           │ ✓  │  ← badge dot
-│     📄 RBI Form C   │           │ 👤 │
-│     📊 Analytics    │           │ ...│
-│                     │           │ ⚙  │
-│ ▾ Registry          │           │ 🚪 │
-│   👥 Residents      │           │────│
-│   ▾ Resident Req.   │           │ ◀▶ │  ← toggle
-│     ✓ Approval  2   │           └────┘
-│     👤 Name Change  │
-│ ...                 │
-│ ⚙ Settings          │
-│ 🚪 Logout           │
-│─────────────────────│
-│ ◀▶ Collapse toggle  │
-└─────────────────────┘
-```
-
-## Acceptance Tests
-1. Collapsed mode shows only icons -- no text labels, no group titles, no clipped text
-2. Hovering any icon shows tooltip with full item name
-3. Active item remains highlighted with accent background in both modes
-4. Badge dots visible on collapsed icons for items with counts
-5. Expanding sidebar restores full layout with group labels and sub-groups
-6. Mobile sidebar unchanged (Sheet overlay, full width)
+- The `SubCollapsibleGroup` component is fully removed — it was the source of clipped labels in collapsed mode. All nesting is now single-level `CollapsibleGroup` only.
+- Default sidebar state remains expanded (`SidebarProvider` default). Users opt in to collapse via the footer toggle.
+- Mobile behavior unchanged: Sheet overlay, full-width, no collapse toggle visible.
 
