@@ -187,9 +187,7 @@ const AppContent = () => {
           </ResidentProtectedRoute>
         } />
         <Route path="/resident/ecological-profile" element={
-          <ResidentProtectedRoute>
-            <ResidentEcologicalProfile />
-          </ResidentProtectedRoute>
+          <Navigate to="/resident/dashboard?tab=ecological-profile" replace />
         } />
         
         {/* Staff Settings */}
