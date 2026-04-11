@@ -194,11 +194,12 @@ interface Announcement {
   imageUrl?: string;
 }
 
-const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed }: { 
+const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed, forceOpen = false }: { 
   label: string; 
   children: React.ReactNode;
   defaultOpen?: boolean;
   isCollapsed: boolean;
+  forceOpen?: boolean;
 }) => {
   if (isCollapsed) {
     return (
@@ -210,11 +211,13 @@ const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed }:
     );
   }
 
+  const isOpen = forceOpen || defaultOpen;
+
   return (
-    <Collapsible defaultOpen={defaultOpen} className="group/collapsible">
+    <Collapsible defaultOpen={isOpen} open={forceOpen ? true : undefined} className="group/collapsible">
       <SidebarGroup>
         <SidebarGroupLabel asChild>
-          <CollapsibleTrigger className="flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+          <CollapsibleTrigger className={`flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wider transition-colors ${forceOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             {label}
             <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </CollapsibleTrigger>
@@ -261,6 +264,19 @@ const StaffSidebar = ({
     setActiveTab(tab);
   }, [setActiveTab]);
 
+  // Determine which group the active tab belongs to
+  const serviceTabs = ["certificate-requests", "incidents"];
+  const censusTabs = ["ecological-census", "monitoring-reports", "view-reports"];
+  const registryTabs = ["registry"];
+  const communicationTabs = ["announcements", "messages"];
+  const adminTabs = ["resident-approval", "name-change-requests", "settings"];
+
+  const isInServices = serviceTabs.includes(activeTab);
+  const isInCensus = censusTabs.includes(activeTab);
+  const isInRegistry = registryTabs.includes(activeTab);
+  const isInCommunication = communicationTabs.includes(activeTab);
+  const isInAdmin = adminTabs.includes(activeTab);
+
   const MenuItem = useCallback(({ title, icon: Icon, tab, badge }: { title: string; icon: any; tab: string; badge?: number }) => (
     <SidebarMenuItem className="relative">
       <SidebarMenuButton
@@ -305,7 +321,7 @@ const StaffSidebar = ({
         </SidebarGroup>
 
         {/* Services */}
-        <CollapsibleGroup label="Services" defaultOpen isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Services" defaultOpen isCollapsed={isCollapsed} forceOpen={isInServices}>
           <SidebarMenu>
             {hasPermission(userRole, "certificate_requests") && (
               <MenuItem title="Certificates" icon={FileText} tab="certificate-requests" badge={pendingCertificatesCount && pendingCertificatesCount > 0 ? pendingCertificatesCount : undefined} />
@@ -317,7 +333,7 @@ const StaffSidebar = ({
         </CollapsibleGroup>
 
         {/* Census & Reports */}
-        <CollapsibleGroup label="Census & Reports" isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Census & Reports" isCollapsed={isCollapsed} forceOpen={isInCensus}>
           <SidebarMenu>
             {(hasPermission(userRole, "ecological_profile") || hasPermission(userRole, "ecological_submissions")) && (
               <MenuItem title="Ecological Census" icon={ClipboardList} tab="ecological-census" badge={pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined} />
@@ -332,7 +348,7 @@ const StaffSidebar = ({
         </CollapsibleGroup>
 
         {/* Registry */}
-        <CollapsibleGroup label="Registry" isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Registry" isCollapsed={isCollapsed} forceOpen={isInRegistry}>
           <SidebarMenu>
             {(hasPermission(userRole, "manage_residents") || hasPermission(userRole, "manage_households")) && (
               <MenuItem title="Residents & Households" icon={Users} tab="registry" />
@@ -341,7 +357,7 @@ const StaffSidebar = ({
         </CollapsibleGroup>
 
         {/* Communication */}
-        <CollapsibleGroup label="Communication" isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Communication" isCollapsed={isCollapsed} forceOpen={isInCommunication}>
           <SidebarMenu>
             {hasPermission(userRole, "announcements") && (
               <MenuItem title="Announcements" icon={Bell} tab="announcements" />
@@ -353,7 +369,7 @@ const StaffSidebar = ({
         </CollapsibleGroup>
 
         {/* Administration */}
-        <CollapsibleGroup label="Administration" defaultOpen isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Administration" defaultOpen isCollapsed={isCollapsed} forceOpen={isInAdmin}>
           <SidebarMenu>
             {hasPermission(userRole, "resident_approval") && (
               <MenuItem title="Resident Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />
