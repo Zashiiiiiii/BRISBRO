@@ -194,11 +194,12 @@ interface Announcement {
   imageUrl?: string;
 }
 
-const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed }: { 
+const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed, forceOpen = false }: { 
   label: string; 
   children: React.ReactNode;
   defaultOpen?: boolean;
   isCollapsed: boolean;
+  forceOpen?: boolean;
 }) => {
   if (isCollapsed) {
     return (
@@ -210,11 +211,13 @@ const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed }:
     );
   }
 
+  const isOpen = forceOpen || defaultOpen;
+
   return (
-    <Collapsible defaultOpen={defaultOpen} className="group/collapsible">
+    <Collapsible defaultOpen={isOpen} open={forceOpen ? true : undefined} className="group/collapsible">
       <SidebarGroup>
         <SidebarGroupLabel asChild>
-          <CollapsibleTrigger className="flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+          <CollapsibleTrigger className={`flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wider transition-colors ${forceOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             {label}
             <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </CollapsibleTrigger>
