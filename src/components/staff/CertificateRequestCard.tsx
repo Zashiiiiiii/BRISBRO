@@ -95,7 +95,7 @@ export function CertificateRequestCard({
   };
 
   return (
-    <div className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow">
+    <div className={`p-4 rounded-lg border bg-card hover:shadow-md transition-shadow ${request.status === "pending" ? "border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : ""}`}>
       <div className="flex items-start gap-3">
         {/* Checkbox */}
         {isSelectable && (
