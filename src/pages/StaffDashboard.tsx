@@ -264,6 +264,19 @@ const StaffSidebar = ({
     setActiveTab(tab);
   }, [setActiveTab]);
 
+  // Determine which group the active tab belongs to
+  const serviceTabs = ["certificate-requests", "incidents"];
+  const censusTabs = ["ecological-census", "monitoring-reports", "view-reports"];
+  const registryTabs = ["registry"];
+  const communicationTabs = ["announcements", "messages"];
+  const adminTabs = ["resident-approval", "name-change-requests", "settings"];
+
+  const isInServices = serviceTabs.includes(activeTab);
+  const isInCensus = censusTabs.includes(activeTab);
+  const isInRegistry = registryTabs.includes(activeTab);
+  const isInCommunication = communicationTabs.includes(activeTab);
+  const isInAdmin = adminTabs.includes(activeTab);
+
   const MenuItem = useCallback(({ title, icon: Icon, tab, badge }: { title: string; icon: any; tab: string; badge?: number }) => (
     <SidebarMenuItem className="relative">
       <SidebarMenuButton
