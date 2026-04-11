@@ -321,7 +321,7 @@ const StaffSidebar = ({
         </SidebarGroup>
 
         {/* Services */}
-        <CollapsibleGroup label="Services" defaultOpen isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Services" defaultOpen isCollapsed={isCollapsed} forceOpen={isInServices}>
           <SidebarMenu>
             {hasPermission(userRole, "certificate_requests") && (
               <MenuItem title="Certificates" icon={FileText} tab="certificate-requests" badge={pendingCertificatesCount && pendingCertificatesCount > 0 ? pendingCertificatesCount : undefined} />
@@ -333,7 +333,7 @@ const StaffSidebar = ({
         </CollapsibleGroup>
 
         {/* Census & Reports */}
-        <CollapsibleGroup label="Census & Reports" isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Census & Reports" isCollapsed={isCollapsed} forceOpen={isInCensus}>
           <SidebarMenu>
             {(hasPermission(userRole, "ecological_profile") || hasPermission(userRole, "ecological_submissions")) && (
               <MenuItem title="Ecological Census" icon={ClipboardList} tab="ecological-census" badge={pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined} />
@@ -348,7 +348,7 @@ const StaffSidebar = ({
         </CollapsibleGroup>
 
         {/* Registry */}
-        <CollapsibleGroup label="Registry" isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Registry" isCollapsed={isCollapsed} forceOpen={isInRegistry}>
           <SidebarMenu>
             {(hasPermission(userRole, "manage_residents") || hasPermission(userRole, "manage_households")) && (
               <MenuItem title="Residents & Households" icon={Users} tab="registry" />
@@ -357,7 +357,7 @@ const StaffSidebar = ({
         </CollapsibleGroup>
 
         {/* Communication */}
-        <CollapsibleGroup label="Communication" isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Communication" isCollapsed={isCollapsed} forceOpen={isInCommunication}>
           <SidebarMenu>
             {hasPermission(userRole, "announcements") && (
               <MenuItem title="Announcements" icon={Bell} tab="announcements" />
@@ -369,7 +369,7 @@ const StaffSidebar = ({
         </CollapsibleGroup>
 
         {/* Administration */}
-        <CollapsibleGroup label="Administration" defaultOpen isCollapsed={isCollapsed}>
+        <CollapsibleGroup label="Administration" defaultOpen isCollapsed={isCollapsed} forceOpen={isInAdmin}>
           <SidebarMenu>
             {hasPermission(userRole, "resident_approval") && (
               <MenuItem title="Resident Approval" icon={CheckCircle} tab="resident-approval" badge={pendingRegistrationCount && pendingRegistrationCount > 0 ? pendingRegistrationCount : undefined} />
