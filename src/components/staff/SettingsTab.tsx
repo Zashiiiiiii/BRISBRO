@@ -69,8 +69,11 @@ const SettingsTab = () => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const staffAuthUrl = import.meta.env.DEV
+        ? '/functions/v1/staff-auth'
+        : `${supabaseUrl}/functions/v1/staff-auth`;
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/staff-auth`, {
+      const response = await fetch(staffAuthUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

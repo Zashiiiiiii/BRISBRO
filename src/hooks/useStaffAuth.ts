@@ -43,7 +43,13 @@ const callStaffAuthFunction = async (body: Record<string, unknown>): Promise<{ d
       headers['x-staff-token'] = storedToken;
     }
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/staff-auth`, {
+    // In dev, call the same-origin path so Vite proxies it to Supabase and the
+    // browser doesn't enforce the edge function's production-only CORS allowlist.
+    const staffAuthUrl = import.meta.env.DEV
+      ? '/functions/v1/staff-auth'
+      : `${supabaseUrl}/functions/v1/staff-auth`;
+
+    const response = await fetch(staffAuthUrl, {
       method: 'POST',
       headers,
       credentials: 'include',

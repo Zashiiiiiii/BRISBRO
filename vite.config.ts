@@ -1,14 +1,30 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const supabaseUrl = env.VITE_SUPABASE_URL;
+
+  return {
   server: {
     host: "::",
     port: 8080,
+    // Proxy Supabase Edge Functions through the dev server so browser requests
+    // are same-origin (localhost). The staff-auth function restricts CORS to the
+    // production/Lovable origins, which would otherwise block local logins.
+    proxy: supabaseUrl
+      ? {
+          "/functions": {
+            target: supabaseUrl,
+            changeOrigin: true,
+            secure: true,
+          },
+        }
+      : undefined,
   },
   plugins: [
     react(),
@@ -58,4 +74,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+  };
+});
