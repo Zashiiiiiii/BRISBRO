@@ -823,10 +823,13 @@ const StaffDashboard = () => {
         supabase.removeChannel(ecologicalChannel);
         supabase.removeChannel(nameChangeChannel);
         supabase.removeChannel(incidentsChannel);
-        
+
         supabase.removeChannel(messagesChannel);
       };
     }
+    // Wires multiple realtime channels on auth; playNotificationSound and user.id
+    // are stable post-login and intentionally excluded to keep channels alive.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, loadRequests]);
 
   // Load pending resident registrations

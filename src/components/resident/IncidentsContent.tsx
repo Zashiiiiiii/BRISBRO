@@ -38,6 +38,9 @@ const IncidentsContent = () => {
 
   useEffect(() => {
     if (user) loadResidentId();
+    // Runs once when the user authenticates; loadResidentId sets up a realtime
+    // subscription, so we intentionally key only on the user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadResidentId = async () => {

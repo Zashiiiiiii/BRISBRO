@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Save, Loader2, User, Phone, Mail, Calendar, Briefcase, GraduationCap, Heart, Users, Pencil, Clock, CheckCircle, XCircle, Home, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,13 +44,7 @@ const ProfileContent = () => {
 
   const [householdData, setHouseholdData] = useState<any>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadProfile();
-    }
-  }, [user]);
-
-  const checkPendingNameChange = async (rid: string) => {
+  const checkPendingNameChange = useCallback(async (rid: string) => {
     try {
       const { data } = await supabase
         .from("name_change_requests")
@@ -62,10 +56,10 @@ const ProfileContent = () => {
     } catch (error) {
       console.error("Error checking pending name change:", error);
     }
-  };
+  }, []);
 
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data } = await supabase
@@ -100,7 +94,13 @@ const ProfileContent = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, checkPendingNameChange]);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user, loadProfile]);
 
   const handleSave = async () => {
     setIsSaving(true);

@@ -115,6 +115,9 @@ const StaffMessagesTab = () => {
     } finally {
       setIsLoading(false);
     }
+    // Keyed on the selected conversation id; the object itself is only read to
+    // re-sync the open conversation, so id identity is the correct trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, selectedConversation?.id]);
 
   useEffect(() => {
@@ -128,12 +131,17 @@ const StaffMessagesTab = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+    // Subscribe once per user; loadMessages is intentionally omitted to avoid
+    // tearing down the channel each time the selected conversation changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   useEffect(() => {
     if (messagesEndRef.current && selectedConversation) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
+    // Scroll to bottom only when replies change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConversation?.replies]);
 
   const loadResidents = async () => {

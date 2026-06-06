@@ -66,6 +66,9 @@ const ChatWidget = () => {
         supabase.removeChannel(channel);
       };
     }
+    // Runs once when the user authenticates and wires a realtime channel;
+    // keyed only on auth state to avoid tearing down/recreating the channel.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   useEffect(() => {

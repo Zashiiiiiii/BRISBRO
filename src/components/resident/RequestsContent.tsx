@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FileText, Loader2, Plus, CalendarDays, AlertTriangle, MessageSquare, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,13 +38,7 @@ const RequestsContent = ({ onNewRequest }: RequestsContentProps) => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      loadRequests();
-    }
-  }, [isAuthenticated, user]);
-
-  const loadRequests = async () => {
+  const loadRequests = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -81,7 +75,13 @@ const RequestsContent = ({ onNewRequest }: RequestsContentProps) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadRequests();
+    }
+  }, [isAuthenticated, user, loadRequests]);
 
   const formatDate = (dateStr: string) => {
     try {

@@ -256,6 +256,9 @@ export const useStaffAuth = () => {
         clearTimeout(warningTimerRef.current);
       }
     };
+    // Session-expiry timer re-arms only when auth state or expiry changes;
+    // extendSession is a stable useCallback defined below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authState.isAuthenticated, authState.expiresAt]);
 
   const extendSession = useCallback(async () => {

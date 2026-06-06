@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,13 +46,7 @@ const NameChangeRequestForm = ({
     reason: "",
   });
 
-  useEffect(() => {
-    if (open && residentId) {
-      checkPendingRequest();
-    }
-  }, [open, residentId]);
-
-  const checkPendingRequest = async () => {
+  const checkPendingRequest = useCallback(async () => {
     setCheckingPending(true);
     try {
       const { data, error } = await supabase
@@ -69,7 +63,13 @@ const NameChangeRequestForm = ({
     } finally {
       setCheckingPending(false);
     }
-  };
+  }, [residentId]);
+
+  useEffect(() => {
+    if (open && residentId) {
+      checkPendingRequest();
+    }
+  }, [open, residentId, checkPendingRequest]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

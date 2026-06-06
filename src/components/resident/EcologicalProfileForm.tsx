@@ -433,6 +433,9 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
         }));
       }
     }
+    // Auto-add the resident once when the profile loads / edit-mode resolves.
+    // Keying on member-list state here would re-trigger the add on every edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, isEditMode]);
 
   const handleSubmit = async () => {

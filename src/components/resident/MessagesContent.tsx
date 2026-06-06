@@ -59,6 +59,9 @@ const MessagesContent = () => {
         .subscribe();
       return () => { supabase.removeChannel(channel); };
     }
+    // Runs once when the user authenticates and wires a realtime channel;
+    // keyed only on the user to avoid tearing down/recreating the channel.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadStaffUsers = async () => {

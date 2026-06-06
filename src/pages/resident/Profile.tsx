@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Loader2, User, Home, Phone, Mail, Calendar, Briefcase, GraduationCap, Heart, Users, Pencil, Link, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,14 +67,7 @@ const ResidentProfile = () => {
 
   // Auth is now handled by ResidentProtectedRoute wrapper
 
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      loadProfile();
-      loadHouseholdLinkRequests();
-    }
-  }, [isAuthenticated, user]);
-
-  const loadHouseholdLinkRequests = async () => {
+  const loadHouseholdLinkRequests = useCallback(async () => {
     if (!user?.id) return;
     try {
       const { data, error } = await supabase.rpc("get_resident_household_link_requests", {
@@ -86,9 +79,9 @@ const ResidentProfile = () => {
     } catch (err) {
       console.error("Error loading household link requests:", err);
     }
-  };
+  }, [user]);
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -139,7 +132,14 @@ const ResidentProfile = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadProfile();
+      loadHouseholdLinkRequests();
+    }
+  }, [isAuthenticated, user, loadProfile, loadHouseholdLinkRequests]);
 
   const handleSave = async () => {
     setIsSaving(true);

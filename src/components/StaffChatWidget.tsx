@@ -82,12 +82,17 @@ const StaffChatWidget = () => {
         supabase.removeChannel(channel);
       };
     }
+    // Runs once when the user authenticates and wires a realtime channel;
+    // keyed only on auth state to avoid tearing down/recreating the channel.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   useEffect(() => {
     if (messagesEndRef.current && selectedConversation) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
+    // Scroll to bottom only when replies change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConversation?.replies]);
 
   const loadResidents = async () => {

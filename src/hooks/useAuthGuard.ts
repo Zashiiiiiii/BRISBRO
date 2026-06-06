@@ -100,6 +100,9 @@ export const useAuthGuard = ({
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
+    // Login-page stale-session guard; keyed on page/type. Auth helpers are
+    // stable hook/module functions intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoginPage, type]);
 
   // --- Protected page guard: revalidate on mount + pageshow + visibilitychange ---

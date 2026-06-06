@@ -152,6 +152,9 @@ const ResidentIncidents = () => {
       loadResidentId();
       loadUnreadMessageCount();
     }
+    // Runs once when the user authenticates; loaders set up a realtime
+    // subscription, so we intentionally key only on auth state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   const loadUnreadMessageCount = async () => {

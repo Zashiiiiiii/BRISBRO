@@ -289,6 +289,8 @@ const ResidentDashboard = () => {
     if (isAuthenticated && user) {
       loadData();
     }
+    // Initial data load once the user authenticates; keyed on auth state only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   const loadData = async () => {
@@ -438,6 +440,9 @@ const ResidentDashboard = () => {
     }
 
     touchStartRef.current = null;
+    // loadData is a stable component-scoped loader invoked on pull-to-refresh;
+    // intentionally excluded to avoid recreating this touch handler each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, isPulling, pullDistance, isRefreshing, activeTab]);
 
   const handleLogout = async () => {

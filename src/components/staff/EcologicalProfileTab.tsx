@@ -431,12 +431,18 @@ const EcologicalProfileTab = () => {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
+    // Debounced autosave; fires on save-status/household change. handleSaveCensusData
+    // is a component-scoped saver intentionally excluded from the trigger set.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sectionSaveStatus, selectedHousehold]);
 
   // Reset save status when household changes
   useEffect(() => {
     setSectionSaveStatus({});
     prevCensusDataRef.current = censusData;
+    // Snapshot censusData ONLY when the household changes — adding censusData as a
+    // dep would re-run this reset on every edit and break dirty-state tracking.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedHousehold?.id]);
 
   // Calculate age from birth date
