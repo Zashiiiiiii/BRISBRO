@@ -1,1 +1,25 @@
-project_id = "letwsilupoqpluwqyyck"
+project_id = "quqyzzqsbdycdnanobid"
+
+# Edge functions perform their own auth (staff session tokens, rate limits,
+# RLS via service role). The gateway JWT check is disabled so the frontend's
+# publishable (sb_publishable_) key is accepted as the apikey.
+[functions.staff-auth]
+verify_jwt = false
+
+[functions.submit-certificate]
+verify_jwt = false
+
+[functions.send-approval-notification]
+verify_jwt = false
+
+[functions.send-name-change-notification]
+verify_jwt = false
+
+[functions.send-notification-email]
+verify_jwt = false
+
+[functions.send-registration-notification]
+verify_jwt = false
+
+[functions.translate-to-tagalog]
+verify_jwt = false

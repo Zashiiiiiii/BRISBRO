@@ -15,6 +15,9 @@ dist-ssr
 # graphify knowledge-graph output (generated, rebuildable)
 graphify-out/
 
+# Supabase CLI local state
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
