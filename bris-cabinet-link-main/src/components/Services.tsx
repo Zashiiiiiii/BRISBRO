@@ -1,8 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, Search, AlertTriangle, ClipboardList } from "lucide-react";
+import { UserPlus, Search, AlertTriangle, ClipboardList, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const services = [
+  {
+    icon: FileText,
+    title: "Request Certificate",
+    description: "Request barangay clearance, residency, indigency and other certificates",
+    path: "/request-certificate",
+  },
   {
     icon: AlertTriangle,
     title: "Incident / Blotter",

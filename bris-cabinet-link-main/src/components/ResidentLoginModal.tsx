@@ -80,8 +80,10 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
   const [signupBirthDate, setSignupBirthDate] = useState<Date | undefined>();
   const [signupContactNumber, setSignupContactNumber] = useState("");
   const [signupAddress, setSignupAddress] = useState("");
+  const [signupPurok, setSignupPurok] = useState("");
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [signupResidentType, setSignupResidentType] = useState("");
+  const [signupGender, setSignupGender] = useState("");
 
   // Status checker state
   const [statusEmail, setStatusEmail] = useState("");
@@ -138,13 +140,15 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
           .eq("user_id", data.user.id)
           .maybeSingle();
 
-        const approvalStatus = resident?.approval_status || 
-          (await supabase
-            .from("residents")
-            .select("approval_status")
-            .eq("email", data.user.email)
-            .maybeSingle()
-          ).data?.approval_status;
+        let approvalStatus = resident?.approval_status;
+
+        if (!approvalStatus) {
+          // Fallback: RPC bypasses RLS so it works for pending/unlinked residents too
+          const { data: statusRows } = await supabase.rpc('check_registration_status', {
+            p_email: data.user.email || loginEmail,
+          });
+          approvalStatus = statusRows?.[0]?.status;
+        }
 
         if (approvalStatus === "pending") {
           await supabase.auth.signOut();
@@ -223,12 +227,19 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
           p_birth_date: format(signupBirthDate!, 'yyyy-MM-dd'),
           p_contact_number: signupContactNumber.trim(),
           p_address: signupAddress.trim(),
+          p_gender: signupGender || null,
+          p_street_purok: signupPurok.trim() || null,
         });
 
       if (registerError) {
         console.error('Registration error:', registerError);
-        if (registerError.message.includes('duplicate')) {
-          toast.error("An account with this email already exists.");
+        if (
+          registerError.message.includes('duplicate') ||
+          registerError.message.includes('already exists')
+        ) {
+          toast.error("An account with this email already exists. Please log in instead.");
+          setActiveTab("login");
+          setLoginEmail(signupEmail);
         } else {
           toast.error("An error occurred during registration. Please try again.");
         }
@@ -437,6 +448,19 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
             </div>
 
             <div className="space-y-1.5">
+              <Label>Gender</Label>
+              <Select value={signupGender} onValueChange={setSignupGender}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label>Birth Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -463,8 +487,13 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
               <Label htmlFor="signup-address">Address</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="signup-address" type="text" placeholder="House/Block/Lot, Street, Purok" value={signupAddress} onChange={(e) => setSignupAddress(e.target.value)} className="pl-10" required />
+                <Input id="signup-address" type="text" placeholder="House/Block/Lot No., Street" value={signupAddress} onChange={(e) => setSignupAddress(e.target.value)} className="pl-10" required />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-purok">Street/Purok (Optional)</Label>
+              <Input id="signup-purok" type="text" placeholder="e.g., Purok 3, Sitio Malaya" value={signupPurok} onChange={(e) => setSignupPurok(e.target.value)} />
             </div>
 
             <div className="space-y-1.5">

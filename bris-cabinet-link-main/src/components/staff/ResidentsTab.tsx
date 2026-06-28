@@ -60,6 +60,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { deleteResident } from "@/utils/staffApi";
 import TableSkeleton from "./TableSkeleton";
 
 interface Household {
@@ -200,23 +201,28 @@ const ResidentsTab = () => {
   const [deletedResidents, setDeletedResidents] = useState<DeletedResident[]>([]);
   const [isLoadingDeleted, setIsLoadingDeleted] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [showAccountOnly, setShowAccountOnly] = useState(false);
 
   const loadResidents = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data: allResidents, error: rpcError } = await supabase.rpc('get_all_residents_for_staff');
-      
+
       if (rpcError) throw rpcError;
 
       let filteredResidents = allResidents || [];
 
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        filteredResidents = filteredResidents.filter((r: any) => 
+        filteredResidents = filteredResidents.filter((r: any) =>
           r.first_name?.toLowerCase().includes(query) ||
           r.last_name?.toLowerCase().includes(query) ||
           r.contact_number?.includes(query)
         );
+      }
+
+      if (showAccountOnly) {
+        filteredResidents = filteredResidents.filter((r: any) => !!r.user_id);
       }
 
       const totalFiltered = filteredResidents.length;
@@ -265,7 +271,7 @@ const ResidentsTab = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, currentPage]);
+  }, [searchQuery, currentPage, showAccountOnly]);
 
   const loadDeletedResidents = useCallback(async () => {
     setIsLoadingDeleted(true);
@@ -430,22 +436,16 @@ const ResidentsTab = () => {
 
   const handleDeleteResident = async () => {
     if (!deletingResident) return;
-    
+
     setIsDeleting(true);
     try {
-      const { error } = await supabase.rpc('staff_delete_resident', {
-        p_resident_id: deletingResident.id
-      });
-
-      if (error) throw error;
+      await deleteResident(deletingResident.id);
 
       toast.success("Resident moved to deleted list");
       setShowDeleteDialog(false);
       setDeletingResident(null);
       loadResidents();
-      if (activeTab === "deleted") {
-        loadDeletedResidents();
-      }
+      loadDeletedResidents();
     } catch (error) {
       console.error("Error deleting resident:", error);
       toast.error("Failed to delete resident");
@@ -490,18 +490,34 @@ const ResidentsTab = () => {
             </TabsList>
 
             <TabsContent value="active">
-              <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name or contact number..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+              <div className="flex flex-col gap-3 mb-6">
+                <form onSubmit={handleSearch} className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name or contact number..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Button type="submit">Search</Button>
+                </form>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant={showAccountOnly ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => { setShowAccountOnly(!showAccountOnly); setCurrentPage(1); }}
+                    className="text-sm"
+                  >
+                    {showAccountOnly ? "Showing: With Account" : "Filter: With Account"}
+                  </Button>
+                  {showAccountOnly && (
+                    <span className="text-xs text-muted-foreground">Showing only residents with portal accounts</span>
+                  )}
                 </div>
-                <Button type="submit">Search</Button>
-              </form>
+              </div>
 
               {isLoading ? (
                 <div className="rounded-md border">
@@ -549,13 +565,20 @@ const ResidentsTab = () => {
                                 </div>
                                 <div>
                                   <p className="font-medium">{getFullName(resident)}</p>
-                                  <p className="text-sm text-muted-foreground">{resident.gender || "N/A"}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <p className="text-sm text-muted-foreground">{resident.gender || "N/A"}</p>
+                                    {resident.user_id && (
+                                      <Badge variant="outline" className="text-xs py-0 px-1.5 text-green-700 border-green-300 bg-green-50">Account</Badge>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
                               {resident.households ? (
                                 <span className="text-sm">{resident.households.street_purok || resident.households.address || "N/A"}</span>
+                              ) : resident.street_purok || resident.place_of_origin ? (
+                                <span className="text-sm">{resident.street_purok || resident.place_of_origin}</span>
                               ) : (
                                 <span className="text-muted-foreground text-sm">—</span>
                               )}

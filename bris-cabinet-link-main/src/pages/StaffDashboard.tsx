@@ -37,7 +37,6 @@ import {
   Filter,
   X,
   ImageIcon,
-  Languages,
   MessageSquare,
   ClipboardList,
 } from "lucide-react";
@@ -758,11 +757,18 @@ const StaffDashboard = () => {
           schema: 'public',
           table: 'certificate_requests'
         }, () => {
-          console.log('Certificate request changed, reloading...');
           loadRequests();
           loadCertificatesCount();
         })
         .subscribe();
+
+      // Polling fallback: staff auth uses cookies (no Supabase JWT), so the
+      // postgres_changes subscription above may not fire due to RLS. Poll every
+      // 30 s to guarantee new resident cert requests are always visible.
+      const certPollInterval = setInterval(() => {
+        loadRequests();
+        loadCertificatesCount();
+      }, 30000);
 
       // Real-time subscription for ecological submissions
       const ecologicalChannel = supabase
@@ -823,8 +829,8 @@ const StaffDashboard = () => {
         supabase.removeChannel(ecologicalChannel);
         supabase.removeChannel(nameChangeChannel);
         supabase.removeChannel(incidentsChannel);
-        
         supabase.removeChannel(messagesChannel);
+        clearInterval(certPollInterval);
       };
     }
   }, [isAuthenticated, loadRequests]);
@@ -1592,12 +1598,9 @@ const StaffDashboard = () => {
   const [deleteAnnouncementDialogOpen, setDeleteAnnouncementDialogOpen] = useState(false);
   const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
   const [isDeletingAnnouncement, setIsDeletingAnnouncement] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
   const [announcementForm, setAnnouncementForm] = useState({
     title: "",
-    titleTl: "",
     description: "",
-    descriptionTl: "",
     type: "general" as "important" | "general",
     imageFile: null as File | null,
     imageUrl: "" as string,
@@ -1675,32 +1678,6 @@ const StaffDashboard = () => {
     }
   }, [isAuthenticated, loadAnnouncements]);
 
-  const handleAutoTranslate = async () => {
-    if (!announcementForm.title && !announcementForm.description) {
-      toast.error("Please enter the English title or description first");
-      return;
-    }
-    setIsTranslating(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('translate-to-tagalog', {
-        body: { title: announcementForm.title, content: announcementForm.description },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setAnnouncementForm(prev => ({
-        ...prev,
-        titleTl: data.title_tl || prev.titleTl,
-        descriptionTl: data.content_tl || prev.descriptionTl,
-      }));
-      toast.success("Translation completed! You can review and edit before saving.");
-    } catch (err: any) {
-      console.error("Translation error:", err);
-      toast.error(err.message || "Failed to translate. Please try again.");
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
   const handleCreateAnnouncement = async () => {
     if (!announcementForm.title || !announcementForm.description) {
       toast.error("Please fill in all required fields");
@@ -1732,8 +1709,6 @@ const StaffDashboard = () => {
         await updateAnnouncementStaff(editingAnnouncement.id, {
           title: announcementForm.title,
           content: announcementForm.description,
-          titleTl: announcementForm.titleTl,
-          contentTl: announcementForm.descriptionTl,
           type: announcementForm.type,
           imageUrl: finalImageUrl || undefined,
         });
@@ -1742,8 +1717,6 @@ const StaffDashboard = () => {
         await createAnnouncementStaff({
           title: announcementForm.title,
           content: announcementForm.description,
-          titleTl: announcementForm.titleTl,
-          contentTl: announcementForm.descriptionTl,
           type: announcementForm.type,
           imageUrl: finalImageUrl || undefined,
         });
@@ -1756,9 +1729,9 @@ const StaffDashboard = () => {
         id: editingAnnouncement?.id || `ann-${Date.now()}`,
         type: announcementForm.type,
         title: announcementForm.title,
-        titleTl: announcementForm.titleTl || announcementForm.title,
+        titleTl: announcementForm.title,
         description: announcementForm.description,
-        descriptionTl: announcementForm.descriptionTl || announcementForm.description,
+        descriptionTl: announcementForm.description,
         date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
         imageUrl: finalImageUrl || undefined,
       };
@@ -1781,7 +1754,7 @@ const StaffDashboard = () => {
 
       setShowAnnouncementDialog(false);
       setEditingAnnouncement(null);
-      setAnnouncementForm({ title: "", titleTl: "", description: "", descriptionTl: "", type: "general", imageFile: null, imageUrl: "" });
+      setAnnouncementForm({ title: "", description: "", type: "general", imageFile: null, imageUrl: "" });
     } catch (error) {
       console.error("Error saving announcement:", error);
       toast.error("Failed to save announcement");
@@ -1792,9 +1765,7 @@ const StaffDashboard = () => {
     setEditingAnnouncement(announcement);
     setAnnouncementForm({
       title: announcement.title,
-      titleTl: announcement.titleTl,
       description: announcement.description,
-      descriptionTl: announcement.descriptionTl,
       type: announcement.type,
       imageFile: null,
       imageUrl: announcement.imageUrl || "",
@@ -1945,7 +1916,7 @@ const StaffDashboard = () => {
                   );
                   if (urgentRequests.length === 0) return null;
                   return (
-                    <Card className="mb-8 border-l-4 border-l-destructive">
+                    <Card className="mb-8 border-destructive/40 bg-destructive/5">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-lg font-semibold flex items-center gap-2">
                           <AlertCircle className="h-5 w-5 text-destructive" />
@@ -2019,7 +1990,7 @@ const StaffDashboard = () => {
 
                 {/* Pending Registrations Widget (Admin Only) */}
                 {user?.role === 'admin' && pendingRegistrationCount > 0 && (
-                  <Card className="mb-8 border-l-4 border-l-yellow-500 bg-yellow-50/50">
+                  <Card className="mb-8 border-yellow-300 bg-yellow-50/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-lg font-semibold flex items-center gap-2">
                         <User className="h-5 w-5 text-yellow-600" />
@@ -2687,7 +2658,7 @@ const StaffDashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {filteredPendingResidents.map((resident) => (
-                      <Card key={resident.id} className="border-l-4 border-l-yellow-500">
+                      <Card key={resident.id}>
                         <CardContent className="p-4">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div className="space-y-2 flex-1">
@@ -2786,7 +2757,7 @@ const StaffDashboard = () => {
                     </Button>
                     <Button onClick={() => {
                       setEditingAnnouncement(null);
-                      setAnnouncementForm({ title: "", titleTl: "", description: "", descriptionTl: "", type: "general", imageFile: null, imageUrl: "" });
+                      setAnnouncementForm({ title: "", description: "", type: "general", imageFile: null, imageUrl: "" });
                       setShowAnnouncementDialog(true);
                     }}>
                       <Plus className="h-4 w-4 mr-2" />
@@ -2844,9 +2815,7 @@ const StaffDashboard = () => {
                                       setEditingAnnouncement(announcement);
                                       setAnnouncementForm({
                                         title: announcement.title,
-                                        titleTl: announcement.titleTl,
                                         description: announcement.description,
-                                        descriptionTl: announcement.descriptionTl,
                                         type: announcement.type,
                                         imageFile: null,
                                         imageUrl: announcement.imageUrl || "",
@@ -3359,7 +3328,7 @@ const StaffDashboard = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="title">Title (English)*</Label>
+              <Label htmlFor="title">Title*</Label>
               <Input
                 id="title"
                 value={announcementForm.title}
@@ -3367,48 +3336,13 @@ const StaffDashboard = () => {
                 placeholder="Enter announcement title"
               />
             </div>
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAutoTranslate}
-                disabled={isTranslating || (!announcementForm.title && !announcementForm.description)}
-              >
-                {isTranslating ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Languages className="h-4 w-4 mr-2" />
-                )}
-                {isTranslating ? "Translating..." : "Auto-translate to Tagalog"}
-              </Button>
-            </div>
             <div>
-              <Label htmlFor="titleTl">Title (Tagalog)</Label>
-              <Input
-                id="titleTl"
-                value={announcementForm.titleTl}
-                onChange={(e) => setAnnouncementForm({ ...announcementForm, titleTl: e.target.value })}
-                placeholder="Ilagay ang pamagat"
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description (English)*</Label>
+              <Label htmlFor="description">Description*</Label>
               <Textarea
                 id="description"
                 value={announcementForm.description}
                 onChange={(e) => setAnnouncementForm({ ...announcementForm, description: e.target.value })}
                 placeholder="Enter announcement description"
-                rows={3}
-              />
-            </div>
-            <div>
-              <Label htmlFor="descriptionTl">Description (Tagalog)</Label>
-              <Textarea
-                id="descriptionTl"
-                value={announcementForm.descriptionTl}
-                onChange={(e) => setAnnouncementForm({ ...announcementForm, descriptionTl: e.target.value })}
-                placeholder="Ilagay ang deskripsyon"
                 rows={3}
               />
             </div>

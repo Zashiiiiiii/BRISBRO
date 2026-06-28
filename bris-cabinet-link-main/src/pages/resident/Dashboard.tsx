@@ -180,7 +180,7 @@ const AnnouncementItem = ({ announcement }: { announcement: Announcement }) => {
   return (
     <div className={`p-3 rounded-lg border overflow-hidden ${
       announcement.type === "important"
-        ? "border-l-4 border-l-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/20"
+        ? "border-yellow-300 bg-yellow-50/50 dark:bg-yellow-950/20"
         : "bg-card"
     }`}>
       <div className="flex gap-3">
@@ -231,7 +231,7 @@ const ResidentDashboard = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
-  const { user, profile, isAuthenticated, isLoading: authLoading, logout } = useResidentAuth();
+  const { user, profile, isAuthenticated, isLoading: authLoading, logout, refetchProfile } = useResidentAuth();
   const [activeTab, setActiveTab] = useState(() => {
     const tab = searchParams.get("tab");
     // Map legacy "dashboard" to "home"
@@ -247,6 +247,15 @@ const ResidentDashboard = () => {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [ecoStatus, setEcoStatus] = useState<EcoStatus>("none");
   const [isPendingVerification, setIsPendingVerification] = useState(false);
+  const [isRefetchingProfile, setIsRefetchingProfile] = useState(false);
+
+  // Auto-retry profile once if it's null after auth finishes loading
+  useEffect(() => {
+    if (!authLoading && !profile && user && refetchProfile) {
+      setIsRefetchingProfile(true);
+      Promise.resolve(refetchProfile()).finally(() => setIsRefetchingProfile(false));
+    }
+  }, [authLoading, profile, user]);
 
   // Pull-to-refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -564,7 +573,7 @@ const ResidentDashboard = () => {
               {/* Status Cards Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* My Latest Request Status */}
-                <Card className="border-l-4 border-l-primary">
+                <Card className="border-primary/30 bg-primary/5">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                       <FileText className="h-4 w-4 text-primary" />
@@ -614,7 +623,7 @@ const ResidentDashboard = () => {
                 </Card>
 
                 {/* Ecological Profile Status */}
-                <Card className="border-l-4 border-l-accent">
+                <Card className="border-accent/30 bg-accent/5">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                       <Leaf className="h-4 w-4 text-accent" />
@@ -673,7 +682,7 @@ const ResidentDashboard = () => {
 
               {/* Quick Action - Go to Services */}
               <Card 
-                className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary mb-6"
+                className="cursor-pointer hover:shadow-md transition-shadow mb-6"
                 onClick={() => handleTabChange("services")}
               >
                 <CardContent className="p-4 flex items-center gap-4">
@@ -812,8 +821,8 @@ const ResidentDashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {profile && (
-                    <ResidentCertificateRequestForm 
+                  {profile ? (
+                    <ResidentCertificateRequestForm
                       profile={{
                         id: profile.id,
                         fullName: profile.fullName,
@@ -821,8 +830,23 @@ const ResidentDashboard = () => {
                         contactNumber: profile.contactNumber,
                         householdId: profile.householdId,
                       }}
-                      onSuccess={handleRequestSuccess} 
+                      onSuccess={handleRequestSuccess}
                     />
+                  ) : isRefetchingProfile ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 space-y-3">
+                      <p className="text-sm text-muted-foreground">Unable to load your profile.</p>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setIsRefetchingProfile(true);
+                        Promise.resolve(refetchProfile?.()).finally(() => setIsRefetchingProfile(false));
+                      }}>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Retry
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>

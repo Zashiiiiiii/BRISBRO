@@ -3178,6 +3178,50 @@ serve(async (req) => {
       );
     }
 
+    if (action === 'delete-resident') {
+      const token = getTokenFromCookie(req);
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { residentId } = body;
+      if (!residentId) {
+        return new Response(
+          JSON.stringify({ error: 'residentId is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Clear head_resident_id FK before soft-delete
+      await supabase
+        .from('households')
+        .update({ head_resident_id: null })
+        .eq('head_resident_id', residentId);
+
+      const { error } = await supabase
+        .from('residents')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', residentId);
+
+      if (error) {
+        console.error('Error deleting resident:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to delete resident' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Resident soft-deleted:', residentId, 'by:', session.username);
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // ========== LOGIN (default) ==========
     console.log('Processing LOGIN action');
     const username = body?.username;

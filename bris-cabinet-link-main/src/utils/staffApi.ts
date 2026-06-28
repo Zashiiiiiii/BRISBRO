@@ -41,6 +41,11 @@ const callStaffApi = async (action: string, body: Record<string, unknown> = {}):
   return data;
 };
 
+// Resident delete
+export const deleteResident = async (residentId: string) => {
+  return callStaffApi('delete-resident', { residentId });
+};
+
 // Resident approval operations
 export const getPendingRegistrations = async () => {
   const result = await callStaffApi('get-pending-registrations');

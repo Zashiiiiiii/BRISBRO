@@ -146,33 +146,38 @@ export const useResidentAuth = () => {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("residents")
-        .select(`
-          *,
-          households (
-            id,
-            household_number,
-            address,
-            barangay,
-            city,
-            province
-          )
-        `)
-        .eq("user_id", userId)
-        .maybeSingle();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userEmail = sessionData?.session?.user?.email;
+
+      // Link resident to auth user (no-op if already linked)
+      if (userEmail) {
+        await supabase.rpc('link_resident_to_user', {
+          p_user_id: userId,
+          p_email: userEmail,
+        });
+      }
+
+      // Use SECURITY DEFINER RPC — bypasses RLS entirely
+      const { data: rows, error } = await supabase.rpc('get_my_resident_profile');
+
+      if (error) {
+        console.error("get_my_resident_profile error:", error);
+        return;
+      }
+
+      const data = rows?.[0];
 
       if (data) {
         setProfile({
           id: data.id,
-          userId: data.user_id || userId,
+          userId: userId,
           firstName: data.first_name || "",
           lastName: data.last_name || "",
           fullName: `${data.first_name} ${data.middle_name ? data.middle_name + ' ' : ''}${data.last_name}${data.suffix ? ' ' + data.suffix : ''}`.trim(),
           email: data.email || "",
           contactNumber: data.contact_number || undefined,
-          address: data.households 
-            ? `${data.households.address || ''}, ${data.households.barangay || ''}, ${data.households.city || ''}`
+          address: data.hh_id
+            ? `${data.hh_address || ''}, ${data.hh_barangay || ''}, ${data.hh_city || ''}`
             : undefined,
           householdId: data.household_id || undefined,
           birthDate: data.birth_date || undefined,

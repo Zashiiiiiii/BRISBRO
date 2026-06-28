@@ -185,35 +185,73 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     const loadData = async () => {
       if (!user) return;
       setIsLoading(true);
-      
+
       try {
-        // Get resident ID
-        const { data: residentData } = await supabase
-          .from("residents")
-          .select("id, first_name, middle_name, last_name, household_id")
-          .eq("user_id", user.id)
-          .single();
+        // Use SECURITY DEFINER RPC — bypasses RLS, works for all approved residents
+        const { data: rows } = await supabase.rpc('get_my_resident_profile');
+        const residentData = rows?.[0];
 
         if (residentData) {
           setResidentId(residentData.id);
-          
-          // Pre-fill respondent name
+
           const fullName = [residentData.first_name, residentData.middle_name, residentData.last_name]
             .filter(Boolean)
             .join(" ");
+
           setFormData(prev => ({
             ...prev,
             respondent_name: fullName,
-            respondent_relation: "Self"
+            respondent_relation: "Self",
+            // Pre-fill address from registration if no household is linked
+            ...(!residentData.household_id && {
+              address: residentData.place_of_origin || prev.address,
+              street_purok: residentData.street_purok || prev.street_purok,
+            }),
           }));
 
-          // If resident has household, pre-fill household data
+          // Pre-fill household member with full registration data
+          const age = residentData.birth_date
+            ? Math.floor((Date.now() - new Date(residentData.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+            : null;
+
+          const selfMember: HouseholdMember = {
+            id: `resident-${residentData.id}`,
+            full_name: fullName,
+            birth_date: residentData.birth_date || "",
+            age,
+            gender: residentData.gender || "",
+            relationship_to_head: "Head",
+            civil_status: residentData.civil_status || "",
+            religion: residentData.religion || "",
+            schooling_status: "",
+            education_level: residentData.education_attainment || "",
+            employment_status: residentData.employment_status || "",
+            occupation: residentData.occupation || "",
+            monthly_income: "",
+            is_pwd: false,
+            is_solo_parent: false,
+            is_tenant: false,
+          };
+
+          setFormData(prev => {
+            const alreadyHasSelf = prev.household_members.some(
+              (m: HouseholdMember) => m.id === selfMember.id ||
+                (m.full_name || "").trim().toLowerCase() === fullName.trim().toLowerCase()
+            );
+            return alreadyHasSelf ? prev : {
+              ...prev,
+              household_members: [selfMember, ...prev.household_members],
+            };
+          });
+
+          // If resident has a linked household, overwrite with household data
           if (residentData.household_id) {
+            setExistingHouseholdId(residentData.household_id);
             const { data: householdData } = await supabase
               .from("households")
               .select("*")
               .eq("id", residentData.household_id)
-              .single();
+              .maybeSingle();
 
             if (householdData) {
               setFormData(prev => ({
@@ -602,6 +640,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
           .insert({
             submission_number: submissionNumber,
             submitted_by_resident_id: residentId,
+            household_id: existingHouseholdId || null,
             ...submissionData,
           });
 

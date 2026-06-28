@@ -29,9 +29,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Loader2, User, ExternalLink, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Loader2, User } from "lucide-react";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +38,7 @@ import { logResidentCertificateRequest } from "@/utils/auditLog";
 import CertificateRequirementsGuide from "@/components/CertificateRequirementsGuide";
 
 const formSchema = z.object({
+  householdNumber: z.string().trim().optional(),
   certificateType: z.string().min(1, "Please select a certificate type"),
   customCertificateName: z.string().trim().max(200, "Custom certificate name is too long").optional(),
   purpose: z.string().trim().min(10, "Please provide more details about the purpose (at least 10 characters)").max(500, "Purpose is too long"),
@@ -87,32 +87,12 @@ interface ResidentCertificateRequestFormProps {
 }
 
 const ResidentCertificateRequestForm = ({ profile, onSuccess }: ResidentCertificateRequestFormProps) => {
-  const { types: certificateTypeOptions, isLoading: isLoadingTypes } = useCertificateTypes();
+  const { types: certificateTypeOptions } = useCertificateTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [householdNumber, setHouseholdNumber] = useState<string | null>(null);
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    const fetchHouseholdNumber = async () => {
-      if (profile.householdId) {
-        const { data } = await supabase
-          .from("households")
-          .select("household_number")
-          .eq("id", profile.householdId)
-          .maybeSingle();
-        
-        if (data) {
-          setHouseholdNumber(data.household_number);
-        }
-      }
-    };
-    
-    fetchHouseholdNumber();
-  }, [profile.householdId]);
-  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      householdNumber: "",
       certificateType: "",
       customCertificateName: "",
       purpose: "",
@@ -120,6 +100,20 @@ const ResidentCertificateRequestForm = ({ profile, onSuccess }: ResidentCertific
       urgencyReason: "",
     },
   });
+
+  useEffect(() => {
+    if (!profile.householdId) return;
+    supabase
+      .from("households")
+      .select("household_number")
+      .eq("id", profile.householdId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.household_number) {
+          form.setValue("householdNumber", data.household_number);
+        }
+      });
+  }, [profile.householdId, form]);
 
   const selectedCertificateType = form.watch("certificateType");
   const selectedPriority = form.watch("priority");
@@ -132,11 +126,6 @@ const ResidentCertificateRequestForm = ({ profile, onSuccess }: ResidentCertific
   };
 
   const onSubmit = async (data: FormValues) => {
-    if (!householdNumber) {
-      toast.error("Your household number is not set. Please update your profile first.");
-      return;
-    }
-
     try {
       setIsSubmitting(true);
       
@@ -152,7 +141,7 @@ const ResidentCertificateRequestForm = ({ profile, onSuccess }: ResidentCertific
           full_name: profile.fullName,
           contact_number: profile.contactNumber || "",
           email: profile.email,
-          household_number: householdNumber,
+          household_number: data.householdNumber?.trim() || null,
           purpose: data.purpose,
           priority: data.priority,
           urgency_reason: data.priority === "urgent" ? (data.urgencyReason?.trim() || null) : null,
@@ -182,8 +171,6 @@ const ResidentCertificateRequestForm = ({ profile, onSuccess }: ResidentCertific
     }
   };
 
-  const isBlocked = !householdNumber;
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -206,38 +193,27 @@ const ResidentCertificateRequestForm = ({ profile, onSuccess }: ResidentCertific
               <span className="text-muted-foreground">Contact Number:</span>
               <p className="font-medium">{profile.contactNumber || "Not set"}</p>
             </div>
-            <div>
-              <span className="text-muted-foreground">Household Number:</span>
-              <p className="font-medium">{householdNumber || "Not assigned"}</p>
-            </div>
           </div>
         </div>
 
-        {isBlocked && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center space-y-4">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
-            </div>
-            <div className="space-y-1.5">
-              <h3 className="text-lg font-semibold text-destructive">Cannot Submit Certificate Request</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                You must be assigned to a household before you can request certificates. Please complete your Ecological Profile first so the barangay can verify your residency.
-              </p>
-            </div>
-            <Button
-              type="button"
-              size="lg"
-              className="gap-2"
-              onClick={() => navigate("/resident/ecological-profile")}
-            >
-              <ExternalLink className="h-4 w-4" />
-              Complete Ecological Profile
-            </Button>
-          </div>
-        )}
+        <FormField
+          control={form.control}
+          name="householdNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Household Number / Blg. ng Sambahayan</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. HH-001" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter your household number (optional)
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        {/* Form fields - visually muted when blocked */}
-        <div className={cn(isBlocked && "opacity-50 pointer-events-none select-none")}>
+        <div>
           {/* Certificate Type */}
           <div className="space-y-6">
             <FormField
@@ -424,7 +400,7 @@ const ResidentCertificateRequestForm = ({ profile, onSuccess }: ResidentCertific
               type="submit" 
               size="lg" 
               className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-              disabled={isSubmitting || isBlocked}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>

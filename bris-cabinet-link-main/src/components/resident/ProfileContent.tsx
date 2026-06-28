@@ -39,7 +39,7 @@ const ProfileContent = () => {
     email: "", occupation: "", relationToHead: "", religion: "",
     schoolingStatus: "", educationAttainment: "", employmentStatus: "",
     employmentCategory: "", monthlyIncomeCash: "", monthlyIncomeKind: "",
-    livelihoodTraining: "", ethnicGroup: "", placeOfOrigin: "",
+    livelihoodTraining: "", ethnicGroup: "", placeOfOrigin: "", streetPurok: "",
   });
 
   const [householdData, setHouseholdData] = useState<any>(null);
@@ -68,11 +68,10 @@ const ProfileContent = () => {
   const loadProfile = async () => {
     setIsLoading(true);
     try {
-      const { data } = await supabase
-        .from("residents")
-        .select(`*, households (*)`)
-        .eq("user_id", user?.id)
-        .maybeSingle();
+      // SECURITY DEFINER RPC — bypasses RLS, works for all approved residents
+      const { data: rows, error } = await supabase.rpc('get_my_resident_profile');
+      if (error) throw error;
+      const data = rows?.[0];
 
       if (data) {
         setResidentId(data.id);
@@ -89,8 +88,18 @@ const ProfileContent = () => {
           monthlyIncomeCash: data.monthly_income_cash || "", monthlyIncomeKind: data.monthly_income_kind || "",
           livelihoodTraining: data.livelihood_training || "", ethnicGroup: data.ethnic_group || "",
           placeOfOrigin: data.place_of_origin || "",
+          streetPurok: data.street_purok || "",
         });
-        if (data.households) setHouseholdData(data.households);
+        if (data.hh_id) {
+          setHouseholdData({
+            id: data.hh_id,
+            household_number: data.hh_number,
+            address: data.hh_address,
+            barangay: data.hh_barangay,
+            city: data.hh_city,
+            province: data.hh_province,
+          });
+        }
       } else {
         setFormData(prev => ({ ...prev, email: user?.email || "" }));
       }
@@ -105,7 +114,8 @@ const ProfileContent = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { data: existing } = await supabase.from("residents").select("id").eq("user_id", user?.id).maybeSingle();
+      // Use residentId already loaded — avoids another RLS-blocked query
+      const existingId = residentId;
       const profileData = {
         gender: formData.gender || null, birth_date: formData.birthDate || null,
         civil_status: formData.civilStatus || null, contact_number: formData.contactNumber || null,
@@ -115,16 +125,16 @@ const ProfileContent = () => {
         employment_status: formData.employmentStatus || null, employment_category: formData.employmentCategory || null,
         monthly_income_cash: formData.monthlyIncomeCash || null, monthly_income_kind: formData.monthlyIncomeKind || null,
         livelihood_training: formData.livelihoodTraining || null, ethnic_group: formData.ethnicGroup || null,
-        place_of_origin: formData.placeOfOrigin || null, updated_at: new Date().toISOString(),
+        place_of_origin: formData.placeOfOrigin || null,
+        street_purok: formData.streetPurok || null, updated_at: new Date().toISOString(),
       };
-      if (existing) {
-        const { error } = await supabase.from("residents").update(profileData).eq("id", existing.id);
-        if (error) throw error;
-      } else {
+      if (!existingId) {
         toast.error("Profile not found. Please contact barangay staff.");
         setIsSaving(false);
         return;
       }
+      const { error } = await supabase.from("residents").update(profileData).eq("id", existingId);
+      if (error) throw error;
       toast.success("Profile saved successfully");
       refetchProfile();
     } catch (error: any) {
@@ -269,8 +279,12 @@ const ProfileContent = () => {
                 <Input value={formData.ethnicGroup} onChange={(e) => setFormData({ ...formData, ethnicGroup: e.target.value })} placeholder="e.g., Ibaloi, Kankanaey" />
               </div>
               <div className="space-y-2">
-                <Label>Place of Origin</Label>
-                <Input value={formData.placeOfOrigin} onChange={(e) => setFormData({ ...formData, placeOfOrigin: e.target.value })} placeholder="City/Municipality" />
+                <Label>Address</Label>
+                <Input value={formData.placeOfOrigin} onChange={(e) => setFormData({ ...formData, placeOfOrigin: e.target.value })} placeholder="House/Block/Lot No., Street" />
+              </div>
+              <div className="space-y-2">
+                <Label>Street/Purok</Label>
+                <Input value={formData.streetPurok} onChange={(e) => setFormData({ ...formData, streetPurok: e.target.value })} placeholder="e.g., Purok 3, Sitio Malaya" />
               </div>
               <div className="space-y-2">
                 <Label>House Number</Label>
