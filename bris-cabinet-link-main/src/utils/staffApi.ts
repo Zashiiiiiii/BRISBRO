@@ -41,9 +41,19 @@ const callStaffApi = async (action: string, body: Record<string, unknown> = {}):
   return data;
 };
 
-// Resident delete
+// Resident delete (soft)
 export const deleteResident = async (residentId: string) => {
   return callStaffApi('delete-resident', { residentId });
+};
+
+// Restore soft-deleted resident
+export const restoreResident = async (residentId: string) => {
+  return callStaffApi('restore-resident', { residentId });
+};
+
+// Permanently delete resident + auth user
+export const permanentDeleteResident = async (residentId: string) => {
+  return callStaffApi('permanent-delete-resident', { residentId });
 };
 
 // Resident approval operations

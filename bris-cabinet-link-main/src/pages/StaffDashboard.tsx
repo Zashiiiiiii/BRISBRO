@@ -106,6 +106,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useStaffAuthContext } from "@/context/StaffAuthContext";
 import { useBarangayStats } from "@/context/BarangayStatsContext";
@@ -124,13 +125,16 @@ import {
   getPendingRegistrations,
   approveResident,
   rejectResident,
+  getDuplicateHints,
   getAllIncidentsForStaff,
   getPendingIncidentsCount,
   getPendingCertificatesCount,
   getPendingEcologicalCount,
-  
   getPendingNameChangeRequestsCount,
   getStaffUnreadMessageCount,
+  deleteResident,
+  restoreResident,
+  permanentDeleteResident,
 } from "@/utils/staffApi";
 import { format } from "date-fns";
 import { MapPin, Search } from "lucide-react";
@@ -232,9 +236,9 @@ const CollapsibleGroup = ({ label, children, defaultOpen = false, isCollapsed, f
 };
 
 
-const StaffSidebar = ({ 
-  activeTab, 
-  setActiveTab, 
+const StaffSidebar = ({
+  activeTab,
+  setActiveTab,
   onLogout,
   userRole,
   pendingRegistrationCount,
@@ -243,8 +247,9 @@ const StaffSidebar = ({
   pendingIncidentsCount,
   pendingCertificatesCount,
   unreadMessagesCount,
-}: { 
-  activeTab: string; 
+  onEcologicalClick,
+}: {
+  activeTab: string;
   setActiveTab: (tab: string) => void;
   onLogout: () => void;
   userRole?: string;
@@ -254,6 +259,7 @@ const StaffSidebar = ({
   pendingIncidentsCount?: number;
   pendingCertificatesCount?: number;
   unreadMessagesCount?: number;
+  onEcologicalClick?: () => void;
 }) => {
   const { state } = useSidebar();
   const navigate = useNavigate();
@@ -276,12 +282,12 @@ const StaffSidebar = ({
   const isInCommunication = communicationTabs.includes(activeTab);
   const isInAdmin = adminTabs.includes(activeTab);
 
-  const MenuItem = useCallback(({ title, icon: Icon, tab, badge }: { title: string; icon: any; tab: string; badge?: number }) => (
+  const MenuItem = useCallback(({ title, icon: Icon, tab, badge, onClickOverride }: { title: string; icon: any; tab: string; badge?: number; onClickOverride?: () => void }) => (
     <SidebarMenuItem className="relative">
       <SidebarMenuButton
         tooltip={title}
         isActive={activeTab === tab}
-        onClick={() => handleMenuClick(tab)}
+        onClick={onClickOverride ?? (() => handleMenuClick(tab))}
       >
         <Icon className="h-4 w-4" />
         <span className="flex items-center justify-between flex-1">
@@ -335,7 +341,7 @@ const StaffSidebar = ({
         <CollapsibleGroup label="Census & Reports" isCollapsed={isCollapsed} forceOpen={isInCensus}>
           <SidebarMenu>
             {(hasPermission(userRole, "ecological_profile") || hasPermission(userRole, "ecological_submissions")) && (
-              <MenuItem title="Ecological Census" icon={ClipboardList} tab="ecological-census" badge={pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined} />
+              <MenuItem title="Ecological Census" icon={ClipboardList} tab="ecological-census" badge={pendingEcologicalCount && pendingEcologicalCount > 0 ? pendingEcologicalCount : undefined} onClickOverride={onEcologicalClick ? () => onEcologicalClick() : undefined} />
             )}
             {hasPermission(userRole, "monitoring_reports") && (
               <MenuItem title="RBI Form C Reports" icon={FileText} tab="monitoring-reports" />
@@ -419,6 +425,16 @@ const StaffDashboard = () => {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [pendingEcologicalCount, setPendingEcologicalCount] = useState(0);
   const [pendingNameChangeCount, setPendingNameChangeCount] = useState(0);
+  const [ecoSubTab, setEcoSubTab] = useState("census-form");
+
+  const loadEcologicalCount = useCallback(async () => {
+    try {
+      const count = await getPendingEcologicalCount();
+      setPendingEcologicalCount(count);
+    } catch (err) {
+      console.error("Error loading ecological count:", err);
+    }
+  }, []);
   
   const [pendingIncidentsCount, setPendingIncidentsCount] = useState(0);
   const [pendingCertificatesCount, setPendingCertificatesCount] = useState(0);
@@ -526,7 +542,25 @@ const StaffDashboard = () => {
     place_of_origin: string | null;
     approval_status: string;
     created_at: string;
+    resident_type: string | null;
   }
+  interface DuplicateHint {
+    id: string;
+    first_name: string;
+    middle_name: string | null;
+    last_name: string;
+    birth_date: string | null;
+    email: string | null;
+    household_number: string | null;
+    household_address: string | null;
+    match_score: number;
+  }
+  const RESIDENT_TYPE_LABELS: Record<string, string> = { owner: "Owner", tenant: "Tenant", boarder: "Boarder", relative: "Relative" };
+  const APPROVAL_VERIFICATION_METHODS = [
+    { value: "matched_household", label: "Matched Household" },
+    { value: "manual_review", label: "Manual Review" },
+    { value: "proof_upload", label: "Proof Upload" },
+  ];
   const [pendingResidents, setPendingResidents] = useState<PendingResident[]>([]);
   const [isLoadingResidents, setIsLoadingResidents] = useState(false);
   const [residentSearchTerm, setResidentSearchTerm] = useState("");
@@ -534,6 +568,27 @@ const StaffDashboard = () => {
   const [residentRejectDialogOpen, setResidentRejectDialogOpen] = useState(false);
   const [selectedResidentForReject, setSelectedResidentForReject] = useState<PendingResident | null>(null);
   const [residentRejectionReason, setResidentRejectionReason] = useState("");
+  // Approve dialog state
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [residentForApprove, setResidentForApprove] = useState<PendingResident | null>(null);
+  const [approveVerificationMethod, setApproveVerificationMethod] = useState("manual_review");
+  const [approveHouseholdOption, setApproveHouseholdOption] = useState<"none" | "existing" | "new">("none");
+  const [approveExistingHouseholdId, setApproveExistingHouseholdId] = useState("");
+  const [approveHouseholdSearch, setApproveHouseholdSearch] = useState("");
+  const [approveHouseholdResults, setApproveHouseholdResults] = useState<any[]>([]);
+  const [approveNewHouseholdNumber, setApproveNewHouseholdNumber] = useState("");
+  const [approveNewHouseholdAddress, setApproveNewHouseholdAddress] = useState("");
+  const [approveNewHouseholdPurok, setApproveNewHouseholdPurok] = useState("");
+  const [approveDuplicateHints, setApproveDuplicateHints] = useState<DuplicateHint[]>([]);
+  const [approveDuplicatesLoading, setApproveDuplicatesLoading] = useState(false);
+  const [adminSubTab, setAdminSubTab] = useState<"pending" | "accounts">("pending");
+  const [registeredAccounts, setRegisteredAccounts] = useState<{ id: string; first_name: string; last_name: string; middle_name: string | null; email: string | null; approval_status: string; created_at: string; user_id: string | null }[]>([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null);
+  const [deletedAccounts, setDeletedAccounts] = useState<{ id: string; first_name: string; last_name: string; middle_name: string | null; email: string | null; deleted_at: string; user_id: string | null }[]>([]);
+  const [isLoadingDeletedAccounts, setIsLoadingDeletedAccounts] = useState(false);
+  const [restoringAccountId, setRestoringAccountId] = useState<string | null>(null);
+  const [permanentDeletingId, setPermanentDeletingId] = useState<string | null>(null);
 
   // Filtered, sorted, and paginated certificate requests
   const filteredAndSortedRequests = useMemo(() => {
@@ -681,15 +736,6 @@ const StaffDashboard = () => {
     if (isAuthenticated) {
       loadRequests();
       
-      // Load pending ecological submissions count via staff API
-      const loadEcologicalCount = async () => {
-        try {
-          const count = await getPendingEcologicalCount();
-          setPendingEcologicalCount(count);
-        } catch (err) {
-          console.error("Error loading ecological count:", err);
-        }
-      };
       loadEcologicalCount();
 
       // Load pending name change requests count
@@ -770,6 +816,11 @@ const StaffDashboard = () => {
         loadCertificatesCount();
       }, 30000);
 
+      // Polling fallback for ecological count (staff auth is cookie-based, realtime may not fire)
+      const ecoPollInterval = setInterval(() => {
+        loadEcologicalCount();
+      }, 30000);
+
       // Real-time subscription for ecological submissions
       const ecologicalChannel = supabase
         .channel('ecological-submissions-changes')
@@ -778,7 +829,6 @@ const StaffDashboard = () => {
           schema: 'public',
           table: 'ecological_profile_submissions'
         }, () => {
-          console.log('Ecological submission changed, reloading count...');
           loadEcologicalCount();
         })
         .subscribe();
@@ -831,9 +881,10 @@ const StaffDashboard = () => {
         supabase.removeChannel(incidentsChannel);
         supabase.removeChannel(messagesChannel);
         clearInterval(certPollInterval);
+        clearInterval(ecoPollInterval);
       };
     }
-  }, [isAuthenticated, loadRequests]);
+  }, [isAuthenticated, loadRequests, loadEcologicalCount]);
 
   // Load pending resident registrations
   const loadPendingResidents = useCallback(async () => {
@@ -849,18 +900,49 @@ const StaffDashboard = () => {
     }
   }, []);
 
-  // Load pending residents when tab is active
+  const loadDeletedAccounts = useCallback(async () => {
+    setIsLoadingDeletedAccounts(true);
+    try {
+      const { data, error } = await supabase.rpc("get_deleted_residents_for_staff" as any);
+      if (error) throw error;
+      setDeletedAccounts((data || []) as any[]);
+    } catch (error) {
+      console.error("Error loading deleted accounts:", error);
+    } finally {
+      setIsLoadingDeletedAccounts(false);
+    }
+  }, []);
+
+  const loadRegisteredAccounts = useCallback(async () => {
+    setIsLoadingAccounts(true);
+    try {
+      const { data, error } = await supabase.rpc("get_all_residents_for_staff" as any);
+      if (error) throw error;
+      const withAccounts = (data || []).filter((r: any) => r.user_id != null);
+      setRegisteredAccounts(withAccounts);
+    } catch (error) {
+      console.error("Error loading registered accounts:", error);
+      toast.error("Failed to load registered accounts");
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  }, []);
+
+  // Load pending residents when tab is active; always start on Pending sub-tab
   useEffect(() => {
     if (isAuthenticated && activeTab === "resident-approval") {
+      setAdminSubTab("pending");
       loadPendingResidents();
+      loadRegisteredAccounts();
+      loadDeletedAccounts();
     }
-  }, [isAuthenticated, activeTab, loadPendingResidents]);
+  }, [isAuthenticated, activeTab, loadPendingResidents, loadRegisteredAccounts, loadDeletedAccounts]);
 
   // Handle resident approval
   const handleApproveResident = async (resident: PendingResident) => {
     setProcessingResidentId(resident.id);
     try {
-      await approveResident(resident.id, user?.fullName || 'Admin');
+      await approveResident(resident.id, user?.fullName || 'Admin', { verificationMethod: "manual_review" });
 
       // Send approval notification email
       if (resident.email) {
@@ -880,8 +962,83 @@ const StaffDashboard = () => {
 
       toast.success(`${resident.first_name} ${resident.last_name}'s registration has been approved`);
       loadPendingResidents();
-      
-      // Refresh stats from context (handles real-time updates)
+      refreshStats();
+    } catch (error) {
+      console.error('Error approving resident:', error);
+      toast.error("Failed to approve registration");
+    } finally {
+      setProcessingResidentId(null);
+    }
+  };
+
+  const openResidentApproveDialog = (resident: PendingResident) => {
+    setResidentForApprove(resident);
+    setApproveVerificationMethod("manual_review");
+    setApproveHouseholdOption("none");
+    setApproveExistingHouseholdId("");
+    setApproveHouseholdSearch("");
+    setApproveHouseholdResults([]);
+    setApproveNewHouseholdNumber("");
+    setApproveNewHouseholdAddress("");
+    setApproveNewHouseholdPurok("");
+    setApproveDuplicateHints([]);
+    setApproveDialogOpen(true);
+    // Load duplicate hints in background
+    setApproveDuplicatesLoading(true);
+    getDuplicateHints(resident.first_name, resident.last_name, resident.birth_date || undefined, resident.place_of_origin || undefined)
+      .then(hints => setApproveDuplicateHints(hints || []))
+      .catch(() => setApproveDuplicateHints([]))
+      .finally(() => setApproveDuplicatesLoading(false));
+  };
+
+  const searchHouseholdsForApproval = async (query: string) => {
+    if (query.length < 2) { setApproveHouseholdResults([]); return; }
+    try {
+      const { data } = await supabase
+        .from("households")
+        .select("id, household_number, address, street_purok")
+        .or(`household_number.ilike.%${query}%,address.ilike.%${query}%`)
+        .limit(10);
+      setApproveHouseholdResults(data || []);
+    } catch {
+      setApproveHouseholdResults([]);
+    }
+  };
+
+  const handleConfirmResidentApproval = async () => {
+    if (!residentForApprove) return;
+    setProcessingResidentId(residentForApprove.id);
+    try {
+      const options: any = { verificationMethod: approveVerificationMethod };
+      if (approveHouseholdOption === "existing" && approveExistingHouseholdId) {
+        options.householdId = approveExistingHouseholdId;
+      } else if (approveHouseholdOption === "new" && approveNewHouseholdNumber) {
+        options.newHousehold = {
+          householdNumber: approveNewHouseholdNumber,
+          address: approveNewHouseholdAddress || undefined,
+          streetPurok: approveNewHouseholdPurok || undefined,
+        };
+      }
+      await approveResident(residentForApprove.id, user?.fullName || 'Admin', options);
+
+      if (residentForApprove.email) {
+        try {
+          await supabase.functions.invoke('send-approval-notification', {
+            body: {
+              recipientEmail: residentForApprove.email,
+              residentName: `${residentForApprove.first_name} ${residentForApprove.last_name}`,
+              status: 'approved',
+              approvedBy: user?.fullName || 'Admin',
+            },
+          });
+        } catch (emailError) {
+          console.error('Failed to send approval notification:', emailError);
+        }
+      }
+
+      toast.success(`${residentForApprove.first_name} ${residentForApprove.last_name}'s registration has been approved`);
+      setApproveDialogOpen(false);
+      loadPendingResidents();
       refreshStats();
     } catch (error) {
       console.error('Error approving resident:', error);
@@ -940,11 +1097,62 @@ const StaffDashboard = () => {
     }
   };
 
+  const handleDeleteAccount = async (id: string, name: string) => {
+    setDeletingAccountId(id);
+    try {
+      await deleteResident(id);
+      toast.success(`${name} moved to deleted accounts`);
+      setRegisteredAccounts(prev => prev.filter(r => r.id !== id));
+      loadDeletedAccounts();
+      refreshStats();
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast.error("Failed to delete account");
+    } finally {
+      setDeletingAccountId(null);
+    }
+  };
+
+  const handleRestoreAccount = async (id: string, name: string) => {
+    setRestoringAccountId(id);
+    try {
+      await restoreResident(id);
+      toast.success(`${name} has been restored`);
+      loadDeletedAccounts();
+      loadRegisteredAccounts();
+    } catch (error) {
+      console.error("Error restoring account:", error);
+      toast.error("Failed to restore account");
+    } finally {
+      setRestoringAccountId(null);
+    }
+  };
+
+  const handlePermanentDeleteAccount = async (id: string, name: string) => {
+    if (!window.confirm(`Permanently delete ${name}? This cannot be undone.`)) return;
+    setPermanentDeletingId(id);
+    try {
+      await permanentDeleteResident(id);
+      toast.success(`${name} permanently deleted`);
+      setDeletedAccounts(prev => prev.filter(r => r.id !== id));
+    } catch (error) {
+      console.error("Error permanently deleting:", error);
+      toast.error("Failed to permanently delete");
+    } finally {
+      setPermanentDeletingId(null);
+    }
+  };
+
   // Filter pending residents
   const filteredPendingResidents = pendingResidents.filter(resident => {
     const fullName = `${resident.first_name} ${resident.middle_name || ''} ${resident.last_name}`.toLowerCase();
-    return fullName.includes(residentSearchTerm.toLowerCase()) || 
+    return fullName.includes(residentSearchTerm.toLowerCase()) ||
            resident.email?.toLowerCase().includes(residentSearchTerm.toLowerCase());
+  });
+  const filteredRegisteredAccounts = registeredAccounts.filter(r => {
+    const fullName = `${r.first_name} ${r.middle_name || ''} ${r.last_name}`.toLowerCase();
+    return fullName.includes(residentSearchTerm.toLowerCase()) ||
+           r.email?.toLowerCase().includes(residentSearchTerm.toLowerCase());
   });
 
   const handleViewDetails = (request: PendingRequest) => {
@@ -1804,7 +2012,7 @@ const StaffDashboard = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <StaffSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} userRole={user?.role} pendingRegistrationCount={pendingRegistrationCount} pendingEcologicalCount={pendingEcologicalCount} pendingNameChangeCount={pendingNameChangeCount} pendingIncidentsCount={pendingIncidentsCount} pendingCertificatesCount={pendingCertificatesCount} unreadMessagesCount={unreadMessagesCount} />
+        <StaffSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} userRole={user?.role} pendingRegistrationCount={pendingRegistrationCount} pendingEcologicalCount={pendingEcologicalCount} pendingNameChangeCount={pendingNameChangeCount} pendingIncidentsCount={pendingIncidentsCount} pendingCertificatesCount={pendingCertificatesCount} unreadMessagesCount={unreadMessagesCount} onEcologicalClick={() => { setEcoSubTab("submissions-queue"); setActiveTab("ecological-census"); }} />
         
         <div className="flex-1 flex flex-col">
           {/* Top Bar */}
@@ -1883,7 +2091,7 @@ const StaffDashboard = () => {
                         </CardContent>
                       </Card>
 
-                      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab("ecological-census")}>
+                      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => { setEcoSubTab("submissions-queue"); setActiveTab("ecological-census"); }}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <CardTitle className="text-sm font-medium">Pending Ecological</CardTitle>
                           <Clock className="h-4 w-4 text-muted-foreground" />
@@ -2006,7 +2214,7 @@ const StaffDashboard = () => {
                       </p>
                       <Button 
                         size="sm" 
-                        onClick={() => navigate('/admin/resident-approval')}
+                        onClick={() => setActiveTab("resident-approval")}
                         className="bg-yellow-600 hover:bg-yellow-700"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
@@ -2620,9 +2828,28 @@ const StaffDashboard = () => {
             {activeTab === "resident-approval" && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold">Resident Registration Approval</h2>
-                <p className="text-muted-foreground">
-                  Review and approve or reject pending resident registrations
-                </p>
+
+                {/* Sub-tabs */}
+                <div className="flex gap-2 border-b">
+                  <button
+                    className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${adminSubTab === "pending" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => setAdminSubTab("pending")}
+                  >
+                    Pending Registrations
+                    {pendingResidents.length > 0 && (
+                      <Badge variant="destructive" className="ml-2 h-5 px-1.5 text-xs">{pendingResidents.length}</Badge>
+                    )}
+                  </button>
+                  <button
+                    className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${adminSubTab === "accounts" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => setAdminSubTab("accounts")}
+                  >
+                    Registered Accounts
+                    {registeredAccounts.length > 0 && (
+                      <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">{registeredAccounts.length}</Badge>
+                    )}
+                  </button>
+                </div>
 
                 {/* Search */}
                 <div className="relative">
@@ -2636,13 +2863,15 @@ const StaffDashboard = () => {
                 </div>
 
                 {/* Pending Count */}
+                {adminSubTab === "pending" && (
                 <div>
                   <Badge variant="secondary" className="text-sm">
                     {filteredPendingResidents.length} pending registration{filteredPendingResidents.length !== 1 ? 's' : ''}
                   </Badge>
                 </div>
+                )}
 
-                {isLoadingResidents ? (
+                {adminSubTab === "pending" && (isLoadingResidents ? (
                   <div className="text-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                     <p className="mt-2 text-muted-foreground">Loading pending registrations...</p>
@@ -2658,15 +2887,20 @@ const StaffDashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {filteredPendingResidents.map((resident) => (
-                      <Card key={resident.id}>
+                      <Card key={resident.id} className="border-l-4 border-l-yellow-500">
                         <CardContent className="p-4">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div className="space-y-2 flex-1">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <User className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-semibold text-lg">
                                   {resident.first_name} {resident.middle_name} {resident.last_name}
                                 </span>
+                                {resident.resident_type && (
+                                  <Badge variant="outline" className="capitalize text-xs">
+                                    {RESIDENT_TYPE_LABELS[resident.resident_type] || resident.resident_type}
+                                  </Badge>
+                                )}
                               </div>
                               
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
@@ -2721,7 +2955,7 @@ const StaffDashboard = () => {
                               <Button
                                 size="sm"
                                 className="bg-green-600 hover:bg-green-700"
-                                onClick={() => handleApproveResident(resident)}
+                                onClick={() => openResidentApproveDialog(resident)}
                                 disabled={processingResidentId === resident.id}
                               >
                                 {processingResidentId === resident.id ? (
@@ -2739,7 +2973,136 @@ const StaffDashboard = () => {
                       </Card>
                     ))}
                   </div>
+                ))}
+
+                {adminSubTab === "accounts" && (
+                  isLoadingAccounts ? (
+                    <div className="text-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                      <p className="mt-2 text-muted-foreground">Loading accounts...</p>
+                    </div>
+                  ) : filteredRegisteredAccounts.length === 0 ? (
+                    <Card>
+                      <CardContent className="text-center py-12 text-muted-foreground">
+                        <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg font-medium">No registered accounts</p>
+                        <p className="text-sm">Approved residents with portal accounts will appear here</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredRegisteredAccounts.map((account) => (
+                        <Card key={account.id}>
+                          <CardContent className="p-4">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-semibold">
+                                    {account.first_name} {account.middle_name ? account.middle_name + " " : ""}{account.last_name}
+                                  </span>
+                                  <Badge variant="outline" className="text-xs text-green-700 border-green-300 bg-green-50">Account</Badge>
+                                </div>
+                                {account.email && (
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Mail className="h-3 w-3" />
+                                    <span>{account.email}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+                                disabled={deletingAccountId === account.id}
+                                onClick={() => handleDeleteAccount(account.id, `${account.first_name} ${account.last_name}`)}
+                              >
+                                {deletingAccountId === account.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )
                 )}
+
+                {/* Deleted Accounts */}
+                <div className="mt-8">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-base font-semibold text-muted-foreground">Deleted Accounts</h3>
+                    {deletedAccounts.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">{deletedAccounts.length}</Badge>
+                    )}
+                  </div>
+                  {isLoadingDeletedAccounts ? (
+                    <div className="text-center py-6 text-muted-foreground text-sm">
+                      <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
+                      Loading deleted accounts...
+                    </div>
+                  ) : deletedAccounts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No deleted accounts.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {deletedAccounts.map((account) => (
+                        <Card key={account.id} className="border-dashed opacity-75">
+                          <CardContent className="p-3">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm line-through text-muted-foreground">
+                                    {account.first_name} {account.middle_name ? account.middle_name + " " : ""}{account.last_name}
+                                  </span>
+                                  <Badge variant="secondary" className="text-xs">Deleted</Badge>
+                                </div>
+                                {account.email && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Mail className="h-3 w-3" />
+                                    <span>{account.email}</span>
+                                  </div>
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  Deleted: {format(new Date(account.deleted_at), 'MMM d, yyyy h:mm a')}
+                                </p>
+                              </div>
+                              <div className="flex gap-2 shrink-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-green-700 hover:text-green-800 hover:bg-green-50 border-green-300"
+                                  disabled={restoringAccountId === account.id}
+                                  onClick={() => handleRestoreAccount(account.id, `${account.first_name} ${account.last_name}`)}
+                                >
+                                  {restoringAccountId === account.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : "Restore"}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-700 hover:text-red-800 hover:bg-red-50 border-red-300"
+                                  disabled={permanentDeletingId === account.id}
+                                  onClick={() => handlePermanentDeleteAccount(account.id, `${account.first_name} ${account.last_name}`)}
+                                >
+                                  {permanentDeletingId === account.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : "Delete Forever"}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -2882,7 +3245,7 @@ const StaffDashboard = () => {
             {activeTab === "name-change-requests" && <NameChangeRequestsTab />}
 
             {activeTab === "ecological-census" && (
-              <Tabs defaultValue="census-form">
+              <Tabs value={ecoSubTab} onValueChange={setEcoSubTab}>
                 <TabsList>
                   <TabsTrigger value="census-form">Census Form</TabsTrigger>
                   <TabsTrigger value="submissions-queue">
@@ -2895,7 +3258,7 @@ const StaffDashboard = () => {
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="census-form"><EcologicalProfileTab /></TabsContent>
-                <TabsContent value="submissions-queue"><EcologicalSubmissionsTab /></TabsContent>
+                <TabsContent value="submissions-queue"><EcologicalSubmissionsTab onReviewComplete={loadEcologicalCount} /></TabsContent>
               </Tabs>
             )}
 
@@ -3399,6 +3762,128 @@ const StaffDashboard = () => {
             </Button>
             <Button onClick={handleCreateAnnouncement}>
               {editingAnnouncement ? "Update" : "Create"} Announcement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resident Approve Dialog */}
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Approve Registration</DialogTitle>
+            <DialogDescription>
+              Approve <strong>{residentForApprove?.first_name} {residentForApprove?.last_name}</strong> and optionally link to a household.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {approveDuplicatesLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Checking for duplicates...
+              </div>
+            ) : approveDuplicateHints.length > 0 && (
+              <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription>
+                  <p className="font-medium text-sm mb-2">Possible duplicate matches found:</p>
+                  <div className="space-y-2">
+                    {approveDuplicateHints.map(hint => (
+                      <div key={hint.id} className="text-xs p-2 bg-background rounded border">
+                        <span className="font-medium">{hint.first_name} {hint.middle_name || ''} {hint.last_name}</span>
+                        {hint.birth_date && <span className="ml-2 text-muted-foreground">Born: {format(new Date(hint.birth_date), 'MMM d, yyyy')}</span>}
+                        {hint.household_number && <span className="ml-2 text-muted-foreground">HH# {hint.household_number}</span>}
+                        <Badge variant="outline" className="ml-2 text-[10px]">{hint.match_score}% match</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-2">
+              <Label>Verification Method</Label>
+              <Select value={approveVerificationMethod} onValueChange={setApproveVerificationMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {APPROVAL_VERIFICATION_METHODS.map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link to Household (Optional)</Label>
+              <Select value={approveHouseholdOption} onValueChange={(v: any) => setApproveHouseholdOption(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No household linking</SelectItem>
+                  <SelectItem value="existing">Link to existing household</SelectItem>
+                  <SelectItem value="new">Create new household</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {approveHouseholdOption === "existing" && (
+              <div className="space-y-2 pl-2 border-l-2 border-primary/20">
+                <Label>Search Household</Label>
+                <Input
+                  placeholder="Search by household number or address..."
+                  value={approveHouseholdSearch}
+                  onChange={(e) => { setApproveHouseholdSearch(e.target.value); searchHouseholdsForApproval(e.target.value); }}
+                />
+                {approveHouseholdResults.length > 0 && (
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {approveHouseholdResults.map(hh => (
+                      <div
+                        key={hh.id}
+                        className={`p-2 rounded text-sm cursor-pointer border transition-colors ${approveExistingHouseholdId === hh.id ? "bg-primary/10 border-primary" : "hover:bg-muted"}`}
+                        onClick={() => { setApproveExistingHouseholdId(hh.id); setApproveVerificationMethod("matched_household"); }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Home className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-medium">HH# {hh.household_number}</span>
+                        </div>
+                        {hh.address && <p className="text-xs text-muted-foreground ml-5">{hh.address}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {approveHouseholdOption === "new" && (
+              <div className="space-y-3 pl-2 border-l-2 border-primary/20">
+                <div className="space-y-1">
+                  <Label>Household Number *</Label>
+                  <Input value={approveNewHouseholdNumber} onChange={(e) => setApproveNewHouseholdNumber(e.target.value)} placeholder="e.g., HH-001" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Address</Label>
+                  <Input value={approveNewHouseholdAddress} onChange={(e) => setApproveNewHouseholdAddress(e.target.value)} placeholder="Full address" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Street / Purok</Label>
+                  <Input value={approveNewHouseholdPurok} onChange={(e) => setApproveNewHouseholdPurok(e.target.value)} placeholder="e.g., Purok 1" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleConfirmResidentApproval}
+              disabled={processingResidentId === residentForApprove?.id || (approveHouseholdOption === "new" && !approveNewHouseholdNumber)}
+            >
+              {processingResidentId === residentForApprove?.id ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Approve Registration
             </Button>
           </DialogFooter>
         </DialogContent>

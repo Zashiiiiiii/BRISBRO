@@ -68,6 +68,7 @@ interface HouseholdMember {
   relationship_to_head: string;
   civil_status: string;
   religion: string;
+  religion_other?: string;
   schooling_status: string;
   education_level: string;
   employment_status: string;
@@ -127,6 +128,10 @@ interface SubmissionData {
     communication_services?: string;
     means_of_transport?: string;
     info_sources?: string;
+    house_ownership?: string;
+    lot_ownership?: string;
+    dwelling_type?: string;
+    lighting_source?: string;
   };
 }
 
@@ -188,7 +193,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
 
       try {
         // Use SECURITY DEFINER RPC — bypasses RLS, works for all approved residents
-        const { data: rows } = await supabase.rpc('get_my_resident_profile');
+        const { data: rows } = await (supabase.rpc as any)('get_my_resident_profile');
         const residentData = rows?.[0];
 
         if (residentData) {
@@ -298,23 +303,19 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     };
 
     loadData();
-  }, [user]);
-
-  // Debounced household number check - only check for pending submissions, skip "already exists" warning
-  const [householdNumberWarning, setHouseholdNumberWarning] = useState<string | null>(null);
+  }, [user?.id]);
 
   useEffect(() => {
     const checkHouseholdNumber = async (householdNumber: string) => {
       if (!householdNumber.trim()) {
         setHouseholdNumberError(null);
-        setHouseholdNumberWarning(null);
         setExistingHouseholdId(null);
         return;
       }
 
       setIsCheckingHousehold(true);
       try {
-        // Check for pending submissions
+        // Check for pending submissions with this household number
         const { data: pendingSubmission } = await supabase
           .from("ecological_profile_submissions")
           .select("id, submission_number, status")
@@ -324,29 +325,27 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
 
         if (pendingSubmission) {
           setHouseholdNumberError(
-            `There's already a pending submission (${pendingSubmission.submission_number}) for this household number. Please wait for it to be reviewed.`
+            `Household number "${householdNumber.trim()}" already has a pending submission (${pendingSubmission.submission_number}). Please use a different number or wait for it to be reviewed.`
           );
-          setHouseholdNumberWarning(null);
           setExistingHouseholdId(null);
+          return;
+        }
+
+        // Check if household number already exists in the approved households table
+        const { data: existingHousehold } = await supabase
+          .from("households")
+          .select("id, household_number")
+          .eq("household_number", householdNumber.trim())
+          .maybeSingle();
+
+        if (existingHousehold) {
+          setHouseholdNumberError(
+            `Household number "${householdNumber.trim()}" already exists. Please use a different number.`
+          );
+          setExistingHouseholdId(existingHousehold.id);
         } else {
           setHouseholdNumberError(null);
-
-          // Check if household number already exists in households table (warning only)
-          const { data: existingHousehold } = await supabase
-            .from("households")
-            .select("id, household_number")
-            .eq("household_number", householdNumber.trim())
-            .maybeSingle();
-
-          if (existingHousehold) {
-            setHouseholdNumberWarning(
-              `Household number "${householdNumber.trim()}" already exists. Submitting will update the existing household data.`
-            );
-            setExistingHouseholdId(existingHousehold.id);
-          } else {
-            setHouseholdNumberWarning(null);
-            setExistingHouseholdId(null);
-          }
+          setExistingHouseholdId(null);
         }
       } catch (error) {
         console.error("Error checking household number:", error);
@@ -459,19 +458,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
     });
   };
 
-  // Auto-add resident to household members when form loads and profile is available
-  useEffect(() => {
-    if (profile && !isResidentInMembers() && formData.household_members !== undefined) {
-      // Only auto-add if we're not in edit mode loading state
-      if (!isEditMode || editingSubmissionId) {
-        const residentMember = createResidentMember();
-        setFormData(prev => ({
-          ...prev,
-          household_members: [residentMember, ...prev.household_members]
-        }));
-      }
-    }
-  }, [profile, isEditMode]);
 
   const handleSubmit = async () => {
     if (!residentId) {
@@ -504,10 +490,10 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
       return;
     }
 
-    // Block submission if there's a pending submission for this household number (only for new submissions)
-    if (!isEditMode && householdNumberError && !existingHouseholdId) {
+    // Block submission if household number already exists or has a pending submission
+    if (!isEditMode && householdNumberError) {
       toast.error("Cannot submit", {
-        description: "There's already a pending submission for this household number."
+        description: householdNumberError
       });
       return;
     }
@@ -649,8 +635,18 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
         toast.success("Ecological profile submitted successfully!", {
           description: `Submission number: ${submissionNumber}. Staff will review your submission.`
         });
-        
-        onSuccess?.();
+
+        // Reload submissions list so all entries show after submit
+        const { data: updatedSubmissions } = await supabase
+          .from("ecological_profile_submissions")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (updatedSubmissions) setExistingSubmissions(updatedSubmissions);
+
+        // Reset form for a potential new submission
+        setFormData(defaultFormData);
+        setConsentGiven(false);
+        setActiveTab("basic-info");
       }
     } catch (error: any) {
       console.error("Error submitting:", error);
@@ -1049,7 +1045,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         value={formData.household_number}
                         onChange={(e) => setFormData({ ...formData, household_number: e.target.value })}
                         placeholder="e.g., HH-002"
-                        className={householdNumberError ? "border-destructive" : householdNumberWarning ? "border-yellow-500" : ""}
+                        className={householdNumberError ? "border-destructive" : ""}
                       />
                       {isCheckingHousehold && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -1059,12 +1055,6 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                       <p className="text-sm flex items-center gap-1 text-destructive">
                         <AlertCircle className="h-3 w-3" />
                         {householdNumberError}
-                      </p>
-                    )}
-                    {!householdNumberError && householdNumberWarning && (
-                      <p className="text-sm flex items-center gap-1 text-yellow-600">
-                        <AlertCircle className="h-3 w-3" />
-                        {householdNumberWarning}
                       </p>
                     )}
                   </div>
@@ -1279,10 +1269,13 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                                     </Select>
                                   </TableCell>
                                   <TableCell className="p-1 border-r">
-                                    <Select value={member.religion} onValueChange={(v) => updateHouseholdMember(member.id, { religion: v })}>
+                                    <Select value={member.religion} onValueChange={(v) => updateHouseholdMember(member.id, { religion: v, religion_other: "" })}>
                                       <SelectTrigger className="h-8 text-xs w-full"><SelectValue placeholder="Religion" /></SelectTrigger>
                                       <SelectContent>{RELIGIONS.map(r => <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>)}</SelectContent>
                                     </Select>
+                                    {member.religion === "Others" && (
+                                      <Input className="mt-1 h-7 text-xs" placeholder="Specify..." value={member.religion_other || ""} onChange={(e) => updateHouseholdMember(member.id, { religion_other: e.target.value })} />
+                                    )}
                                   </TableCell>
                                   <TableCell className="p-1 border-r">
                                     <Select value={member.schooling_status} onValueChange={(v) => updateHouseholdMember(member.id, { schooling_status: v })}>
@@ -1388,7 +1381,7 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                     <Label>House Ownership</Label>
                     <Select
                       value={formData.house_ownership}
-                      onValueChange={(v) => setFormData({ ...formData, house_ownership: v })}
+                      onValueChange={(v) => setFormData({ ...formData, house_ownership: v, other_values: { ...formData.other_values, house_ownership: "" } })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select..." />
@@ -1399,12 +1392,15 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         ))}
                       </SelectContent>
                     </Select>
+                    {formData.house_ownership === "Others" && (
+                      <Input placeholder="Please specify..." value={formData.other_values?.house_ownership || ""} onChange={(e) => setFormData({ ...formData, other_values: { ...formData.other_values, house_ownership: e.target.value } })} />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Lot Ownership</Label>
                     <Select
                       value={formData.lot_ownership}
-                      onValueChange={(v) => setFormData({ ...formData, lot_ownership: v })}
+                      onValueChange={(v) => setFormData({ ...formData, lot_ownership: v, other_values: { ...formData.other_values, lot_ownership: "" } })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select..." />
@@ -1415,12 +1411,15 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         ))}
                       </SelectContent>
                     </Select>
+                    {formData.lot_ownership === "Others" && (
+                      <Input placeholder="Please specify..." value={formData.other_values?.lot_ownership || ""} onChange={(e) => setFormData({ ...formData, other_values: { ...formData.other_values, lot_ownership: e.target.value } })} />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Dwelling Type</Label>
                     <Select
                       value={formData.dwelling_type}
-                      onValueChange={(v) => setFormData({ ...formData, dwelling_type: v })}
+                      onValueChange={(v) => setFormData({ ...formData, dwelling_type: v, other_values: { ...formData.other_values, dwelling_type: "" } })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select..." />
@@ -1431,12 +1430,15 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         ))}
                       </SelectContent>
                     </Select>
+                    {formData.dwelling_type === "Others" && (
+                      <Input placeholder="Please specify..." value={formData.other_values?.dwelling_type || ""} onChange={(e) => setFormData({ ...formData, other_values: { ...formData.other_values, dwelling_type: e.target.value } })} />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Lighting Source</Label>
                     <Select
                       value={formData.lighting_source}
-                      onValueChange={(v) => setFormData({ ...formData, lighting_source: v })}
+                      onValueChange={(v) => setFormData({ ...formData, lighting_source: v, other_values: { ...formData.other_values, lighting_source: "" } })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select..." />
@@ -1447,6 +1449,9 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                         ))}
                       </SelectContent>
                     </Select>
+                    {formData.lighting_source === "Others" && (
+                      <Input placeholder="Please specify..." value={formData.other_values?.lighting_source || ""} onChange={(e) => setFormData({ ...formData, other_values: { ...formData.other_values, lighting_source: e.target.value } })} />
+                    )}
                   </div>
                 </div>
               </TabsContent>
@@ -1598,7 +1603,8 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                             ...formData,
                             health_data: {
                               ...(formData.health_data as any),
-                              familyPlanningType: v
+                              familyPlanningType: v,
+                              familyPlanningTypeOther: ""
                             }
                           })}
                         >
@@ -1611,6 +1617,20 @@ const EcologicalProfileForm = ({ onSuccess, onCancel }: EcologicalProfileFormPro
                             ))}
                           </SelectContent>
                         </Select>
+                        {(formData.health_data as any)?.familyPlanningType === "Others" && (
+                          <Input
+                            className="w-[200px]"
+                            placeholder="Please specify..."
+                            value={(formData.health_data as any)?.familyPlanningTypeOther || ""}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              health_data: {
+                                ...(formData.health_data as any),
+                                familyPlanningTypeOther: e.target.value
+                              }
+                            })}
+                          />
+                        )}
                       </div>
                     )}
                   </CardContent>

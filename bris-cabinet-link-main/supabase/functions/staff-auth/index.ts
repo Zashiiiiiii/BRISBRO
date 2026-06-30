@@ -3222,6 +3222,105 @@ serve(async (req) => {
       );
     }
 
+    if (action === 'restore-resident') {
+      const token = getTokenFromCookie(req);
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { residentId } = body;
+      if (!residentId) {
+        return new Response(
+          JSON.stringify({ error: 'residentId is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { error } = await supabase
+        .from('residents')
+        .update({ deleted_at: null, deleted_by: null })
+        .eq('id', residentId);
+
+      if (error) {
+        console.error('Error restoring resident:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to restore resident' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Resident restored:', residentId, 'by:', session.username);
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'permanent-delete-resident') {
+      const token = getTokenFromCookie(req);
+      const session = await validateStaffSession(token);
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { residentId } = body;
+      if (!residentId) {
+        return new Response(
+          JSON.stringify({ error: 'residentId is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get the resident's user_id before deleting
+      const { data: resident } = await supabase
+        .from('residents')
+        .select('user_id')
+        .eq('id', residentId)
+        .single();
+
+      // Clear household FK
+      await supabase
+        .from('households')
+        .update({ head_resident_id: null })
+        .eq('head_resident_id', residentId);
+
+      // Hard-delete the resident record
+      const { error } = await supabase
+        .from('residents')
+        .delete()
+        .eq('id', residentId);
+
+      if (error) {
+        console.error('Error permanently deleting resident:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to permanently delete resident' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Also delete the auth user if they have one
+      if (resident?.user_id) {
+        try {
+          await supabase.auth.admin.deleteUser(resident.user_id);
+        } catch (authErr) {
+          console.error('Non-fatal: failed to delete auth user:', authErr);
+        }
+      }
+
+      console.log('Resident permanently deleted:', residentId, 'by:', session.username);
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // ========== LOGIN (default) ==========
     console.log('Processing LOGIN action');
     const username = body?.username;

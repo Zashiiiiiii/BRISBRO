@@ -149,7 +149,7 @@ interface Submission {
   deleted_by: string | null;
 }
 
-const EcologicalSubmissionsTab = () => {
+const EcologicalSubmissionsTab = ({ onReviewComplete }: { onReviewComplete?: () => void }) => {
   const { user: staffUser } = useStaffAuthContext();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -346,6 +346,7 @@ const EcologicalSubmissionsTab = () => {
 
       setShowReviewDialog(false);
       loadSubmissions();
+      onReviewComplete?.();
     } catch (error: any) {
       console.error("Error processing review:", error);
       toast.error("Failed to process review", { description: error.message });

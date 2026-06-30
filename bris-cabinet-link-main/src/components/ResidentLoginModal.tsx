@@ -218,6 +218,16 @@ const ResidentLoginForm = ({ onOpenChange }: { onOpenChange: (open: boolean) => 
     setIsLoading(true);
 
     try {
+      // Check if email already exists before proceeding with registration
+      const { data: emailExists } = await supabase.rpc('check_email_exists' as any, { p_email: signupEmail.trim() });
+      if (emailExists) {
+        toast.error("This email is already registered. Please log in instead.");
+        setActiveTab("login");
+        setLoginEmail(signupEmail);
+        setIsLoading(false);
+        return;
+      }
+
       const { data: residentId, error: registerError } = await supabase
         .rpc('register_new_resident', {
           p_first_name: signupFirstName.trim(),
